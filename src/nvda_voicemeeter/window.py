@@ -31,6 +31,7 @@ class Window(psg.Window):
 
         def add_physical_device_opts(layout):
             devices = ["{type}: {name}".format(**self.vm.device.output(i)) for i in range(self.vm.device.outs)]
+            devices.append("Deselect Device")
             layout.append(
                 [
                     psg.Combo(
@@ -38,6 +39,7 @@ class Window(psg.Window):
                         size=(22, 4),
                         expand_x=True,
                         enable_events=True,
+                        readonly=True,
                         key=f"HARDWARE OUT||A{i}",
                     )
                     for i in range(1, self.kind.phys_out + 1)
@@ -98,10 +100,14 @@ class Window(psg.Window):
             match self.parser.match.parseString(event):
                 case [["HARDWARE", "OUT"], [key]]:
                     selection = values[f"HARDWARE OUT||{key}"]
-                    driver, device_name = selection.split(":")
-                    index = int(key[1]) - 1
-                    setattr(self.vm.bus[index].device, driver, device_name.strip())
-                    self.nvda.speak(f"{driver} {selection}")
+                    match selection.split(":"):
+                        case [device_name]:
+                            device_name = ""
+                            self.nvda.speak(f"HARDWARE OUT {key} device deselected")
+                        case [driver, device_name]:
+                            index = int(key[1]) - 1
+                            setattr(self.vm.bus[index].device, driver, device_name.strip())
+                            self.nvda.speak(f"{driver} {selection}")
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} in focus")
                 case [["ASIO", "CHECKBOX"], [in_num, side]]:
