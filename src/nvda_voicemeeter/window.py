@@ -6,6 +6,7 @@ from .builder import Builder
 from .models import _make_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
+from .util import get_asio_checkbox_index, get_insert_checkbox_index
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +76,7 @@ class Window(psg.Window):
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} in focus")
                 case [["ASIO", "CHECKBOX"], [in_num, channel]]:
-                    if int(channel) == 0:
-                        index = (2 * int(in_num[-1])) - 2
-                    else:
-                        index = 2 * int(in_num[-1]) - 1
+                    index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.asio[index].set(val)
                     channel = ("left", "right")[int(channel)]
@@ -88,14 +86,11 @@ class Window(psg.Window):
                     num = int(in_num[-1])
                     self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} in focus")
                 case [["INSERT", "CHECKBOX"], [in_num, channel]]:
-                    num = int(in_num[-1])
-                    if num <= self.kind.phys_in:
-                        if int(channel) == 0:
-                            index = (2 * int(in_num[-1])) - 2
-                        else:
-                            index = 2 * int(in_num[-1]) - 1
-                    else:
-                        index = (2 * self.kind.phys_in) + (8 * (int(in_num[-1]) - self.kind.phys_in - 1)) + int(channel)
+                    index = get_insert_checkbox_index(
+                        self.kind,
+                        int(channel),
+                        int(in_num[-1]),
+                    )
                     val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.insert[index].on = val
                     self.nvda.speak(
