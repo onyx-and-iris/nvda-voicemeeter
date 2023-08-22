@@ -44,18 +44,53 @@ class Window(psg.Window):
                 ]
             )
 
+        def add_asio_checkboxes(layout, i):
+            data = list(range(99))
+            layout.append(
+                [psg.Spin(data, initial_value=0, size=2, enable_events=True, key=f"ASIO CHECKBOX||IN{i} 0")],
+            )
+            layout.append(
+                [psg.Spin(data, initial_value=0, size=2, enable_events=True, key=f"ASIO CHECKBOX||IN{i} 1")],
+            )
+
         hardware_out = list()
         [step(hardware_out) for step in (add_physical_device_opts,)]
         row0 = psg.Frame("Hardware Out", hardware_out)
 
-        return [[row0]]
+        inner = list()
+        asio_checkboxes_in1, asio_checkboxes_in2, asio_checkboxes_in3, asio_checkboxes_in4, asio_checkboxes_in5 = (
+            [] for _ in range(5)
+        )
+        for i, checkbox_list in enumerate(
+            (
+                asio_checkboxes_in1,
+                asio_checkboxes_in2,
+                asio_checkboxes_in3,
+                asio_checkboxes_in4,
+                asio_checkboxes_in5,
+            )
+        ):
+            [step(checkbox_list, i + 1) for step in (add_asio_checkboxes,)]
+            inner.append(psg.Frame(f"In#{i + 1}", checkbox_list))
+
+        asio_checkboxes = [inner]
+        row1 = psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
+
+        return [[row0], [row1]]
 
     def register_events(self):
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
+        for i in range(1, 6):
+            self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
 
     def run(self):
-        """Runs the main window until an Close/Exit event"""
+        """
+        Parses the event string and matches it to events
+
+        Main thread will shutdown once a close or exit event occurs
+        """
         while True:
             event, values = self.read()
             if event in (psg.WIN_CLOSED, "Exit"):
@@ -69,8 +104,21 @@ class Window(psg.Window):
                     self.nvda.speak(f"{driver} {selection}")
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} in focus")
+                case [["ASIO", "CHECKBOX"], [in_num, side]]:
+                    if int(side) == 0:
+                        index = (2 * int(in_num[-1])) - 2
+                    else:
+                        index = 2 * int(in_num[-1]) - 1
+                    val = values[f"ASIO CHECKBOX||{in_num} {side}"]
+                    self.vm.patch.asio[index].set(val)
+                    side = ("left", "right")[int(side)]
+                    self.nvda.speak(f"Patch ASIO {in_num} {side} set to {val}")
+                case [["ASIO", "CHECKBOX"], [in_num, side], ["FOCUS", "IN"]]:
+                    side = ("left", "right")[int(side)]
+                    num = int(in_num[-1])
+                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {side} in focus")
                 case _:
-                    print(f"Unknown event {event}")
+                    self.logger.error(f"Unknown event {event}")
             self.logger.debug(self.parser.match.parseString(event))
 
 
