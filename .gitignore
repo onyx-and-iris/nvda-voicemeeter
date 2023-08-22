@@ -162,3 +162,6 @@ cython_debug/
 #.idea/
 
 controllerClient/
+basic.py
+banana.py
+potato.py

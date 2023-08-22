@@ -10,7 +10,11 @@ dependencies = [
     "pyparsing>=3.1.1",
     "voicemeeter-api>=2.4.8",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.11"
 readme = "README.md"
 license = {text = "MIT"}
 
+[tool.pdm.dev-dependencies]
+build = [
+    "pyinstaller>=5.1",
+]
