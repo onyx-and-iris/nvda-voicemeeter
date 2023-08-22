@@ -24,3 +24,15 @@ def _make_cache(vm) -> dict:
                 **{f"BUTTON||strip {i} B2": vm.strip[i].B2 for i in range(vm.kind.num_strip)},
                 **{f"BUTTON||strip {i} B3": vm.strip[i].B3 for i in range(vm.kind.num_strip)},
             }
+
+
+_patch_insert_channels = (
+    "left",
+    "right",
+    "center",
+    "low frequency effect",
+    "surround left",
+    "surround right",
+    "back left",
+    "back right",
+)

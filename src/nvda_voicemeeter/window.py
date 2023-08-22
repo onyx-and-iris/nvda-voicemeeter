@@ -3,7 +3,7 @@ import logging
 import PySimpleGUI as psg
 
 from .builder import Builder
-from .models import _make_cache
+from .models import _make_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
 
@@ -74,19 +74,37 @@ class Window(psg.Window):
                             self.nvda.speak(f"{driver} {selection}")
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} in focus")
-                case [["ASIO", "CHECKBOX"], [in_num, side]]:
-                    if int(side) == 0:
+                case [["ASIO", "CHECKBOX"], [in_num, channel]]:
+                    if int(channel) == 0:
                         index = (2 * int(in_num[-1])) - 2
                     else:
                         index = 2 * int(in_num[-1]) - 1
-                    val = values[f"ASIO CHECKBOX||{in_num} {side}"]
+                    val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.asio[index].set(val)
-                    side = ("left", "right")[int(side)]
-                    self.nvda.speak(f"Patch ASIO {in_num} {side} set to {val}")
-                case [["ASIO", "CHECKBOX"], [in_num, side], ["FOCUS", "IN"]]:
-                    side = ("left", "right")[int(side)]
+                    channel = ("left", "right")[int(channel)]
+                    self.nvda.speak(f"Patch ASIO {in_num} {channel} set to {val}")
+                case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
+                    channel = ("left", "right")[int(channel)]
                     num = int(in_num[-1])
-                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {side} in focus")
+                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} in focus")
+                case [["INSERT", "CHECKBOX"], [in_num, channel]]:
+                    num = int(in_num[-1])
+                    if num <= self.kind.phys_in:
+                        if int(channel) == 0:
+                            index = (2 * int(in_num[-1])) - 2
+                        else:
+                            index = 2 * int(in_num[-1]) - 1
+                    else:
+                        index = (2 * self.kind.phys_in) + (8 * (int(in_num[-1]) - self.kind.phys_in - 1)) + int(channel)
+                    val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
+                    self.vm.patch.insert[index].on = val
+                    self.nvda.speak(
+                        f"PATCH INSERT {in_num} {_patch_insert_channels[int(channel)]} set to {'on' if val else 'off'}"
+                    )
+                case [["INSERT", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
+                    channel = _patch_insert_channels[int(channel)]
+                    num = int(in_num[-1])
+                    self.nvda.speak(f"Patch INSERT IN#{num} {channel} in focus")
                 case _:
                     self.logger.error(f"Unknown event {event}")
             self.logger.debug(self.parser.match.parseString(event))
