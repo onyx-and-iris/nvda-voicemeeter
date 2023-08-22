@@ -2,6 +2,7 @@ import logging
 
 import PySimpleGUI as psg
 
+from .builder import Builder
 from .models import _make_cache
 from .nvda import Nvda
 from .parser import Parser
@@ -10,14 +11,18 @@ logger = logging.getLogger(__name__)
 
 
 class Window(psg.Window):
+    """Represents the main window of the application"""
+
     def __init__(self, title, vm):
         self.vm = vm
         self.kind = self.vm.kind
-        super().__init__(title, self.make_layout(), finalize=True)
         self.logger = logger.getChild(type(self).__name__)
         self.cache = _make_cache(self.vm)
         self.nvda = Nvda()
         self.parser = Parser()
+        self.builder = Builder(self, self.vm)
+        layout = self.builder.run()
+        super().__init__(title, layout, finalize=True)
         self.register_events()
 
     def __enter__(self):
@@ -25,60 +30,6 @@ class Window(psg.Window):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-
-    def make_layout(self) -> list:
-        """Builds the window layout step by step"""
-
-        def add_physical_device_opts(layout):
-            devices = ["{type}: {name}".format(**self.vm.device.output(i)) for i in range(self.vm.device.outs)]
-            devices.append("Deselect Device")
-            layout.append(
-                [
-                    psg.Combo(
-                        devices,
-                        size=(22, 4),
-                        expand_x=True,
-                        enable_events=True,
-                        readonly=True,
-                        key=f"HARDWARE OUT||A{i}",
-                    )
-                    for i in range(1, self.kind.phys_out + 1)
-                ]
-            )
-
-        def add_asio_checkboxes(layout, i):
-            data = list(range(99))
-            layout.append(
-                [psg.Spin(data, initial_value=0, size=2, enable_events=True, key=f"ASIO CHECKBOX||IN{i} 0")],
-            )
-            layout.append(
-                [psg.Spin(data, initial_value=0, size=2, enable_events=True, key=f"ASIO CHECKBOX||IN{i} 1")],
-            )
-
-        hardware_out = list()
-        [step(hardware_out) for step in (add_physical_device_opts,)]
-        row0 = psg.Frame("Hardware Out", hardware_out)
-
-        inner = list()
-        asio_checkboxes_in1, asio_checkboxes_in2, asio_checkboxes_in3, asio_checkboxes_in4, asio_checkboxes_in5 = (
-            [] for _ in range(5)
-        )
-        for i, checkbox_list in enumerate(
-            (
-                asio_checkboxes_in1,
-                asio_checkboxes_in2,
-                asio_checkboxes_in3,
-                asio_checkboxes_in4,
-                asio_checkboxes_in5,
-            )
-        ):
-            [step(checkbox_list, i + 1) for step in (add_asio_checkboxes,)]
-            inner.append(psg.Frame(f"In#{i + 1}", checkbox_list))
-
-        asio_checkboxes = [inner]
-        row1 = psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
-
-        return [[row0], [row1]]
 
     def register_events(self):
         for i in range(1, self.vm.kind.phys_out + 1):
