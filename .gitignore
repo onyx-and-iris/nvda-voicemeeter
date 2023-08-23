@@ -161,7 +161,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-controllerClient/
+# nvda files
+controllerClient/*
+!.gitkeep
+
+# build files
 basic.py
 banana.py
 potato.py
