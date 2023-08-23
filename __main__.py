@@ -6,8 +6,6 @@ import nvda_voicemeeter
 
 logging.basicConfig(level=logging.DEBUG)
 
-nvda_voicemeeter.launch()
-
 KIND_ID = "potato"
 
 with voicemeeterlib.api(KIND_ID) as vm:

@@ -36,9 +36,10 @@ try:
 except FileNotFoundError as e:
     NVDA_PATH = ""
 
+
 controller_path = Path(__file__).parents[2].resolve() / "controllerClient"
 if not controller_path.exists():
-    controller_path = Path(__file__).parents[3].resolve() / "controllerClient"
+    controller_path = Path("controllerClient")
 
 DLL_PATH = controller_path / f"x{64 if bits == 64 else 86}" / f"nvdaControllerClient{bits}.dll"
 
