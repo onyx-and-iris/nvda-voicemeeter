@@ -16,12 +16,16 @@ class Builder:
         self.kind = self.vm.kind
 
     def run(self) -> list:
-        row0 = self.make_row0()
-        row1 = self.make_row1()
-        row2 = self.make_row2()
-        return [[row0], [row1], [row2]]
+        layout = []
+        if self.kind.name == "basic":
+            steps = (self.make_row0,)
+        else:
+            steps = (self.make_row0, self.make_row1, self.make_row2)
+        for step in steps:
+            layout.append([step()])
+        return layout
 
-    def make_row0(self):
+    def make_row0(self) -> psg.Frame:
         def add_physical_device_opts(layout):
             devices = get_input_device_list(self.vm)
             devices.append("Deselect Device")
@@ -44,7 +48,7 @@ class Builder:
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("Hardware Out", hardware_out)
 
-    def make_row1(self):
+    def make_row1(self) -> psg.Frame:
         def add_asio_checkboxes(layout, i):
             nums = list(range(99))
             layout.append(
@@ -79,7 +83,7 @@ class Builder:
         asio_checkboxes = [inner]
         return psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
 
-    def make_row2(self):
+    def make_row2(self) -> psg.Frame:
         def add_insert_checkboxes(layout, i):
             if i <= self.kind.phys_in:
                 layout.append(

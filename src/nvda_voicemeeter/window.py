@@ -41,22 +41,24 @@ class Window(psg.Window):
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
             self[f"HARDWARE OUT||A{i}"].bind("<Return>", "||KEY RETURN")
-        for i in range(1, self.kind.phys_out + 1):
-            self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
-            self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
-        for i in range(1, self.kind.num_strip + 1):
-            if i <= self.kind.phys_in:
-                self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
-            else:
-                self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 2"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 3"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 4"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 5"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 6"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"INSERT CHECKBOX||IN{i} 7"].bind("<FocusIn>", "||FOCUS IN")
+        if self.kind.name != "basic":
+            for i in range(1, self.kind.phys_out + 1):
+                self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
+        if self.kind.name != "basic":
+            for i in range(1, self.kind.num_strip + 1):
+                if i <= self.kind.phys_in:
+                    self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
+                else:
+                    self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 2"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 3"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 4"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 5"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 6"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i} 7"].bind("<FocusIn>", "||FOCUS IN")
 
     def run(self):
         """
