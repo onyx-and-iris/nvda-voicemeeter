@@ -6,8 +6,8 @@ import nvda_voicemeeter
 
 logging.basicConfig(level=logging.DEBUG)
 
-kind_id = "potato"
+KIND_ID = "potato"
 
-with voicemeeterlib.api(kind_id) as vm:
-    with nvda_voicemeeter.build(f"Voicemeeter {kind_id.capitalize()} NVDA", vm) as window:
+with voicemeeterlib.api(KIND_ID) as vm:
+    with nvda_voicemeeter.build(f"Voicemeeter {KIND_ID.capitalize()} NVDA", vm) as window:
         window.run()
