@@ -86,6 +86,13 @@ class Window(psg.Window):
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} in focus")
                 case [["HARDWARE", "OUT"], [key], ["KEY", "RETURN"]]:
+                    if not values[f"HARDWARE OUT||{key}"]:
+                        index = int(key[1]) - 1
+                        setattr(self.vm.bus[index].device, "wdm", "")
+                        time.sleep(0.75)
+                        self.nvda.speak(f"HARDWARE OUT {key} device deselected")
+                        continue
+
                     matches = []
                     devices = get_input_device_list(self.vm)
                     devices.append("Deselect Device")
@@ -94,14 +101,15 @@ class Window(psg.Window):
                             matches.append(device)
                     if len(matches) == 1:
                         self.logger.info(f"Single matching entry found: {matches[0]}. Setting as device.")
-                        self[f"HARDWARE OUT||{key}"].update(matches[0])
                         index = int(key[1]) - 1
                         match matches[0].split(":"):
                             case [device_name]:
+                                self[f"HARDWARE OUT||{key}"].update("")
                                 setattr(self.vm.bus[index].device, "wdm", "")
                                 time.sleep(0.75)
                                 self.nvda.speak(f"HARDWARE OUT {key} device deselected")
                             case [driver, device_name]:
+                                self[f"HARDWARE OUT||{key}"].update(matches[0])
                                 setattr(self.vm.bus[index].device, driver, device_name.strip())
                                 time.sleep(0.75)
                                 self.nvda.speak(f"HARDWARE OUT {key} set {matches[0]}")
