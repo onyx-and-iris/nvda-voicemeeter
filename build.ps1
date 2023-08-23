@@ -1,7 +1,7 @@
 function Compress-Builds {
+    $target = Join-Path -Path $PSScriptRoot -ChildPath "dist"
     @("basic", "banana", "potato") | ForEach-Object {
-        $target = Join-Path -Path $PSScriptRoot -ChildPath "dist"
-        Compress-Archive -Path $(Join-Path -Path $target -ChildPath $_) -DestinationPath $(Join-Path -Path $target -ChildPath "${_}.zip")
+        Compress-Archive -Path $(Join-Path -Path $target -ChildPath $_) -DestinationPath $(Join-Path -Path $target -ChildPath "${_}.zip") -Force
     } 
 }
 
