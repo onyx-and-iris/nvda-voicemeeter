@@ -1,6 +1,10 @@
 import PySimpleGUI as psg
 
-from .util import get_asio_checkbox_index, get_insert_checkbox_index
+from .util import (
+    get_asio_checkbox_index,
+    get_input_device_list,
+    get_insert_checkbox_index,
+)
 
 
 class Builder:
@@ -19,7 +23,7 @@ class Builder:
 
     def make_row0(self):
         def add_physical_device_opts(layout):
-            devices = ["{type}: {name}".format(**self.vm.device.output(i)) for i in range(self.vm.device.outs)]
+            devices = get_input_device_list(self.vm)
             devices.append("Deselect Device")
             layout.append(
                 [
@@ -29,7 +33,7 @@ class Builder:
                         expand_x=True,
                         default_value=self.vm.bus[i - 1].device.name,
                         enable_events=True,
-                        readonly=True,
+                        readonly=False,
                         key=f"HARDWARE OUT||A{i}",
                     )
                     for i in range(1, self.kind.phys_out + 1)

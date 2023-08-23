@@ -11,3 +11,7 @@ def get_insert_checkbox_index(kind, channel, num):
         else:
             return 2 * num - 1
     return (2 * kind.phys_in) + (8 * (num - kind.phys_in - 1)) + channel
+
+
+def get_input_device_list(vm):
+    return ["{type}: {name}".format(**vm.device.output(i)) for i in range(vm.device.outs)]

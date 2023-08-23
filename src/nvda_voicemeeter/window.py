@@ -1,4 +1,5 @@
 import logging
+import time
 
 import PySimpleGUI as psg
 
@@ -6,7 +7,11 @@ from .builder import Builder
 from .models import _make_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
-from .util import get_asio_checkbox_index, get_insert_checkbox_index
+from .util import (
+    get_asio_checkbox_index,
+    get_input_device_list,
+    get_insert_checkbox_index,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +40,7 @@ class Window(psg.Window):
     def register_events(self):
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"HARDWARE OUT||A{i}"].bind("<Return>", "||KEY RETURN")
         for i in range(1, self.kind.phys_out + 1):
             self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
             self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
@@ -62,19 +68,41 @@ class Window(psg.Window):
             event, values = self.read()
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            match self.parser.match.parseString(event):
+            match parsed_cmd := self.parser.match.parseString(event):
                 case [["HARDWARE", "OUT"], [key]]:
                     selection = values[f"HARDWARE OUT||{key}"]
+                    index = int(key[1]) - 1
                     match selection.split(":"):
                         case [device_name]:
-                            device_name = ""
+                            setattr(self.vm.bus[index].device, "wdm", "")
+                            time.sleep(0.75)
                             self.nvda.speak(f"HARDWARE OUT {key} device deselected")
                         case [driver, device_name]:
-                            index = int(key[1]) - 1
                             setattr(self.vm.bus[index].device, driver, device_name.strip())
-                            self.nvda.speak(f"{driver} {selection}")
+                            time.sleep(0.75)
+                            self.nvda.speak(f"HARDWARE OUT {key} set {driver} {selection}")
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} in focus")
+                case [["HARDWARE", "OUT"], [key], ["KEY", "RETURN"]]:
+                    matches = []
+                    devices = get_input_device_list(self.vm)
+                    devices.append("Deselect Device")
+                    for device in devices:
+                        if values[f"HARDWARE OUT||{key}"] in device.lower():
+                            matches.append(device)
+                    if len(matches) == 1:
+                        self.logger.info(f"Single matching entry found: {matches[0]}. Setting as device.")
+                        self[f"HARDWARE OUT||{key}"].update(matches[0])
+                        index = int(key[1]) - 1
+                        match matches[0].split(":"):
+                            case [device_name]:
+                                setattr(self.vm.bus[index].device, "wdm", "")
+                                time.sleep(0.75)
+                                self.nvda.speak(f"HARDWARE OUT {key} device deselected")
+                            case [driver, device_name]:
+                                setattr(self.vm.bus[index].device, driver, device_name.strip())
+                                time.sleep(0.75)
+                                self.nvda.speak(f"HARDWARE OUT {key} set {matches[0]}")
                 case [["ASIO", "CHECKBOX"], [in_num, channel]]:
                     index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
@@ -102,7 +130,7 @@ class Window(psg.Window):
                     self.nvda.speak(f"Patch INSERT IN#{num} {channel} in focus")
                 case _:
                     self.logger.error(f"Unknown event {event}")
-            self.logger.debug(self.parser.match.parseString(event))
+            self.logger.debug(parsed_cmd)
 
 
 def request_window_object(title, vm):
