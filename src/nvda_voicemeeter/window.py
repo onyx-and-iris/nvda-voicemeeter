@@ -1,5 +1,4 @@
 import logging
-import time
 
 import PySimpleGUI as psg
 
@@ -10,6 +9,8 @@ from .parser import Parser
 from .util import get_asio_checkbox_index, get_insert_checkbox_index
 
 logger = logging.getLogger(__name__)
+
+psg.theme("Light Gray 2")
 
 
 class Window(psg.Window):
@@ -47,14 +48,7 @@ class Window(psg.Window):
                     self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
                     self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
                 else:
-                    self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 2"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 3"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 4"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 5"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 6"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 7"].bind("<FocusIn>", "||FOCUS IN")
+                    [self[f"INSERT CHECKBOX||IN{i} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
 
     def run(self):
         """
