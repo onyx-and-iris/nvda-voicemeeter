@@ -28,16 +28,13 @@ class Builder:
     def make_row0(self) -> psg.Frame:
         def add_physical_device_opts(layout):
             devices = get_input_device_list(self.vm)
-            devices.append("Deselect Device")
+            devices.append("- remove device selection -")
             layout.append(
                 [
-                    psg.Combo(
-                        devices,
-                        size=(22, 4),
-                        expand_x=True,
-                        default_value=self.vm.bus[i - 1].device.name,
-                        enable_events=True,
-                        readonly=False,
+                    psg.ButtonMenu(
+                        f"A{i}",
+                        size=(6, 3),
+                        menu_def=["", [f"{device}" for device in devices]],
                         key=f"HARDWARE OUT||A{i}",
                     )
                     for i in range(1, self.kind.phys_out + 1)

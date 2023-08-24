@@ -7,11 +7,7 @@ from .builder import Builder
 from .models import _make_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
-from .util import (
-    get_asio_checkbox_index,
-    get_input_device_list,
-    get_insert_checkbox_index,
-)
+from .util import get_asio_checkbox_index, get_insert_checkbox_index
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +25,7 @@ class Window(psg.Window):
         self.builder = Builder(self, self.vm)
         layout = self.builder.run()
         super().__init__(title, layout, finalize=True)
+        [self[f"HARDWARE OUT||A{i}"].Widget.config(takefocus=1) for i in range(1, self.kind.phys_out + 1)]
         self.register_events()
 
     def __enter__(self):
@@ -40,7 +37,6 @@ class Window(psg.Window):
     def register_events(self):
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
-            self[f"HARDWARE OUT||A{i}"].bind("<Return>", "||KEY RETURN")
         if self.kind.name != "basic":
             for i in range(1, self.kind.phys_out + 1):
                 self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
@@ -77,42 +73,17 @@ class Window(psg.Window):
                     match selection.split(":"):
                         case [device_name]:
                             setattr(self.vm.bus[index].device, "wdm", "")
-                            time.sleep(0.75)
-                            self.nvda.speak(f"HARDWARE OUT {key} device deselected")
+                            self.TKroot.after(200, self.nvda.speak, f"HARDWARE OUT {key} device selection removed")
                         case [driver, device_name]:
                             setattr(self.vm.bus[index].device, driver, device_name.strip())
-                            time.sleep(0.75)
-                            self.nvda.speak(f"HARDWARE OUT {key} set {driver} {selection}")
+                            phonetic = {"mme": "em em e"}
+                            self.TKroot.after(
+                                200,
+                                self.nvda.speak,
+                                f"HARDWARE OUT {key} set {phonetic.get(driver, driver)} {device_name}",
+                            )
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
-                    self.nvda.speak(f"HARDWARE OUT {key} in focus")
-                case [["HARDWARE", "OUT"], [key], ["KEY", "RETURN"]]:
-                    if not values[f"HARDWARE OUT||{key}"]:
-                        index = int(key[1]) - 1
-                        setattr(self.vm.bus[index].device, "wdm", "")
-                        time.sleep(0.75)
-                        self.nvda.speak(f"HARDWARE OUT {key} device deselected")
-                        continue
-
-                    matches = []
-                    devices = get_input_device_list(self.vm)
-                    devices.append("Deselect Device")
-                    for device in devices:
-                        if values[f"HARDWARE OUT||{key}"] in device.lower():
-                            matches.append(device)
-                    if len(matches) == 1:
-                        self.logger.info(f"Single matching entry found: {matches[0]}. Setting as device.")
-                        index = int(key[1]) - 1
-                        match matches[0].split(":"):
-                            case [device_name]:
-                                self[f"HARDWARE OUT||{key}"].update("")
-                                setattr(self.vm.bus[index].device, "wdm", "")
-                                time.sleep(0.75)
-                                self.nvda.speak(f"HARDWARE OUT {key} device deselected")
-                            case [driver, device_name]:
-                                self[f"HARDWARE OUT||{key}"].update(matches[0])
-                                setattr(self.vm.bus[index].device, driver, device_name.strip())
-                                time.sleep(0.75)
-                                self.nvda.speak(f"HARDWARE OUT {key} set {matches[0]}")
+                    self.nvda.speak(f"HARDWARE OUT {key} {self.vm.bus[int(key[-1]) - 1].device.name}")
                 case [["ASIO", "CHECKBOX"], [in_num, channel]]:
                     index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
@@ -120,9 +91,10 @@ class Window(psg.Window):
                     channel = ("left", "right")[int(channel)]
                     self.nvda.speak(f"Patch ASIO {in_num} {channel} set to {val}")
                 case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
+                    index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     channel = ("left", "right")[int(channel)]
                     num = int(in_num[-1])
-                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} in focus")
+                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {self.vm.patch.asio[index].get()}")
                 case [["INSERT", "CHECKBOX"], [in_num, channel]]:
                     index = get_insert_checkbox_index(
                         self.kind,
@@ -135,9 +107,16 @@ class Window(psg.Window):
                         f"PATCH INSERT {in_num} {_patch_insert_channels[int(channel)]} set to {'on' if val else 'off'}"
                     )
                 case [["INSERT", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
+                    index = get_insert_checkbox_index(
+                        self.kind,
+                        int(channel),
+                        int(in_num[-1]),
+                    )
                     channel = _patch_insert_channels[int(channel)]
                     num = int(in_num[-1])
-                    self.nvda.speak(f"Patch INSERT IN#{num} {channel} in focus")
+                    self.nvda.speak(
+                        f"Patch INSERT IN#{num} {channel} {'on' if self.vm.patch.insert[index].on else 'off'}"
+                    )
                 case _:
                     self.logger.error(f"Unknown event {event}")
             self.logger.debug(parsed_cmd)

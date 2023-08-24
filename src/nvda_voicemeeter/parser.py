@@ -1,4 +1,4 @@
-from pyparsing import Group, OneOrMore, Optional, Suppress, Word, alphanums
+from pyparsing import Group, OneOrMore, Optional, Suppress, Word, alphanums, restOfLine
 
 
 class Parser:
