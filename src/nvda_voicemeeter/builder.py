@@ -83,77 +83,29 @@ class Builder:
     def make_row2(self) -> psg.Frame:
         def add_insert_checkboxes(layout, i):
             if i <= self.kind.phys_in:
-                layout.append(
-                    [
-                        psg.Checkbox(
-                            text="LEFT",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 0, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 0",
-                        )
-                    ],
-                )
-                layout.append(
-                    [
-                        psg.Checkbox(
-                            text="RIGHT",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 1, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 1",
-                        )
-                    ],
-                )
+                [
+                    layout.append(
+                        [
+                            psg.Checkbox(
+                                text=channel,
+                                default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, j, i)].on,
+                                enable_events=True,
+                                key=f"INSERT CHECKBOX||IN{i} {j}",
+                            )
+                        ],
+                    )
+                    for j, channel in enumerate(("LEFT", "RIGHT"))
+                ]
             else:
                 layout.append(
                     [
                         psg.Checkbox(
-                            text="LEFT",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 0, i)].on,
+                            text=channel,
+                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, j, i)].on,
                             enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 0",
-                        ),
-                        psg.Checkbox(
-                            text="RIGHT",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 1, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 1",
-                        ),
-                        psg.Checkbox(
-                            text="C",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 2, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 2",
-                        ),
-                        psg.Checkbox(
-                            text="LFE",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 3, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 3",
-                        ),
-                        psg.Checkbox(
-                            text="SL",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 4, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 4",
-                        ),
-                        psg.Checkbox(
-                            text="SR",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 5, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 5",
-                        ),
-                        psg.Checkbox(
-                            text="BL",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 6, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 6",
-                        ),
-                        psg.Checkbox(
-                            text="BR",
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, 7, i)].on,
-                            enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} 7",
-                        ),
+                            key=f"INSERT CHECKBOX||IN{i} {j}",
+                        )
+                        for j, channel in enumerate(("LEFT", "RIGHT", "C", "LFE", "SL", "SR", "BL", "BR"))
                     ],
                 )
 
