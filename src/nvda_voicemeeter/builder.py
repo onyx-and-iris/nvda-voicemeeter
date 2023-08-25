@@ -11,9 +11,9 @@ from .util import (
 class Builder:
     """Responsible for building the Window layout"""
 
-    def __init__(self, window, vm):
+    def __init__(self, window):
         self.window = window
-        self.vm = vm
+        self.vm = self.window.vm
         self.kind = self.vm.kind
 
     def run(self) -> list:
@@ -38,9 +38,9 @@ class Builder:
         tab1 = psg.Tab("settings", layout0, key="settings")
         tab2 = psg.Tab("physical strips", layout1, key="physical strip")
         tab3 = psg.Tab("virtual strips", layout2, key="virtual strip")
-        Tg = psg.TabGroup([[tab1, tab2, tab3]], change_submits=True, key="tabs")
+        tab_group = psg.TabGroup([[tab1, tab2, tab3]], change_submits=True, key="tabs")
 
-        return [[Tg]]
+        return [[tab_group]]
 
     def make_tab0_row0(self) -> psg.Frame:
         """row0 represents hardware outs"""
@@ -186,9 +186,9 @@ class Builder:
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(self.vm.strip[i].label, outputs)
 
-    def make_tab1_rows(self) -> list:
+    def make_tab1_rows(self) -> psg.Frame:
         layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_out)]
-        return psg.Frame(f"", layout)
+        return psg.Frame(None, layout, border_width=0)
 
     def make_tab2_row(self, i) -> psg.Frame:
         def add_strip_outputs(layout):
@@ -209,6 +209,6 @@ class Builder:
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(self.vm.strip[i].label, outputs)
 
-    def make_tab2_rows(self) -> list:
+    def make_tab2_rows(self) -> psg.Frame:
         layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_out, self.kind.phys_out + self.kind.virt_out)]
-        return psg.Frame(f"", layout)
+        return psg.Frame(None, layout, border_width=0)

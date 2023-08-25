@@ -3,7 +3,7 @@ import logging
 import PySimpleGUI as psg
 
 from .builder import Builder
-from .models import _make_cache, _patch_insert_channels
+from .models import _make_output_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
 from .util import (
@@ -24,10 +24,10 @@ class NVDAVMWindow(psg.Window):
         self.vm = vm
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
-        self.cache = {}
+        self.cache = {"outputs": _make_output_cache(self.vm)}
         self.nvda = Nvda()
         self.parser = Parser()
-        self.builder = Builder(self, self.vm)
+        self.builder = Builder(self)
         layout = self.builder.run()
         super().__init__(title, layout, finalize=True)
         [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
@@ -165,6 +165,15 @@ class NVDAVMWindow(psg.Window):
                     channel = _patch_insert_channels[int(channel)]
                     num = int(in_num[-1])
                     self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
+
+                # Strip outputs
+                case [["STRIP", "0"], [output]]:
+                    val = not self.cache["outputs"][f"STRIP {index}||{output}"]
+                    setattr(self.vm.strip[int(index)], output, val)
+                    self.cache["outputs"][f"STRIP {index}||{output}"] = val
+                case [["STRIP", index], [output], ["FOCUS", "IN"]]:
+                    val = self.cache["outputs"][f"STRIP {index}||{output}"]
+                    self.nvda.speak(f"STRIP {index} {output} {'on' if val else 'off'}")
                 case _:
                     self.logger.error(f"Unknown event {event}")
             self.logger.debug(parsed_cmd)
