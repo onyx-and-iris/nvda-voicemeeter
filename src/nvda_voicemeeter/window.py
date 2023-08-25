@@ -27,6 +27,7 @@ class Window(psg.Window):
         layout = self.builder.run()
         super().__init__(title, layout, finalize=True)
         [self[f"HARDWARE OUT||A{i}"].Widget.config(takefocus=1) for i in range(1, self.kind.phys_out + 1)]
+        [self[f"PATCH COMPOSITE||PC{i}"].Widget.config(takefocus=1) for i in range(1, self.kind.phys_out + 1)]
         self.register_events()
 
     def __enter__(self):
@@ -36,12 +37,21 @@ class Window(psg.Window):
         self.close()
 
     def register_events(self):
+        # Hardware Out events
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
+
+        # Patch ASIO events
         if self.kind.name != "basic":
             for i in range(1, self.kind.phys_out + 1):
                 self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
+
+        # Patch Composite events
+        for i in range(1, self.vm.kind.phys_out + 1):
+            self[f"PATCH COMPOSITE||PC{i}"].bind("<FocusIn>", "||FOCUS IN")
+
+        # Patch Insert events
         if self.kind.name != "basic":
             for i in range(1, self.kind.num_strip + 1):
                 if i <= self.kind.phys_in:

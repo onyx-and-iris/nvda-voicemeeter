@@ -4,6 +4,7 @@ from .util import (
     get_asio_checkbox_index,
     get_input_device_list,
     get_insert_checkbox_index,
+    get_patch_composite_list,
 )
 
 
@@ -20,12 +21,41 @@ class Builder:
         if self.kind.name == "basic":
             steps = (self.make_row0,)
         else:
-            steps = (self.make_row0, self.make_row1, self.make_row2)
+            steps = (self.make_row0, self.make_row1, self.make_row2, self.make_row3)
         for step in steps:
             layout.append([step()])
-        return layout
+
+        # dummy layouts
+        layout2 = [
+            [
+                psg.Button(
+                    f"1",
+                    size=(6, 3),
+                    key=f"ZA BUTTON||1",
+                )
+            ]
+        ]
+
+        layout3 = [
+            [
+                psg.Button(
+                    f"2",
+                    size=(6, 3),
+                    key=f"ZA BUTTON||2",
+                )
+            ]
+        ]
+
+        tab1 = psg.Tab("settings", layout)
+        tab2 = psg.Tab("physical strips", layout2)
+        tab3 = psg.Tab("virtual strips", layout3)
+        Tg = psg.TabGroup([[tab1, tab2, tab3]])
+
+        return [[Tg]]
 
     def make_row0(self) -> psg.Frame:
+        """row0 represents hardware outs"""
+
         def add_physical_device_opts(layout):
             devices = get_input_device_list(self.vm)
             devices.append("- remove device selection -")
@@ -46,6 +76,8 @@ class Builder:
         return psg.Frame("Hardware Out", hardware_out)
 
     def make_row1(self) -> psg.Frame:
+        """row1 represents patch asio inputs to strips"""
+
         def add_asio_checkboxes(layout, i):
             nums = list(range(99))
             layout.append(
@@ -81,6 +113,30 @@ class Builder:
         return psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
 
     def make_row2(self) -> psg.Frame:
+        """row2 represents patch composite"""
+
+        def add_physical_device_opts(layout):
+            outputs = get_patch_composite_list(self.vm.kind)
+            outputs.append("BUS Channel")
+            layout.append(
+                [
+                    psg.ButtonMenu(
+                        f"PC{i}",
+                        size=(6, 2),
+                        menu_def=["", [f"{output}" for output in outputs]],
+                        key=f"PATCH COMPOSITE||PC{i}",
+                    )
+                    for i in range(1, self.kind.phys_out + 1)
+                ]
+            )
+
+        hardware_out = list()
+        [step(hardware_out) for step in (add_physical_device_opts,)]
+        return psg.Frame("PATCH COMPOSITE", hardware_out)
+
+    def make_row3(self) -> psg.Frame:
+        """row3 represents patch insert"""
+
         def add_insert_checkboxes(layout, i):
             if i <= self.kind.phys_in:
                 [
