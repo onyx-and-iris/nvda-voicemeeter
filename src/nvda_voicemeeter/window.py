@@ -95,10 +95,11 @@ class Window(psg.Window):
                     channel = ("left", "right")[int(channel)]
                     self.nvda.speak(f"Patch ASIO {in_num} {channel} set to {val}")
                 case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
+                    val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
                     index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     channel = ("left", "right")[int(channel)]
                     num = int(in_num[-1])
-                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {self.vm.patch.asio[index].get()}")
+                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {val}")
                 case [["INSERT", "CHECKBOX"], [in_num, channel]]:
                     index = get_insert_checkbox_index(
                         self.kind,
@@ -116,11 +117,10 @@ class Window(psg.Window):
                         int(channel),
                         int(in_num[-1]),
                     )
+                    val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
                     channel = _patch_insert_channels[int(channel)]
                     num = int(in_num[-1])
-                    self.nvda.speak(
-                        f"Patch INSERT IN#{num} {channel} {'on' if self.vm.patch.insert[index].on else 'off'}"
-                    )
+                    self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
                 case _:
                     self.logger.error(f"Unknown event {event}")
             self.logger.debug(parsed_cmd)
