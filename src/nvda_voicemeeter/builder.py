@@ -19,9 +19,9 @@ class Builder:
     def run(self) -> list:
         layout = []
         if self.kind.name == "basic":
-            steps = (self.make_row0,)
+            steps = (self.make_tab0_row0,)
         else:
-            steps = (self.make_row0, self.make_row1, self.make_row2, self.make_row3)
+            steps = (self.make_tab0_row0, self.make_tab0_row1, self.make_tab0_row2, self.make_tab0_row3)
         for step in steps:
             layout.append([step()])
 
@@ -53,7 +53,7 @@ class Builder:
 
         return [[Tg]]
 
-    def make_row0(self) -> psg.Frame:
+    def make_tab0_row0(self) -> psg.Frame:
         """row0 represents hardware outs"""
 
         def add_physical_device_opts(layout):
@@ -75,7 +75,7 @@ class Builder:
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("Hardware Out", hardware_out)
 
-    def make_row1(self) -> psg.Frame:
+    def make_tab0_row1(self) -> psg.Frame:
         """row1 represents patch asio inputs to strips"""
 
         def add_asio_checkboxes(layout, i):
@@ -112,7 +112,7 @@ class Builder:
         asio_checkboxes = [inner]
         return psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
 
-    def make_row2(self) -> psg.Frame:
+    def make_tab0_row2(self) -> psg.Frame:
         """row2 represents patch composite"""
 
         def add_physical_device_opts(layout):
@@ -134,7 +134,7 @@ class Builder:
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("PATCH COMPOSITE", hardware_out)
 
-    def make_row3(self) -> psg.Frame:
+    def make_tab0_row3(self) -> psg.Frame:
         """row3 represents patch insert"""
 
         def add_insert_checkboxes(layout, i):
