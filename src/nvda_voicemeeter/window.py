@@ -10,7 +10,7 @@ from .util import get_asio_checkbox_index, get_insert_checkbox_index
 
 logger = logging.getLogger(__name__)
 
-psg.theme("Light Gray 2")
+psg.theme("Dark Blue 3")
 
 
 class Window(psg.Window):
@@ -20,7 +20,7 @@ class Window(psg.Window):
         self.vm = vm
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
-        self.cache = _make_cache(self.vm)
+        self.cache = {}
         self.nvda = Nvda()
         self.parser = Parser()
         self.builder = Builder(self, self.vm)
