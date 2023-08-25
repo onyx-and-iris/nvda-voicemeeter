@@ -66,6 +66,13 @@ class NVDAVMWindow(psg.Window):
                 else:
                     [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
 
+        # Strip Outputs
+        for i in range(self.kind.num_strip):
+            for j in range(self.kind.phys_out):
+                self[f"STRIP {i}||A{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
+            for j in range(self.kind.virt_out):
+                self[f"STRIP {i}||B{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
+
     def run(self):
         """
         Parses the event string and matches it to events
@@ -75,6 +82,7 @@ class NVDAVMWindow(psg.Window):
 
         while True:
             event, values = self.read()
+            self.logger.debug(f"event::{event}\nvalues::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
             match parsed_cmd := self.parser.match.parseString(event):

@@ -17,38 +17,27 @@ class Builder:
         self.kind = self.vm.kind
 
     def run(self) -> list:
-        layout = []
+        layout0 = []
         if self.kind.name == "basic":
             steps = (self.make_tab0_row0,)
         else:
             steps = (self.make_tab0_row0, self.make_tab0_row1, self.make_tab0_row2, self.make_tab0_row3)
         for step in steps:
-            layout.append([step()])
+            layout0.append([step()])
 
-        # dummy layouts
-        layout2 = [
-            [
-                psg.Button(
-                    f"1",
-                    size=(6, 3),
-                    key=f"ZA BUTTON||1",
-                )
-            ]
-        ]
+        layout1 = []
+        steps = (self.make_tab1_rows,)
+        for step in steps:
+            layout1.append([step()])
 
-        layout3 = [
-            [
-                psg.Button(
-                    f"2",
-                    size=(6, 3),
-                    key=f"ZA BUTTON||2",
-                )
-            ]
-        ]
+        layout2 = []
+        steps = (self.make_tab2_rows,)
+        for step in steps:
+            layout2.append([step()])
 
-        tab1 = psg.Tab("settings", layout)
-        tab2 = psg.Tab("physical strips", layout2)
-        tab3 = psg.Tab("virtual strips", layout3)
+        tab1 = psg.Tab("settings", layout0, key="settings")
+        tab2 = psg.Tab("physical strips", layout1, key="physical strip")
+        tab3 = psg.Tab("virtual strips", layout2, key="virtual strip")
         Tg = psg.TabGroup([[tab1, tab2, tab3]])
 
         return [[Tg]]
@@ -177,3 +166,49 @@ class Builder:
         asio_checkboxes.insert(0, inner)
 
         return psg.Frame("PATCH INSERT", asio_checkboxes)
+
+    def make_tab1_row(self, i) -> psg.Frame:
+        def add_strip_outputs(layout):
+            layout.append(
+                [
+                    psg.Button(
+                        f"A{j + 1}" if j < self.kind.phys_out else f"B{j - self.kind.phys_out + 1}",
+                        size=(4, 2),
+                        key=f"STRIP {i}||A{j + 1}"
+                        if j < self.kind.phys_out
+                        else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
+                    )
+                    for j in range(self.kind.num_strip)
+                ]
+            )
+
+        outputs = list()
+        [step(outputs) for step in (add_strip_outputs,)]
+        return psg.Frame(self.vm.strip[i].label, outputs)
+
+    def make_tab1_rows(self) -> list:
+        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_out)]
+        return psg.Frame(f"", layout)
+
+    def make_tab2_row(self, i) -> psg.Frame:
+        def add_strip_outputs(layout):
+            layout.append(
+                [
+                    psg.Button(
+                        f"A{j + 1}" if j < self.kind.phys_out else f"B{j - self.kind.phys_out + 1}",
+                        size=(4, 2),
+                        key=f"STRIP {i}||A{j + 1}"
+                        if j < self.kind.phys_out
+                        else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
+                    )
+                    for j in range(self.kind.num_strip)
+                ]
+            )
+
+        outputs = list()
+        [step(outputs) for step in (add_strip_outputs,)]
+        return psg.Frame(self.vm.strip[i].label, outputs)
+
+    def make_tab2_rows(self) -> list:
+        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_out, self.kind.phys_out + self.kind.virt_out)]
+        return psg.Frame(f"", layout)
