@@ -62,12 +62,12 @@ class Builder:
             layout.append(
                 [
                     psg.ButtonMenu(
-                        f"A{i}",
+                        f"A{i + 1}",
                         size=(6, 3),
                         menu_def=["", devices],
-                        key=f"HARDWARE OUT||A{i}",
+                        key=f"HARDWARE OUT||A{i + 1}",
                     )
-                    for i in range(1, self.kind.phys_out + 1)
+                    for i in range(self.kind.phys_out)
                 ]
             )
 

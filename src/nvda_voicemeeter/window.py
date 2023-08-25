@@ -30,8 +30,8 @@ class NVDAVMWindow(psg.Window):
         self.builder = Builder(self, self.vm)
         layout = self.builder.run()
         super().__init__(title, layout, finalize=True)
-        [self[f"HARDWARE OUT||A{i}"].Widget.config(takefocus=1) for i in range(1, self.kind.phys_out + 1)]
-        [self[f"PATCH COMPOSITE||PC{i}"].Widget.config(takefocus=1) for i in range(1, self.kind.phys_out + 1)]
+        [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
+        [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
         self.register_events()
 
     def __enter__(self):
@@ -44,27 +44,27 @@ class NVDAVMWindow(psg.Window):
         """Registers events for widgets"""
 
         # Hardware Out
-        for i in range(1, self.vm.kind.phys_out + 1):
-            self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
+        for i in range(self.vm.kind.phys_out):
+            self[f"HARDWARE OUT||A{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
 
         # Patch ASIO
         if self.kind.name != "basic":
-            for i in range(1, self.kind.phys_out + 1):
-                self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
+            for i in range(self.kind.phys_out):
+                self[f"ASIO CHECKBOX||IN{i + 1} 0"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"ASIO CHECKBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
 
         # Patch Composite
-        for i in range(1, self.vm.kind.phys_out + 1):
-            self[f"PATCH COMPOSITE||PC{i}"].bind("<FocusIn>", "||FOCUS IN")
+        for i in range(self.vm.kind.phys_out):
+            self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
 
         # Patch Insert
         if self.kind.name != "basic":
-            for i in range(1, self.kind.num_strip + 1):
+            for i in range(self.kind.num_strip):
                 if i <= self.kind.phys_in:
-                    self[f"INSERT CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"INSERT CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i + 1} 0"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
                 else:
-                    [self[f"INSERT CHECKBOX||IN{i} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
+                    [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
 
     def run(self):
         """
