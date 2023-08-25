@@ -43,6 +43,9 @@ class NVDAVMWindow(psg.Window):
     def register_events(self):
         """Registers events for widgets"""
 
+        # TABS
+        self["tabs"].bind("<FocusIn>", "||FOCUS IN")
+
         # Hardware Out
         for i in range(self.vm.kind.phys_out):
             self[f"HARDWARE OUT||A{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
@@ -86,10 +89,14 @@ class NVDAVMWindow(psg.Window):
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
             elif event == "tabs":
-                self.nvda.speak(f"switched to tab {values['tabs']}")
+                self.nvda.speak(f"tab {values['tabs']}")
                 continue
 
             match parsed_cmd := self.parser.match.parseString(event):
+                # Tabs
+                case [["tabs"], ["FOCUS", "IN"]]:
+                    self.nvda.speak(f"tab {values['tabs']}")
+
                 # Hardware out
                 case [["HARDWARE", "OUT"], [key]]:
                     selection = values[f"HARDWARE OUT||{key}"]
