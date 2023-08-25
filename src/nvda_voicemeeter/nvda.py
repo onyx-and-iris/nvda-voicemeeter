@@ -13,7 +13,7 @@ class CBindings:
         if ok_exp is None:
             if retval not in ok:
                 raise NVDAVMCAPIError(fn.__name__, retval)
-        elif not ok_exp(retval) and retval not in ok:
+        elif not ok_exp(retval):
             raise NVDAVMCAPIError(fn.__name__, retval)
         return retval
 
