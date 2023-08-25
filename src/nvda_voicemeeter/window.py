@@ -85,6 +85,10 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"event::{event}\nvalues::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
+            elif event == "tabs":
+                self.nvda.speak(f"switched to tab {values['tabs']}")
+                continue
+
             match parsed_cmd := self.parser.match.parseString(event):
                 # Hardware out
                 case [["HARDWARE", "OUT"], [key]]:

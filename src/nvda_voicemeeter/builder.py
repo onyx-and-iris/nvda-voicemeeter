@@ -38,7 +38,7 @@ class Builder:
         tab1 = psg.Tab("settings", layout0, key="settings")
         tab2 = psg.Tab("physical strips", layout1, key="physical strip")
         tab3 = psg.Tab("virtual strips", layout2, key="virtual strip")
-        Tg = psg.TabGroup([[tab1, tab2, tab3]])
+        Tg = psg.TabGroup([[tab1, tab2, tab3]], change_submits=True, key="tabs")
 
         return [[Tg]]
 
