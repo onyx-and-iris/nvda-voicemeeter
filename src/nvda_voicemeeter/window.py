@@ -6,15 +6,19 @@ from .builder import Builder
 from .models import _make_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
-from .util import get_asio_checkbox_index, get_insert_checkbox_index
+from .util import (
+    get_asio_checkbox_index,
+    get_insert_checkbox_index,
+    get_patch_composite_list,
+)
 
 logger = logging.getLogger(__name__)
 
 psg.theme("Dark Blue 3")
 
 
-class Window(psg.Window):
-    """Represents the main window of the application"""
+class NVDAVMWindow(psg.Window):
+    """Represents the main window of the Voicemeeter NVDA application"""
 
     def __init__(self, title, vm):
         self.vm = vm
@@ -37,21 +41,23 @@ class Window(psg.Window):
         self.close()
 
     def register_events(self):
-        # Hardware Out events
+        """Registers events for widgets"""
+
+        # Hardware Out
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"HARDWARE OUT||A{i}"].bind("<FocusIn>", "||FOCUS IN")
 
-        # Patch ASIO events
+        # Patch ASIO
         if self.kind.name != "basic":
             for i in range(1, self.kind.phys_out + 1):
                 self[f"ASIO CHECKBOX||IN{i} 0"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"ASIO CHECKBOX||IN{i} 1"].bind("<FocusIn>", "||FOCUS IN")
 
-        # Patch Composite events
+        # Patch Composite
         for i in range(1, self.vm.kind.phys_out + 1):
             self[f"PATCH COMPOSITE||PC{i}"].bind("<FocusIn>", "||FOCUS IN")
 
-        # Patch Insert events
+        # Patch Insert
         if self.kind.name != "basic":
             for i in range(1, self.kind.num_strip + 1):
                 if i <= self.kind.phys_in:
@@ -66,11 +72,13 @@ class Window(psg.Window):
 
         Main thread will shutdown once a close or exit event occurs
         """
+
         while True:
             event, values = self.read()
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
             match parsed_cmd := self.parser.match.parseString(event):
+                # Hardware out
                 case [["HARDWARE", "OUT"], [key]]:
                     selection = values[f"HARDWARE OUT||{key}"]
                     index = int(key[1]) - 1
@@ -88,6 +96,8 @@ class Window(psg.Window):
                             )
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} {self.vm.bus[int(key[-1]) - 1].device.name}")
+
+                # Patch ASIO
                 case [["ASIO", "CHECKBOX"], [in_num, channel]]:
                     index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
@@ -96,10 +106,25 @@ class Window(psg.Window):
                     self.nvda.speak(f"Patch ASIO {in_num} {channel} set to {val}")
                 case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
-                    index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     channel = ("left", "right")[int(channel)]
                     num = int(in_num[-1])
                     self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {val}")
+
+                # Patch COMPOSITE
+                case [["PATCH", "COMPOSITE"], [key]]:
+                    val = values[f"PATCH COMPOSITE||{key}"]
+                    index = int(key[-1]) - 1
+                    self.vm.patch.composite[index].set(get_patch_composite_list(self.kind).index(val) + 1)
+                    self.TKroot.after(200, self.nvda.speak, f"PATCH COMPOSITE {key[-1]} set {val}")
+                case [["PATCH", "COMPOSITE"], [key], ["FOCUS", "IN"]]:
+                    if values[f"PATCH COMPOSITE||{key}"]:
+                        val = values[f"PATCH COMPOSITE||{key}"]
+                    else:
+                        index = int(key[-1]) - 1
+                        val = get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
+                    self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
+
+                # Patch INSERT
                 case [["INSERT", "CHECKBOX"], [in_num, channel]]:
                     index = get_insert_checkbox_index(
                         self.kind,
@@ -127,5 +152,5 @@ class Window(psg.Window):
 
 
 def request_window_object(title, vm):
-    WINDOW_cls = Window
-    return WINDOW_cls(title, vm)
+    NVDAVMWindow_cls = NVDAVMWindow
+    return NVDAVMWindow_cls(title, vm)

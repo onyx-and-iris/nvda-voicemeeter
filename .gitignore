@@ -169,3 +169,6 @@ controllerClient/*
 basic.py
 banana.py
 potato.py
+
+# quick test
+quick.py

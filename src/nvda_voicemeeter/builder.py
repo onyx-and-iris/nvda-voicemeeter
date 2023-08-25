@@ -64,7 +64,7 @@ class Builder:
                     psg.ButtonMenu(
                         f"A{i}",
                         size=(6, 3),
-                        menu_def=["", [f"{device}" for device in devices]],
+                        menu_def=["", devices],
                         key=f"HARDWARE OUT||A{i}",
                     )
                     for i in range(1, self.kind.phys_out + 1)
@@ -117,16 +117,15 @@ class Builder:
 
         def add_physical_device_opts(layout):
             outputs = get_patch_composite_list(self.vm.kind)
-            outputs.append("BUS Channel")
             layout.append(
                 [
                     psg.ButtonMenu(
-                        f"PC{i}",
+                        f"PC{i + 1}",
                         size=(6, 2),
-                        menu_def=["", [f"{output}" for output in outputs]],
-                        key=f"PATCH COMPOSITE||PC{i}",
+                        menu_def=["", outputs],
+                        key=f"PATCH COMPOSITE||PC{i + 1}",
                     )
-                    for i in range(1, self.kind.phys_out + 1)
+                    for i in range(self.kind.phys_out)
                 ]
             )
 
