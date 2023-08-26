@@ -29,11 +29,12 @@ class NVDAVMWindow(psg.Window):
         self.parser = Parser()
         self.builder = Builder(self)
         layout = self.builder.run()
-        super().__init__(title, layout, finalize=True)
+        super().__init__(title, layout, return_keyboard_events=True, finalize=True)
         [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
         self.register_events()
+        self.current_focus = None
 
     def __enter__(self):
         return self
@@ -94,8 +95,29 @@ class NVDAVMWindow(psg.Window):
             elif event == "tabs":
                 self.nvda.speak(f"tab {values['tabs']}")
                 continue
+            elif event in ("Escape:27", "\r"):
+                self.logger.debug("escape key pressed event")
+                self.TKroot.after(100, self.refresh)
+                if self.current_focus:
+                    self.current_focus.set_focus()
+                    self.logger.debug(f"setting focus to {self.current_focus.Key}")
+                continue
 
             match parsed_cmd := self.parser.match.parseString(event):
+                # Utility
+                case ["        "]:
+                    self.current_focus = self.find_element_with_focus()
+
+                # Menus
+                case [["Restart", "Audio", "Engine"], ["MENU"]]:
+                    self.perform_long_operation(self.vm.command.restart, "ENGINE RESTART||END")
+                case [["ENGINE", "RESTART"], ["END"]]:
+                    self.TKroot.after(
+                        200,
+                        self.nvda.speak,
+                        f"Audio Engine restarted",
+                    )
+
                 # Tabs
                 case [["tabs"], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"tab {values['tabs']}")
@@ -181,7 +203,7 @@ class NVDAVMWindow(psg.Window):
                     self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
                 case _:
                     self.logger.error(f"Unknown event {event}")
-            self.logger.debug(parsed_cmd)
+            self.logger.debug(f"parsed::{parsed_cmd}")
 
 
 def request_window_object(title, vm):

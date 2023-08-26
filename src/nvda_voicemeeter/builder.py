@@ -17,6 +17,8 @@ class Builder:
         self.kind = self.vm.kind
 
     def run(self) -> list:
+        menu = self.make_menu()
+
         layout0 = []
         if self.kind.name == "basic":
             steps = (self.make_tab0_row0,)
@@ -40,7 +42,18 @@ class Builder:
         tab3 = psg.Tab("Virtual Strips", layout2, key="virtual strip")
         tab_group = psg.TabGroup([[tab1, tab2, tab3]], change_submits=True, key="tabs")
 
-        return [[tab_group]]
+        return [[menu], [tab_group]]
+
+    def make_menu(self) -> psg.Menu:
+        menu_def = [
+            [
+                "&Voicemeeter",
+                [
+                    "Restart Audio Engine::MENU",
+                ],
+            ],
+        ]
+        return [[psg.Menu(menu_def, key="menus")]]
 
     def make_tab0_row0(self) -> psg.Frame:
         """row0 represents hardware outs"""

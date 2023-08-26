@@ -1,10 +1,15 @@
-from pyparsing import Group, OneOrMore, Optional, Suppress, Word, alphanums
+from pyparsing import Group, OneOrMore, Optional, Suppress, Word, alphanums, restOfLine
 
 
 class Parser:
     def __init__(self):
         self.widget = Group(OneOrMore(Word(alphanums)))
-        self.token = Suppress("||")
+        self.widget_token = Suppress("||")
         self.identifier = Group(OneOrMore(Word(alphanums)))
         self.event = Group(OneOrMore(Word(alphanums)))
-        self.match = self.widget + self.token + self.identifier + Optional(self.token) + Optional(self.event)
+        self.menu_token = Suppress("::")
+        self.match = (
+            self.widget + self.widget_token + self.identifier + Optional(self.widget_token) + Optional(self.event)
+            | self.identifier + self.menu_token + self.event
+            | restOfLine
+        )
