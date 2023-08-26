@@ -201,7 +201,8 @@ class NVDAVMWindow(psg.Window):
 
                 # ASIO Buffer
                 case [["ASIO", "BUFFER"], ["FOCUS", "IN"]]:
-                    self.nvda.speak(f"ASIO BUFFER")
+                    val = int(self.vm.get("option.buffer.asio"))
+                    self.nvda.speak(f"ASIO BUFFER {val if val else 'default'}")  # makes me sad ((
                 case ["ASIO BUFFER"]:
                     if values[event] == "Default":
                         val = 0
