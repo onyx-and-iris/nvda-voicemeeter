@@ -96,7 +96,6 @@ class NVDAVMWindow(psg.Window):
                 self.nvda.speak(f"tab {values['tabs']}")
                 continue
             elif event in ("Escape:27", "\r"):
-                self.logger.debug("escape key pressed event")
                 self.TKroot.after(100, self.refresh)
                 if self.current_focus:
                     self.current_focus.set_focus()
@@ -104,7 +103,7 @@ class NVDAVMWindow(psg.Window):
                 continue
 
             match parsed_cmd := self.parser.match.parseString(event):
-                # Utility
+                # Track focus
                 case ["        "]:
                     self.current_focus = self.find_element_with_focus()
 
