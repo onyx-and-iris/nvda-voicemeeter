@@ -85,7 +85,8 @@ class NVDAVMWindow(psg.Window):
 
         while True:
             event, values = self.read()
-            self.logger.debug(f"event::{event}\nvalues::{values}")
+            self.logger.debug(f"event::{event}")
+            self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
             elif event == "tabs":
