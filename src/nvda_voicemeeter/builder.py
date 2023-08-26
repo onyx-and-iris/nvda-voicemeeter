@@ -37,10 +37,16 @@ class Builder:
         for step in steps:
             layout2.append([step()])
 
+        layout3 = []
+        steps = (self.make_tab3_rows,)
+        for step in steps:
+            layout3.append([step()])
+
         tab1 = psg.Tab("Settings", layout0, key="settings")
         tab2 = psg.Tab("Physical Strips", layout1, key="physical strip")
         tab3 = psg.Tab("Virtual Strips", layout2, key="virtual strip")
-        tab_group = psg.TabGroup([[tab1, tab2, tab3]], change_submits=True, key="tabs")
+        tab4 = psg.Tab("Buses", layout3, key="buses")
+        tab_group = psg.TabGroup([[tab1, tab2, tab3, tab4]], change_submits=True, key="tabs")
 
         return [[menu], [tab_group]]
 
@@ -227,5 +233,17 @@ class Builder:
         return psg.Frame(self.vm.strip[i].label, outputs)
 
     def make_tab2_rows(self) -> psg.Frame:
-        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)]
+        layout = [[self.make_tab2_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)]
+        return psg.Frame(None, layout, border_width=0)
+
+    def make_tab3_row(self, i):
+        def add_strip_outputs(layout):
+            layout.append([psg.Button(f"COMPOSITE", size=(16, 2), key=f"BUS {i}||COMPOSITE")])
+
+        buses = list()
+        [step(buses) for step in (add_strip_outputs,)]
+        return psg.Frame(self.vm.bus[i].label, buses)
+
+    def make_tab3_rows(self):
+        layout = [[self.make_tab3_row(i)] for i in range(self.kind.num_bus)]
         return psg.Frame(None, layout, border_width=0)

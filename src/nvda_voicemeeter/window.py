@@ -3,7 +3,7 @@ import logging
 import PySimpleGUI as psg
 
 from .builder import Builder
-from .models import _make_output_cache, _patch_insert_channels
+from .models import _make_bus_mode_cache, _make_output_cache, _patch_insert_channels
 from .nvda import Nvda
 from .parser import Parser
 from .util import (
@@ -24,7 +24,7 @@ class NVDAVMWindow(psg.Window):
         self.vm = vm
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
-        self.cache = {"outputs": _make_output_cache(self.vm)}
+        self.cache = {"outputs": _make_output_cache(self.vm), "busmode": _make_bus_mode_cache(self.vm)}
         self.nvda = Nvda()
         self.parser = Parser()
         self.builder = Builder(self)
@@ -78,6 +78,10 @@ class NVDAVMWindow(psg.Window):
                 self[f"STRIP {i}||A{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
             for j in range(self.kind.virt_out):
                 self[f"STRIP {i}||B{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
+
+            # Bus Composites
+            for j in range(self.kind.num_bus):
+                self[f"BUS {i}||COMPOSITE"].bind("<FocusIn>", "||FOCUS IN")
 
     def run(self):
         """
@@ -200,6 +204,29 @@ class NVDAVMWindow(psg.Window):
                     val = self.cache["outputs"][f"STRIP {index}||{output}"]
                     label = self.vm.strip[int(index)].label
                     self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
+
+                # Bus composite
+                case [["BUS", index], ["COMPOSITE"]]:
+                    val = self.cache["busmode"][event]
+                    if val != "normal":
+                        self.vm.bus[int(index)].mode.normal = True
+                        self.cache["busmode"][event] = "normal"
+                    else:
+                        self.vm.bus[int(index)].mode.composite = True
+                        self.cache["busmode"][event] = "composite"
+                    label = self.vm.bus[int(index)].label
+                    self.TKroot.after(
+                        200,
+                        self.nvda.speak,
+                        f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][event]}",
+                    )
+                case [["BUS", index], ["COMPOSITE"], ["FOCUS", "IN"]]:
+                    label = self.vm.bus[int(index)].label
+                    self.nvda.speak(
+                        f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][f'BUS {index}||COMPOSITE']}"
+                    )
+
+                # Unknown
                 case _:
                     self.logger.error(f"Unknown event {event}")
             self.logger.debug(f"parsed::{parsed_cmd}")
