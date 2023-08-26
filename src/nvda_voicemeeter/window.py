@@ -65,7 +65,7 @@ class NVDAVMWindow(psg.Window):
         # Patch Insert
         if self.kind.name != "basic":
             for i in range(self.kind.num_strip):
-                if i <= self.kind.phys_in:
+                if i < self.kind.phys_in:
                     self[f"INSERT CHECKBOX||IN{i + 1} 0"].bind("<FocusIn>", "||FOCUS IN")
                     self[f"INSERT CHECKBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
                 else:
@@ -174,6 +174,7 @@ class NVDAVMWindow(psg.Window):
                     val = not self.cache["outputs"][f"STRIP {index}||{output}"]
                     setattr(self.vm.strip[int(index)], output, val)
                     self.cache["outputs"][f"STRIP {index}||{output}"] = val
+                    self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
                 case [["STRIP", index], [output], ["FOCUS", "IN"]]:
                     val = self.cache["outputs"][f"STRIP {index}||{output}"]
                     label = self.vm.strip[int(index)].label

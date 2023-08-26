@@ -35,9 +35,9 @@ class Builder:
         for step in steps:
             layout2.append([step()])
 
-        tab1 = psg.Tab("settings", layout0, key="settings")
-        tab2 = psg.Tab("physical strips", layout1, key="physical strip")
-        tab3 = psg.Tab("virtual strips", layout2, key="virtual strip")
+        tab1 = psg.Tab("Settings", layout0, key="settings")
+        tab2 = psg.Tab("Physical Strips", layout1, key="physical strip")
+        tab3 = psg.Tab("Virtual Strips", layout2, key="virtual strip")
         tab_group = psg.TabGroup([[tab1, tab2, tab3]], change_submits=True, key="tabs")
 
         return [[tab_group]]
