@@ -28,15 +28,3 @@ def _make_output_cache(vm) -> dict:
 
 def _make_bus_mode_cache(vm) -> dict:
     return {**{f"BUS {i}||COMPOSITE": vm.bus[i].mode.get() for i in range(vm.kind.num_bus)}}
-
-
-_patch_insert_channels = (
-    "left",
-    "right",
-    "center",
-    "low frequency effect",
-    "surround left",
-    "surround right",
-    "back left",
-    "back right",
-)

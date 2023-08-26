@@ -3,10 +3,11 @@ import logging
 import PySimpleGUI as psg
 
 from .builder import Builder
-from .models import _make_bus_mode_cache, _make_output_cache, _patch_insert_channels
+from .models import _make_bus_mode_cache, _make_output_cache
 from .nvda import Nvda
 from .parser import Parser
 from .util import (
+    _patch_insert_channels,
     get_asio_checkbox_index,
     get_insert_checkbox_index,
     get_patch_composite_list,
@@ -33,6 +34,7 @@ class NVDAVMWindow(psg.Window):
         [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
+        self["ASIO BUFFER"].Widget.config(takefocus=1)
         self.register_events()
         self.current_focus = None
 
@@ -82,6 +84,9 @@ class NVDAVMWindow(psg.Window):
             # Bus Composites
             for j in range(self.kind.num_bus):
                 self[f"BUS {i}||COMPOSITE"].bind("<FocusIn>", "||FOCUS IN")
+
+        # ASIO Buffer
+        self[f"ASIO BUFFER"].bind("<FocusIn>", "||FOCUS IN")
 
     def run(self):
         """
@@ -193,6 +198,16 @@ class NVDAVMWindow(psg.Window):
                     channel = _patch_insert_channels[int(channel)]
                     num = int(in_num[-1])
                     self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
+
+                # ASIO Buffer
+                case [["ASIO", "BUFFER"], ["FOCUS", "IN"]]:
+                    self.nvda.speak(f"ASIO BUFFER")
+                case ["ASIO BUFFER"]:
+                    if values[event] == "Default":
+                        val = 0
+                    else:
+                        val = values[event]
+                    self.vm.option.buffer("asio", val)
 
                 # Strip outputs
                 case [["STRIP", index], [output]]:

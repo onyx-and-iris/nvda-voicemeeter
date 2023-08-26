@@ -2,6 +2,7 @@ import PySimpleGUI as psg
 
 from .util import (
     get_asio_checkbox_index,
+    get_asio_samples_list,
     get_input_device_list,
     get_insert_checkbox_index,
     get_patch_composite_list,
@@ -17,13 +18,19 @@ class Builder:
         self.kind = self.vm.kind
 
     def run(self) -> list:
-        menu = self.make_menu()
+        menu = [[self.make_menu()]]
 
         layout0 = []
         if self.kind.name == "basic":
             steps = (self.make_tab0_row0,)
         else:
-            steps = (self.make_tab0_row0, self.make_tab0_row1, self.make_tab0_row2, self.make_tab0_row3)
+            steps = (
+                self.make_tab0_row0,
+                self.make_tab0_row1,
+                self.make_tab0_row2,
+                self.make_tab0_row3,
+                self.make_tab0_row4,
+            )
         for step in steps:
             layout0.append([step()])
 
@@ -59,7 +66,7 @@ class Builder:
                 ],
             ],
         ]
-        return [[psg.Menu(menu_def, key="menus")]]
+        return psg.Menu(menu_def, key="menus")
 
     def make_tab0_row0(self) -> psg.Frame:
         """row0 represents hardware outs"""
@@ -189,6 +196,26 @@ class Builder:
         asio_checkboxes.insert(0, inner)
 
         return psg.Frame("PATCH INSERT", asio_checkboxes)
+
+    def make_tab0_row4(self) -> psg.Frame:
+        """row4 represents asio buffer"""
+
+        samples = get_asio_samples_list()
+        samples.append("Default")
+
+        return psg.Frame(
+            "ASIO BUFFER",
+            [
+                [
+                    psg.ButtonMenu(
+                        "ASIO BUFFER",
+                        size=(12, 2),
+                        menu_def=["", samples],
+                        key="ASIO BUFFER",
+                    )
+                ]
+            ],
+        )
 
     def make_tab1_row(self, i) -> psg.Frame:
         def add_strip_outputs(layout):

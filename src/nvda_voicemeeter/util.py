@@ -1,10 +1,10 @@
-def get_asio_checkbox_index(channel, num):
+def get_asio_checkbox_index(channel, num) -> int:
     if channel == 0:
         return 2 * num - 2
     return 2 * num - 1
 
 
-def get_insert_checkbox_index(kind, channel, num):
+def get_insert_checkbox_index(kind, channel, num) -> int:
     if num <= kind.phys_in:
         if channel == 0:
             return 2 * num - 2
@@ -13,11 +13,11 @@ def get_insert_checkbox_index(kind, channel, num):
     return (2 * kind.phys_in) + (8 * (num - kind.phys_in - 1)) + channel
 
 
-def get_input_device_list(vm):
+def get_input_device_list(vm) -> list:
     return ["{type}: {name}".format(**vm.device.output(i)) for i in range(vm.device.outs)]
 
 
-def get_patch_composite_list(kind):
+def get_patch_composite_list(kind) -> list:
     temp = []
     for i in range(kind.phys_out):
         [temp.append(f"IN#{i + 1} {channel}") for channel in ("Left", "Right")]
@@ -25,3 +25,43 @@ def get_patch_composite_list(kind):
         [temp.append(f"IN#{i + 1} {channel}") for channel in ("Left", "Right", "Center", "LFE", "SL", "SR", "BL", "BR")]
     temp.append(f"BUS Channel")
     return temp
+
+
+def get_patch_insert_channels() -> list:
+    return [
+        "left",
+        "right",
+        "center",
+        "low frequency effect",
+        "surround left",
+        "surround right",
+        "back left",
+        "back right",
+    ]
+
+
+_patch_insert_channels = get_patch_insert_channels()
+
+
+def get_asio_samples_list() -> list:
+    return [
+        "1024",
+        "768",
+        "704",
+        "640",
+        "576",
+        "512",
+        "480",
+        "448",
+        "441",
+        "416",
+        "384",
+        "352",
+        "320",
+        "288",
+        "256",
+        "224",
+        "192",
+        "160",
+        "128",
+    ]
