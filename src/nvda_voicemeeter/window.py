@@ -208,6 +208,7 @@ class NVDAVMWindow(psg.Window):
                     else:
                         val = values[event]
                     self.vm.option.buffer("asio", val)
+                    self.TKroot.after(200, self.nvda.speak, f"ASIO BUFFER {val if val else 'default'}")
 
                 # Strip outputs
                 case [["STRIP", index], [output]]:
