@@ -167,13 +167,14 @@ class NVDAVMWindow(psg.Window):
                     self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
 
                 # Strip outputs
-                case [["STRIP", "0"], [output]]:
+                case [["STRIP", index], [output]]:
                     val = not self.cache["outputs"][f"STRIP {index}||{output}"]
                     setattr(self.vm.strip[int(index)], output, val)
                     self.cache["outputs"][f"STRIP {index}||{output}"] = val
                 case [["STRIP", index], [output], ["FOCUS", "IN"]]:
                     val = self.cache["outputs"][f"STRIP {index}||{output}"]
-                    self.nvda.speak(f"STRIP {index} {output} {'on' if val else 'off'}")
+                    label = self.vm.strip[int(index)].label
+                    self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
                 case _:
                     self.logger.error(f"Unknown event {event}")
             self.logger.debug(parsed_cmd)
