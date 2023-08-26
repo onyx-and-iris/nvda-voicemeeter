@@ -48,6 +48,10 @@ class Builder:
         def add_physical_device_opts(layout):
             devices = get_input_device_list(self.vm)
             devices.append("- remove device selection -")
+            if self.kind.name == "basic":
+                num_outs = self.kind.phys_out + self.kind.virt_out
+            else:
+                num_outs = self.kind.phys_out
             layout.append(
                 [
                     psg.ButtonMenu(
@@ -56,7 +60,7 @@ class Builder:
                         menu_def=["", devices],
                         key=f"HARDWARE OUT||A{i + 1}",
                     )
-                    for i in range(self.kind.phys_out)
+                    for i in range(num_outs)
                 ]
             )
 
@@ -178,7 +182,7 @@ class Builder:
                         if j < self.kind.phys_out
                         else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
                     )
-                    for j in range(self.kind.num_strip)
+                    for j in range(self.kind.phys_out + self.kind.virt_out)
                 ]
             )
 
@@ -187,7 +191,7 @@ class Builder:
         return psg.Frame(self.vm.strip[i].label, outputs)
 
     def make_tab1_rows(self) -> psg.Frame:
-        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_out)]
+        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_in)]
         return psg.Frame(None, layout, border_width=0)
 
     def make_tab2_row(self, i) -> psg.Frame:
@@ -201,7 +205,7 @@ class Builder:
                         if j < self.kind.phys_out
                         else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
                     )
-                    for j in range(self.kind.num_strip)
+                    for j in range(self.kind.phys_out + self.kind.virt_out)
                 ]
             )
 
@@ -210,5 +214,5 @@ class Builder:
         return psg.Frame(self.vm.strip[i].label, outputs)
 
     def make_tab2_rows(self) -> psg.Frame:
-        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_out, self.kind.phys_out + self.kind.virt_out)]
+        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)]
         return psg.Frame(None, layout, border_width=0)

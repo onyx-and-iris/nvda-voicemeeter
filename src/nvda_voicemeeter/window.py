@@ -31,7 +31,8 @@ class NVDAVMWindow(psg.Window):
         layout = self.builder.run()
         super().__init__(title, layout, finalize=True)
         [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
-        [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
+        if self.kind.name != "basic":
+            [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
         self.register_events()
 
     def __enter__(self):
@@ -57,8 +58,9 @@ class NVDAVMWindow(psg.Window):
                 self[f"ASIO CHECKBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
 
         # Patch Composite
-        for i in range(self.vm.kind.phys_out):
-            self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
+        if self.kind.name != "basic":
+            for i in range(self.vm.kind.phys_out):
+                self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
 
         # Patch Insert
         if self.kind.name != "basic":
