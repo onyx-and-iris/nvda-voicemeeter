@@ -69,7 +69,7 @@ class Builder:
         return psg.Menu(menu_def, key="menus")
 
     def make_tab0_row0(self) -> psg.Frame:
-        """row0 represents hardware outs"""
+        """tab0 row0 represents hardware outs"""
 
         def add_physical_device_opts(layout):
             devices = get_input_device_list(self.vm)
@@ -95,7 +95,7 @@ class Builder:
         return psg.Frame("Hardware Out", hardware_out)
 
     def make_tab0_row1(self) -> psg.Frame:
-        """row1 represents patch asio inputs to strips"""
+        """tab0 row1 represents patch asio inputs to strips"""
 
         def add_asio_checkboxes(layout, i):
             nums = list(range(99))
@@ -132,7 +132,7 @@ class Builder:
         return psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
 
     def make_tab0_row2(self) -> psg.Frame:
-        """row2 represents patch composite"""
+        """tab0 row2 represents patch composite"""
 
         def add_physical_device_opts(layout):
             outputs = get_patch_composite_list(self.vm.kind)
@@ -153,7 +153,7 @@ class Builder:
         return psg.Frame("PATCH COMPOSITE", hardware_out)
 
     def make_tab0_row3(self) -> psg.Frame:
-        """row3 represents patch insert"""
+        """tab0 row3 represents patch insert"""
 
         def add_insert_checkboxes(layout, i):
             if i <= self.kind.phys_in:
@@ -198,7 +198,7 @@ class Builder:
         return psg.Frame("PATCH INSERT", asio_checkboxes)
 
     def make_tab0_row4(self) -> psg.Frame:
-        """row4 represents asio buffer"""
+        """tab0 row4 represents asio buffer"""
 
         samples = get_asio_samples_list()
         samples.append("Default")
@@ -218,6 +218,8 @@ class Builder:
         )
 
     def make_tab1_row(self, i) -> psg.Frame:
+        """tab1 row represents a strip's outputs (A1-A5, B1-B3)"""
+
         def add_strip_outputs(layout):
             layout.append(
                 [
@@ -241,6 +243,8 @@ class Builder:
         return psg.Frame(None, layout, border_width=0)
 
     def make_tab2_row(self, i) -> psg.Frame:
+        """tab2 row represents a strip's outputs (A1-A5, B1-B3)"""
+
         def add_strip_outputs(layout):
             layout.append(
                 [
@@ -264,6 +268,8 @@ class Builder:
         return psg.Frame(None, layout, border_width=0)
 
     def make_tab3_row(self, i):
+        """tab3 row represents bus composite toggle"""
+
         def add_strip_outputs(layout):
             layout.append([psg.Button(f"COMPOSITE", size=(16, 2), key=f"BUS {i}||COMPOSITE")])
 
