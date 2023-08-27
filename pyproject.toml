@@ -18,6 +18,10 @@ license = {text = "MIT"}
 build = [
     "pyinstaller>=5.1",
 ]
+lint = [
+    "black>=23.7.0",
+    "flake8>=6.1.0",
+]
 
 [tool.pdm.scripts]
 build = {shell = "build.ps1"}
