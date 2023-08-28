@@ -249,6 +249,6 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"parsed::{parsed_cmd}")
 
 
-def request_window_object(title, vm):
+def request_window_object(kind_id, vm):
     NVDAVMWindow_cls = NVDAVMWindow
-    return NVDAVMWindow_cls(title, vm)
+    return NVDAVMWindow_cls(f"Voicemeeter {kind_id.capitalize()} NVDA", vm)
