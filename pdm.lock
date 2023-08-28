@@ -2,11 +2,11 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "build", "lint"]
+groups = ["default", "build", "lint", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:4081282b1f44313deed395aac5f259fb34b022f0c68049119882c68c839137c2"
+content_hash = "sha256:2aaf88f0abb701968bc22eb31fd189810850a505bb93553f67216e4d1d259750"
 
 [[package]]
 name = "altgraph"
@@ -148,6 +148,18 @@ summary = "A small Python package for determining appropriate platform-specific 
 files = [
     {file = "platformdirs-3.10.0-py3-none-any.whl", hash = "sha256:d7c24979f292f916dc9cbf8648319032f551ea8c49a4c9bf2fb556a02070ec1d"},
     {file = "platformdirs-3.10.0.tar.gz", hash = "sha256:b45696dab2d7cc691a3226759c0d3b00c47c8b6e293d96f6436f733303f77f6d"},
+]
+
+[[package]]
+name = "psgdemos"
+version = "1.12.1"
+summary = "Installs the full set of PySimpleGUI Demo Programs and the Demo Browser."
+dependencies = [
+    "PySimpleGUI",
+]
+files = [
+    {file = "psgdemos-1.12.1-py3-none-any.whl", hash = "sha256:a035540dd0ff92f410aed9b7af8d5a641d9d5a9eac3e0072ef115adf06abb447"},
+    {file = "psgdemos-1.12.1.tar.gz", hash = "sha256:4108af795477531a9b1c8675b9aa9b6628c109e660f6954baf8ba2dc3b5806e9"},
 ]
 
 [[package]]

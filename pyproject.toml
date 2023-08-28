@@ -22,6 +22,9 @@ lint = [
     "black>=23.7.0",
     "flake8>=6.1.0",
 ]
+test = [
+    "psgdemos>=1.12.1",
+]
 
 [tool.pdm.scripts]
 build = {shell = "build.ps1"}
