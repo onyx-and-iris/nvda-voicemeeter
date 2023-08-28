@@ -69,3 +69,11 @@ def get_asio_samples_list() -> list:
 
 def get_tabs_labels() -> list:
     return ["Settings", "Physical Strip", "Virtual Strip", "Buses"]
+
+
+def open_context_menu_for_buttonmenu(window, identifier) -> None:
+    element = window[identifier]
+    widget = element.widget
+    x = widget.winfo_rootx()
+    y = widget.winfo_rooty() + widget.winfo_height()
+    element.TKMenu.post(x, y)

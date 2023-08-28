@@ -11,6 +11,7 @@ from .util import (
     get_asio_checkbox_index,
     get_insert_checkbox_index,
     get_patch_composite_list,
+    open_context_menu_for_buttonmenu,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,12 +33,11 @@ class NVDAVMWindow(psg.Window):
         layout = self.builder.run()
         super().__init__(title, layout, return_keyboard_events=True, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
-        [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
+        for i in range(self.kind.phys_out):
+            self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
         self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
-        self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
-        self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
         self.register_events()
         self.current_focus = None
 
@@ -52,10 +52,14 @@ class NVDAVMWindow(psg.Window):
 
         # TABS
         self["tabs"].bind("<FocusIn>", "||FOCUS IN")
+        self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
+        self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
 
         # Hardware Out
         for i in range(self.vm.kind.phys_out):
             self[f"HARDWARE OUT||A{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"HARDWARE OUT||A{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
+            self[f"HARDWARE OUT||A{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Patch ASIO
         if self.kind.name != "basic":
@@ -67,6 +71,8 @@ class NVDAVMWindow(psg.Window):
         if self.kind.name != "basic":
             for i in range(self.vm.kind.phys_out):
                 self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
+                self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Patch Insert
         if self.kind.name != "basic":
@@ -81,15 +87,20 @@ class NVDAVMWindow(psg.Window):
         for i in range(self.kind.num_strip):
             for j in range(self.kind.phys_out):
                 self[f"STRIP {i}||A{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"STRIP {i}||A{j + 1}"].bind("<Return>", "||KEY ENTER")
             for j in range(self.kind.virt_out):
                 self[f"STRIP {i}||B{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"STRIP {i}||B{j + 1}"].bind("<Return>", "||KEY ENTER")
 
-            # Bus Composites
-            for j in range(self.kind.num_bus):
-                self[f"BUS {i}||COMPOSITE"].bind("<FocusIn>", "||FOCUS IN")
+        # Bus Composites
+        for i in range(self.kind.num_bus):
+            self[f"BUS {i}||COMPOSITE"].bind("<FocusIn>", "||FOCUS IN")
+            self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER")
 
         # ASIO Buffer
-        self[f"ASIO BUFFER"].bind("<FocusIn>", "||FOCUS IN")
+        self["ASIO BUFFER"].bind("<FocusIn>", "||FOCUS IN")
+        self["ASIO BUFFER"].bind("<space>", "||KEY SPACE", propagate=False)
+        self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER", propagate=False)
 
     def run(self):
         """
@@ -112,7 +123,6 @@ class NVDAVMWindow(psg.Window):
                 if self.current_focus:
                     self.current_focus.set_focus()
                     self.logger.debug(f"setting focus to {self.current_focus.Key}")
-                continue
 
             match parsed_cmd := self.parser.match.parseString(event):
                 # Track focus
@@ -154,6 +164,8 @@ class NVDAVMWindow(psg.Window):
                             )
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"HARDWARE OUT {key} {self.vm.bus[int(key[-1]) - 1].device.name}")
+                case [["HARDWARE", "OUT"], [key], ["KEY", "SPACE" | "ENTER"]]:
+                    open_context_menu_for_buttonmenu(self, f"HARDWARE OUT||{key}")
 
                 # Patch ASIO
                 case [["ASIO", "CHECKBOX"], [in_num, channel]]:
@@ -181,6 +193,8 @@ class NVDAVMWindow(psg.Window):
                         index = int(key[-1]) - 1
                         val = get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
                     self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
+                case [["PATCH", "COMPOSITE"], [key], ["KEY", "SPACE" | "ENTER"]]:
+                    open_context_menu_for_buttonmenu(self, f"PATCH COMPOSITE||{key}")
 
                 # Patch INSERT
                 case [["INSERT", "CHECKBOX"], [in_num, channel]]:
@@ -206,9 +220,6 @@ class NVDAVMWindow(psg.Window):
                     self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
 
                 # ASIO Buffer
-                case [["ASIO", "BUFFER"], ["FOCUS", "IN"]]:
-                    val = int(self.vm.get("option.buffer.asio"))
-                    self.nvda.speak(f"ASIO BUFFER {val if val else 'default'}")  # makes me sad ((
                 case ["ASIO BUFFER"]:
                     if values[event] == "Default":
                         val = 0
@@ -216,6 +227,11 @@ class NVDAVMWindow(psg.Window):
                         val = values[event]
                     self.vm.option.buffer("asio", val)
                     self.TKroot.after(200, self.nvda.speak, f"ASIO BUFFER {val if val else 'default'}")
+                case [["ASIO", "BUFFER"], ["FOCUS", "IN"]]:
+                    val = int(self.vm.get("option.buffer.asio"))
+                    self.nvda.speak(f"ASIO BUFFER {val if val else 'default'}")
+                case [["ASIO", "BUFFER"], ["KEY", "SPACE" | "ENTER"]]:
+                    open_context_menu_for_buttonmenu(self, "ASIO BUFFER")
 
                 # Strip outputs
                 case [["STRIP", index], [output]]:
@@ -227,6 +243,8 @@ class NVDAVMWindow(psg.Window):
                     val = self.cache["outputs"][f"STRIP {index}||{output}"]
                     label = self.vm.strip[int(index)].label
                     self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
+                case [["STRIP", index], [output], ["KEY", "ENTER"]]:
+                    self.find_element_with_focus().click()
 
                 # Bus composite
                 case [["BUS", index], ["COMPOSITE"]]:
