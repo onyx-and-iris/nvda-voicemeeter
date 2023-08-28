@@ -271,7 +271,7 @@ class Builder:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
-            layout.append([psg.Button(f"COMPOSITE", size=(16, 2), key=f"BUS {i}||COMPOSITE")])
+            layout.append([psg.Button(f"BUSMODE", size=(16, 2), key=f"BUS {i}||MODE")])
 
         buses = list()
         [step(buses) for step in (add_strip_outputs,)]

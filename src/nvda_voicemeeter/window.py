@@ -37,7 +37,7 @@ class NVDAVMWindow(psg.Window):
             self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
-        self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
+            self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
         self.register_events()
         self.current_focus = None
 
@@ -92,15 +92,15 @@ class NVDAVMWindow(psg.Window):
                 self[f"STRIP {i}||B{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"STRIP {i}||B{j + 1}"].bind("<Return>", "||KEY ENTER")
 
-        # Bus Composites
+        # Bus Modes
         for i in range(self.kind.num_bus):
-            self[f"BUS {i}||COMPOSITE"].bind("<FocusIn>", "||FOCUS IN")
-            self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER")
+            self[f"BUS {i}||MODE"].bind("<FocusIn>", "||FOCUS IN")
 
         # ASIO Buffer
-        self["ASIO BUFFER"].bind("<FocusIn>", "||FOCUS IN")
-        self["ASIO BUFFER"].bind("<space>", "||KEY SPACE", propagate=False)
-        self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER", propagate=False)
+        if self.kind.name != "basic":
+            self["ASIO BUFFER"].bind("<FocusIn>", "||FOCUS IN")
+            self["ASIO BUFFER"].bind("<space>", "||KEY SPACE", propagate=False)
+            self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER", propagate=False)
 
     def run(self):
         """
@@ -246,8 +246,8 @@ class NVDAVMWindow(psg.Window):
                 case [["STRIP", index], [output], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
-                # Bus composite
-                case [["BUS", index], ["COMPOSITE"]]:
+                # Bus modes
+                case [["BUS", index], ["MODE"]]:
                     val = self.cache["busmode"][event]
                     if val != "normal":
                         self.vm.bus[int(index)].mode.normal = True
@@ -261,10 +261,10 @@ class NVDAVMWindow(psg.Window):
                         self.nvda.speak,
                         f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][event]}",
                     )
-                case [["BUS", index], ["COMPOSITE"], ["FOCUS", "IN"]]:
+                case [["BUS", index], ["MODE"], ["FOCUS", "IN"]]:
                     label = self.vm.bus[int(index)].label
                     self.nvda.speak(
-                        f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][f'BUS {index}||COMPOSITE']}"
+                        f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][f'BUS {index}||MODE']}"
                     )
 
                 # Unknown
