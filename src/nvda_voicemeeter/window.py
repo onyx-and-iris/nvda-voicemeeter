@@ -11,7 +11,6 @@ from .util import (
     get_asio_checkbox_index,
     get_insert_checkbox_index,
     get_patch_composite_list,
-    get_tabs_labels,
 )
 
 logger = logging.getLogger(__name__)
