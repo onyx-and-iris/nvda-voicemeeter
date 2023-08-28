@@ -65,3 +65,7 @@ def get_asio_samples_list() -> list:
         "160",
         "128",
     ]
+
+
+def get_tabs_labels() -> list:
+    return ["Settings", "Physical Strip", "Virtual Strip", "Buses"]

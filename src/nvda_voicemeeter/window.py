@@ -11,6 +11,7 @@ from .util import (
     get_asio_checkbox_index,
     get_insert_checkbox_index,
     get_patch_composite_list,
+    get_tabs_labels,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,13 @@ class NVDAVMWindow(psg.Window):
         self.builder = Builder(self)
         layout = self.builder.run()
         super().__init__(title, layout, return_keyboard_events=True, finalize=True)
-        [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
+        buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
+        [self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
         if self.kind.name != "basic":
-            [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(takefocus=1) for i in range(self.kind.phys_out)]
-        self["ASIO BUFFER"].Widget.config(takefocus=1)
+            [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
+        self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
+        self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
+        self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
         self.register_events()
         self.current_focus = None
 
@@ -115,6 +119,12 @@ class NVDAVMWindow(psg.Window):
                 # Track focus
                 case ["        "]:
                     self.current_focus = self.find_element_with_focus()
+
+                case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
+                    tab_labels = get_tabs_labels()
+                    next_tab = tab_labels.index(values["tabs"]) + 1
+                    self.logger.debug(f"Setting tab {tab_labels[next_tab]} focus")
+                    self["tabs"].set_focus()
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:

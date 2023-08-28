@@ -6,6 +6,7 @@ from .util import (
     get_input_device_list,
     get_insert_checkbox_index,
     get_patch_composite_list,
+    get_tabs_labels,
 )
 
 
@@ -49,11 +50,10 @@ class Builder:
         for step in steps:
             layout3.append([step()])
 
-        tab1 = psg.Tab("Settings", layout0, key="settings")
-        tab2 = psg.Tab("Physical Strips", layout1, key="physical strip")
-        tab3 = psg.Tab("Virtual Strips", layout2, key="virtual strip")
-        tab4 = psg.Tab("Buses", layout3, key="buses")
-        tab_group = psg.TabGroup([[tab1, tab2, tab3, tab4]], change_submits=True, key="tabs")
+        layouts = [layout0, layout1, layout2, layout3]
+
+        tabs = [psg.Tab(identifier, layouts[i], key=identifier) for i, identifier in enumerate(get_tabs_labels())]
+        tab_group = psg.TabGroup([tabs], change_submits=True, key="tabs")
 
         return [[menu], [tab_group]]
 
