@@ -121,9 +121,6 @@ class NVDAVMWindow(psg.Window):
                     self.current_focus = self.find_element_with_focus()
 
                 case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
-                    tab_labels = get_tabs_labels()
-                    next_tab = tab_labels.index(values["tabs"]) + 1
-                    self.logger.debug(f"Setting tab {tab_labels[next_tab]} focus")
                     self["tabs"].set_focus()
 
                 # Menus
