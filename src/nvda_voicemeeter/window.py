@@ -39,7 +39,6 @@ class NVDAVMWindow(psg.Window):
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
             self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
         self.register_events()
-        self.current_focus = None
 
     def __enter__(self):
         return self
@@ -117,18 +116,9 @@ class NVDAVMWindow(psg.Window):
                 break
             elif event == "tabs":
                 self.nvda.speak(f"tab {values['tabs']}")
-                continue
-            elif event in ("Escape:27", "\r"):
-                self.TKroot.after(100, self.refresh)
-                if self.current_focus:
-                    self.current_focus.set_focus()
-                    self.logger.debug(f"setting focus to {self.current_focus.Key}")
 
             match parsed_cmd := self.parser.match.parseString(event):
-                # Track focus
-                case ["        "]:
-                    self.current_focus = self.find_element_with_focus()
-
+                # Focus tabgroup
                 case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
                     self["tabs"].set_focus()
 
