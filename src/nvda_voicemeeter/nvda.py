@@ -8,12 +8,9 @@ class CBindings:
     bind_cancel_speech = libc.nvdaController_cancelSpeech
     bind_braille_message = libc.nvdaController_brailleMessage
 
-    def call(self, fn, *args, ok=(0,), ok_exp=None):
+    def call(self, fn, *args, ok=(0,)):
         retval = fn(*args)
-        if ok_exp is None:
-            if retval not in ok:
-                raise NVDAVMCAPIError(fn.__name__, retval)
-        elif not ok_exp(retval):
+        if retval not in ok:
             raise NVDAVMCAPIError(fn.__name__, retval)
         return retval
 
@@ -21,7 +18,7 @@ class CBindings:
 class Nvda(CBindings):
     @property
     def is_running(self):
-        return self.call(self.bind_test_if_running, ok_exp=lambda x: x >= 0) == 0
+        return self.call(self.bind_test_if_running) == 0
 
     def speak(self, text):
         self.call(self.bind_speak_text, text)
