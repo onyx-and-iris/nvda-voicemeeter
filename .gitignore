@@ -170,5 +170,8 @@ basic.py
 banana.py
 potato.py
 
+# persistent storage
+default.bin
+
 # quick test
 quick.py

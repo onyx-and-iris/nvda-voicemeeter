@@ -63,6 +63,9 @@ class Builder:
                 "&Voicemeeter",
                 [
                     "Restart Audio Engine::MENU",
+                    "Save Settings::MENU",
+                    "Load Settings::MENU",
+                    "Load Settings on Startup ::MENU",
                 ],
             ],
         ]
@@ -209,7 +212,7 @@ class Builder:
                 [
                     psg.ButtonMenu(
                         "ASIO BUFFER",
-                        size=(12, 2),
+                        size=(14, 2),
                         menu_def=["", samples],
                         key="ASIO BUFFER",
                     )
@@ -271,7 +274,7 @@ class Builder:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
-            layout.append([psg.Button(f"BUSMODE", size=(16, 2), key=f"BUS {i}||MODE")])
+            layout.append([psg.Button(f"BUSMODE", size=(12, 2), key=f"BUS {i}||MODE")])
 
         buses = list()
         [step(buses) for step in (add_strip_outputs,)]

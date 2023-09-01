@@ -1,4 +1,6 @@
 import logging
+import pickle
+from pathlib import Path
 
 import PySimpleGUI as psg
 
@@ -22,6 +24,8 @@ psg.theme("Dark Blue 3")
 class NVDAVMWindow(psg.Window):
     """Represents the main window of the Voicemeeter NVDA application"""
 
+    DEFAULT_BIN = "default.bin"
+
     def __init__(self, title, vm):
         self.vm = vm
         self.kind = self.vm.kind
@@ -41,6 +45,21 @@ class NVDAVMWindow(psg.Window):
         self.register_events()
 
     def __enter__(self):
+        default_config = Path.cwd() / self.DEFAULT_BIN
+        if default_config.exists():
+            try:
+                with open(default_config, "rb") as f:
+                    if config := pickle.load(f):
+                        self.vm.set("command.load", config)
+                        self.logger.debug(f"config {config} loaded")
+                        self.TKroot.after(
+                            200,
+                            self.nvda.speak,
+                            f"config {Path(config).stem} has been loaded",
+                        )
+            except EOFError:
+                self.logger.debug("no data in default bin. silently continuing...")
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -129,8 +148,46 @@ class NVDAVMWindow(psg.Window):
                     self.TKroot.after(
                         200,
                         self.nvda.speak,
-                        f"Audio Engine restarted",
+                        "Audio Engine restarted",
                     )
+                case [["Save", "Settings"], ["MENU"]]:
+                    filename = psg.popup_get_text("Filename", title="Save As")
+                    if filename:
+                        configpath = Path.home() / "Documents" / "Voicemeeter" / f"{filename.removesuffix('xml')}.xml"
+                        self.vm.set("command.save", str(configpath))
+                        self.logger.debug(f"saving config file to {configpath}")
+                        self.TKroot.after(
+                            200,
+                            self.nvda.speak,
+                            f"config file {filename} has been saved",
+                        )
+                case [["Load", "Settings"], ["MENU"]]:
+                    configpath = Path.home() / "Documents" / "Voicemeeter"
+                    filename = psg.popup_get_file("Load Settings", default_path=str(configpath))
+                    if filename:
+                        configpath = configpath / filename
+                        self.vm.set("command.load", str(configpath))
+                        self.logger.debug(f"loading config file from {configpath}")
+                        self.TKroot.after(
+                            200,
+                            self.nvda.speak,
+                            f"config file {Path(filename).stem} has been loaded",
+                        )
+                case [["Load", "Settings", "on", "Startup"], ["MENU"]]:
+                    filename = psg.popup_get_text("Filename", title="Load on startup")
+                    if filename:
+                        configpath = Path.home() / "Documents" / "Voicemeeter" / f"{filename.removesuffix('xml')}.xml"
+                        with open(self.DEFAULT_BIN, "wb") as f:
+                            pickle.dump(str(configpath), f)
+                        self.TKroot.after(
+                            200,
+                            self.nvda.speak,
+                            f"config {filename} set as default on startup",
+                        )
+                    else:
+                        with open(self.DEFAULT_BIN, "wb") as f:
+                            f.truncate()
+                        self.logger.debug("default bin was truncated")
 
                 # Tabs
                 case [["tabs"], ["FOCUS", "IN"]]:
