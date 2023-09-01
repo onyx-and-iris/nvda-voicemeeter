@@ -125,64 +125,32 @@ class NVDAVMWindow(psg.Window):
         layout = [
             [psg.Text(message)],
             [
-                psg.Input(key="Text Input"),
                 psg.FileSaveAs("Browse", initial_folder=str(initial_folder), file_types=(("XML", ".xml"),)),
+                psg.Button("Cancel"),
             ],
-            [psg.Button("Ok"), psg.Button("Cancel")],
         ]
         window = psg.Window(title, layout, finalize=True)
-        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
         window["Browse"].bind("<FocusIn>", "||FOCUS IN")
-        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+        window["Browse"].bind("<Return>", "||KEY ENTER")
         window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+        window["Cancel"].bind("<Return>", "||KEY ENTER")
         filepath = None
         while True:
             event, values = window.read()
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
             if event.endswith("||FOCUS IN"):
+                if values["Browse"]:
+                    filepath = values["Browse"]
+                    break
                 label = event.split("||")[0]
                 self.TKroot.after(
-                    200 if label == "Text Input" else 1,
+                    200 if label == "Edit" else 1,
                     self.nvda.speak,
                     label,
                 )
-            elif event == "Ok":
-                filepath = values["Text Input"]
-                break
-        window.close()
-        if filepath:
-            return Path(filepath)
-
-    def popup_files_browse(self, message, title=None, initial_folder=None):
-        layout = [
-            [psg.Text(message)],
-            [
-                psg.Input(key="Text Input"),
-                psg.FilesBrowse("Browse", initial_folder=initial_folder, file_types=(("XML", ".xml"),)),
-            ],
-            [psg.Button("Ok"), psg.Button("Cancel")],
-        ]
-        window = psg.Window(title, layout, finalize=True)
-        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
-        window["Browse"].bind("<FocusIn>", "||FOCUS IN")
-        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
-        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
-        filepath = None
-        while True:
-            event, values = window.read()
-            if event in (psg.WIN_CLOSED, "Cancel"):
-                break
-            if event.endswith("||FOCUS IN"):
-                label = event.split("||")[0]
-                self.TKroot.after(
-                    200 if label == "Text Input" else 1,
-                    self.nvda.speak,
-                    label,
-                )
-            elif event == "Ok":
-                filepath = values["Text Input"]
-                break
+            elif event.endswith("||KEY ENTER"):
+                window.find_element_with_focus().click()
         window.close()
         if filepath:
             return Path(filepath)
@@ -219,7 +187,9 @@ class NVDAVMWindow(psg.Window):
                     )
                 case [["Save", "Settings"], ["MENU"]]:
                     initial_folder = Path.home() / "Documents" / "Voicemeeter"
-                    if filepath := self.popup_save_as("Filename", title="Save As", initial_folder=initial_folder):
+                    if filepath := self.popup_save_as(
+                        "Open the file browser", title="Save As", initial_folder=initial_folder
+                    ):
                         self.vm.set("command.save", str(filepath))
                         self.logger.debug(f"saving config file to {filepath}")
                         self.TKroot.after(
@@ -229,9 +199,14 @@ class NVDAVMWindow(psg.Window):
                         )
                 case [["Load", "Settings"], ["MENU"]]:
                     initial_folder = Path.home() / "Documents" / "Voicemeeter"
-                    if filepath := self.popup_files_browse(
-                        "Filename", title="Load Settings", initial_folder=initial_folder
+                    if filepath := psg.popup_get_file(
+                        "Filename",
+                        title="Load Settings",
+                        initial_folder=initial_folder,
+                        no_window=True,
+                        file_types=(("XML", ".xml"),),
                     ):
+                        filepath = Path(filepath)
                         self.vm.set("command.load", str(filepath))
                         self.logger.debug(f"loading config file from {filepath}")
                         self.TKroot.after(
@@ -241,15 +216,20 @@ class NVDAVMWindow(psg.Window):
                         )
                 case [["Load", "Settings", "on", "Startup"], ["MENU"]]:
                     initial_folder = Path.home() / "Documents" / "Voicemeeter"
-                    if filename := self.popup_files_browse(
-                        "Filename", title="Load on startup", initial_folder=initial_folder
+                    if filepath := psg.popup_get_file(
+                        "Filename",
+                        title="Load Settings",
+                        initial_folder=initial_folder,
+                        no_window=True,
+                        file_types=(("XML", ".xml"),),
                     ):
+                        filepath = Path(filepath)
                         with open(self.DEFAULT_BIN, "wb") as f:
-                            pickle.dump(str(filename), f)
+                            pickle.dump(str(filepath), f)
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
-                            f"config {filename.stem} set as default on startup",
+                            f"config {filepath.stem} set as default on startup",
                         )
                     else:
                         with open(self.DEFAULT_BIN, "wb") as f:
