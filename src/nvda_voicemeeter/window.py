@@ -49,14 +49,15 @@ class NVDAVMWindow(psg.Window):
         if default_config.exists():
             try:
                 with open(default_config, "rb") as f:
-                    if config := pickle.load(f):
-                        self.vm.set("command.load", config)
-                        self.logger.debug(f"config {config} loaded")
-                        self.TKroot.after(
-                            200,
-                            self.nvda.speak,
-                            f"config {Path(config).stem} has been loaded",
-                        )
+                    config = pickle.load(f)
+                if Path(config).exists():
+                    self.vm.set("command.load", config)
+                    self.logger.debug(f"config {config} loaded")
+                    self.TKroot.after(
+                        200,
+                        self.nvda.speak,
+                        f"config {Path(config).stem} has been loaded",
+                    )
             except EOFError:
                 self.logger.debug("no data in default bin. silently continuing...")
 
@@ -120,6 +121,72 @@ class NVDAVMWindow(psg.Window):
             self["ASIO BUFFER"].bind("<space>", "||KEY SPACE", propagate=False)
             self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER", propagate=False)
 
+    def popup_save_as(self, message, title=None, initial_folder=None):
+        layout = [
+            [psg.Text(message)],
+            [
+                psg.Input(key="Text Input"),
+                psg.FileSaveAs("Browse", initial_folder=str(initial_folder), file_types=(("XML", ".xml"),)),
+            ],
+            [psg.Button("Ok"), psg.Button("Cancel")],
+        ]
+        window = psg.Window(title, layout, finalize=True)
+        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
+        window["Browse"].bind("<FocusIn>", "||FOCUS IN")
+        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+        filepath = None
+        while True:
+            event, values = window.read()
+            if event in (psg.WIN_CLOSED, "Cancel"):
+                break
+            if event.endswith("||FOCUS IN"):
+                label = event.split("||")[0]
+                self.TKroot.after(
+                    200 if label == "Text Input" else 1,
+                    self.nvda.speak,
+                    label,
+                )
+            elif event == "Ok":
+                filepath = values["Text Input"]
+                break
+        window.close()
+        if filepath:
+            return Path(filepath)
+
+    def popup_files_browse(self, message, title=None, initial_folder=None):
+        layout = [
+            [psg.Text(message)],
+            [
+                psg.Input(key="Text Input"),
+                psg.FilesBrowse("Browse", initial_folder=initial_folder, file_types=(("XML", ".xml"),)),
+            ],
+            [psg.Button("Ok"), psg.Button("Cancel")],
+        ]
+        window = psg.Window(title, layout, finalize=True)
+        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
+        window["Browse"].bind("<FocusIn>", "||FOCUS IN")
+        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+        filepath = None
+        while True:
+            event, values = window.read()
+            if event in (psg.WIN_CLOSED, "Cancel"):
+                break
+            if event.endswith("||FOCUS IN"):
+                label = event.split("||")[0]
+                self.TKroot.after(
+                    200 if label == "Text Input" else 1,
+                    self.nvda.speak,
+                    label,
+                )
+            elif event == "Ok":
+                filepath = values["Text Input"]
+                break
+        window.close()
+        if filepath:
+            return Path(filepath)
+
     def run(self):
         """
         Parses the event string and matches it to events
@@ -151,126 +218,38 @@ class NVDAVMWindow(psg.Window):
                         "Audio Engine restarted",
                     )
                 case [["Save", "Settings"], ["MENU"]]:
-
-                    def popup_get_text(message, title=None):
-                        layout = [
-                            [psg.Text(message)],
-                            [psg.Input(key="Text Input")],
-                            [psg.Button("Ok"), psg.Button("Cancel")],
-                        ]
-                        window = psg.Window(title, layout, finalize=True)
-                        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
-                        filename = None
-                        while True:
-                            event, values = window.read()
-                            if event in (psg.WIN_CLOSED, "Cancel"):
-                                break
-                            if event.endswith("||FOCUS IN"):
-                                label = event.split("||")[0]
-                                self.TKroot.after(
-                                    200 if label == "Text Input" else 1,
-                                    self.nvda.speak,
-                                    label,
-                                )
-                            elif event == "Ok":
-                                filename = values["Text Input"]
-                                break
-                        window.close()
-                        return filename
-
-                    filename = popup_get_text("Filename", title="Save As")
-                    if filename:
-                        configpath = Path.home() / "Documents" / "Voicemeeter" / f"{filename.removesuffix('xml')}.xml"
-                        self.vm.set("command.save", str(configpath))
-                        self.logger.debug(f"saving config file to {configpath}")
+                    initial_folder = Path.home() / "Documents" / "Voicemeeter"
+                    if filepath := self.popup_save_as("Filename", title="Save As", initial_folder=initial_folder):
+                        self.vm.set("command.save", str(filepath))
+                        self.logger.debug(f"saving config file to {filepath}")
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
-                            f"config file {filename} has been saved",
+                            f"config file {filepath.stem} has been saved",
                         )
                 case [["Load", "Settings"], ["MENU"]]:
-
-                    def popup_get_file(message, title=None):
-                        layout = [
-                            [psg.Text(message)],
-                            [psg.Input(key="Text Input"), psg.FilesBrowse("Browse")],
-                            [psg.Button("Ok"), psg.Button("Cancel")],
-                        ]
-                        window = psg.Window(title, layout, finalize=True)
-                        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Browse"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
-                        filename = None
-                        while True:
-                            event, values = window.read()
-                            if event in (psg.WIN_CLOSED, "Cancel"):
-                                break
-                            if event.endswith("||FOCUS IN"):
-                                label = event.split("||")[0]
-                                self.TKroot.after(
-                                    200 if label == "Text Input" else 1,
-                                    self.nvda.speak,
-                                    label,
-                                )
-                            elif event == "Ok":
-                                filename = values["Text Input"]
-                                break
-                        window.close()
-                        return filename
-
-                    configpath = Path.home() / "Documents" / "Voicemeeter"
-                    filename = popup_get_file("Filename", title="Load Settings")
-                    if filename:
-                        configpath = configpath / filename
-                        self.vm.set("command.load", str(configpath))
-                        self.logger.debug(f"loading config file from {configpath}")
+                    initial_folder = Path.home() / "Documents" / "Voicemeeter"
+                    if filepath := self.popup_files_browse(
+                        "Filename", title="Load Settings", initial_folder=initial_folder
+                    ):
+                        self.vm.set("command.load", str(filepath))
+                        self.logger.debug(f"loading config file from {filepath}")
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
-                            f"config file {Path(filename).stem} has been loaded",
+                            f"config file {filepath.stem} has been loaded",
                         )
                 case [["Load", "Settings", "on", "Startup"], ["MENU"]]:
-
-                    def popup_get_text(message, title=None):
-                        layout = [
-                            [psg.Text(message)],
-                            [psg.Input(key="Text Input")],
-                            [psg.Button("Ok"), psg.Button("Cancel")],
-                        ]
-                        window = psg.Window(title, layout, finalize=True)
-                        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
-                        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
-                        filename = None
-                        while True:
-                            event, values = window.read()
-                            if event in (psg.WIN_CLOSED, "Cancel"):
-                                break
-                            if event.endswith("||FOCUS IN"):
-                                label = event.split("||")[0]
-                                self.TKroot.after(
-                                    200 if label == "Text Input" else 1,
-                                    self.nvda.speak,
-                                    label,
-                                )
-                            elif event == "Ok":
-                                filename = values["Text Input"]
-                                break
-                        window.close()
-                        return filename
-
-                    filename = popup_get_text("Filename", title="Load on startup")
-                    if filename:
-                        configpath = Path.home() / "Documents" / "Voicemeeter" / f"{filename.removesuffix('xml')}.xml"
+                    initial_folder = Path.home() / "Documents" / "Voicemeeter"
+                    if filename := self.popup_files_browse(
+                        "Filename", title="Load on startup", initial_folder=initial_folder
+                    ):
                         with open(self.DEFAULT_BIN, "wb") as f:
-                            pickle.dump(str(configpath), f)
+                            pickle.dump(str(filename), f)
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
-                            f"config {filename} set as default on startup",
+                            f"config {filename.stem} set as default on startup",
                         )
                     else:
                         with open(self.DEFAULT_BIN, "wb") as f:
