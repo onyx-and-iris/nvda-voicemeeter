@@ -151,7 +151,36 @@ class NVDAVMWindow(psg.Window):
                         "Audio Engine restarted",
                     )
                 case [["Save", "Settings"], ["MENU"]]:
-                    filename = psg.popup_get_text("Filename", title="Save As")
+
+                    def popup_get_text(message, title=None):
+                        layout = [
+                            [psg.Text(message)],
+                            [psg.Input(key="Text Input")],
+                            [psg.Button("Ok"), psg.Button("Cancel")],
+                        ]
+                        window = psg.Window(title, layout, finalize=True)
+                        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+                        filename = None
+                        while True:
+                            event, values = window.read()
+                            if event in (psg.WIN_CLOSED, "Cancel"):
+                                break
+                            if event.endswith("||FOCUS IN"):
+                                label = event.split("||")[0]
+                                self.TKroot.after(
+                                    200 if label == "Text Input" else 1,
+                                    self.nvda.speak,
+                                    label,
+                                )
+                            elif event == "Ok":
+                                filename = values["Text Input"]
+                                break
+                        window.close()
+                        return filename
+
+                    filename = popup_get_text("Filename", title="Save As")
                     if filename:
                         configpath = Path.home() / "Documents" / "Voicemeeter" / f"{filename.removesuffix('xml')}.xml"
                         self.vm.set("command.save", str(configpath))
@@ -162,8 +191,38 @@ class NVDAVMWindow(psg.Window):
                             f"config file {filename} has been saved",
                         )
                 case [["Load", "Settings"], ["MENU"]]:
+
+                    def popup_get_file(message, title=None):
+                        layout = [
+                            [psg.Text(message)],
+                            [psg.Input(key="Text Input"), psg.FilesBrowse("Browse")],
+                            [psg.Button("Ok"), psg.Button("Cancel")],
+                        ]
+                        window = psg.Window(title, layout, finalize=True)
+                        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Browse"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+                        filename = None
+                        while True:
+                            event, values = window.read()
+                            if event in (psg.WIN_CLOSED, "Cancel"):
+                                break
+                            if event.endswith("||FOCUS IN"):
+                                label = event.split("||")[0]
+                                self.TKroot.after(
+                                    200 if label == "Text Input" else 1,
+                                    self.nvda.speak,
+                                    label,
+                                )
+                            elif event == "Ok":
+                                filename = values["Text Input"]
+                                break
+                        window.close()
+                        return filename
+
                     configpath = Path.home() / "Documents" / "Voicemeeter"
-                    filename = psg.popup_get_file("Load Settings", default_path=str(configpath))
+                    filename = popup_get_file("Filename", title="Load Settings")
                     if filename:
                         configpath = configpath / filename
                         self.vm.set("command.load", str(configpath))
@@ -174,7 +233,36 @@ class NVDAVMWindow(psg.Window):
                             f"config file {Path(filename).stem} has been loaded",
                         )
                 case [["Load", "Settings", "on", "Startup"], ["MENU"]]:
-                    filename = psg.popup_get_text("Filename", title="Load on startup")
+
+                    def popup_get_text(message, title=None):
+                        layout = [
+                            [psg.Text(message)],
+                            [psg.Input(key="Text Input")],
+                            [psg.Button("Ok"), psg.Button("Cancel")],
+                        ]
+                        window = psg.Window(title, layout, finalize=True)
+                        window["Text Input"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+                        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+                        filename = None
+                        while True:
+                            event, values = window.read()
+                            if event in (psg.WIN_CLOSED, "Cancel"):
+                                break
+                            if event.endswith("||FOCUS IN"):
+                                label = event.split("||")[0]
+                                self.TKroot.after(
+                                    200 if label == "Text Input" else 1,
+                                    self.nvda.speak,
+                                    label,
+                                )
+                            elif event == "Ok":
+                                filename = values["Text Input"]
+                                break
+                        window.close()
+                        return filename
+
+                    filename = popup_get_text("Filename", title="Load on startup")
                     if filename:
                         configpath = Path.home() / "Documents" / "Voicemeeter" / f"{filename.removesuffix('xml')}.xml"
                         with open(self.DEFAULT_BIN, "wb") as f:
