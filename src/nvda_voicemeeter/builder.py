@@ -239,7 +239,8 @@ class Builder:
 
         outputs = list()
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.vm.strip[i].label, outputs)
+        label = self.vm.strip[i].label
+        return psg.Frame(label if label else f"Hardware Input {i + 1}", outputs)
 
     def make_tab1_rows(self) -> psg.Frame:
         layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_in)]
@@ -264,7 +265,8 @@ class Builder:
 
         outputs = list()
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.vm.strip[i].label, outputs)
+        label = self.vm.strip[i].label
+        return psg.Frame(label if label else f"Virtual Input {i - self.kind.phys_out + 1}", outputs)
 
     def make_tab2_rows(self) -> psg.Frame:
         layout = [[self.make_tab2_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)]
@@ -278,7 +280,11 @@ class Builder:
 
         buses = list()
         [step(buses) for step in (add_strip_outputs,)]
-        return psg.Frame(self.vm.bus[i].label, buses)
+        label = self.vm.bus[i].label
+        if i < self.kind.phys_out:
+            return psg.Frame(label if label else f"Physical Bus {i + 1}", buses)
+        else:
+            return psg.Frame(label if label else f"Virtual Bus {i - self.kind.phys_out + 1}", buses)
 
     def make_tab3_rows(self):
         layout = [[self.make_tab3_row(i)] for i in range(self.kind.num_bus)]
