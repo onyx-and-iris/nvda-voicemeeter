@@ -28,3 +28,30 @@ def _make_output_cache(vm) -> dict:
 
 def _make_bus_mode_cache(vm) -> dict:
     return {**{f"BUS {i}||MODE": vm.bus[i].mode.get() for i in range(vm.kind.num_bus)}}
+
+
+def _make_label_cache(vm) -> dict:
+    return {
+        "strip": {
+            **{
+                f"STRIP {i}||LABEL": vm.strip[i].label if vm.strip[i].label else f"Hardware Input {i + 1}"
+                for i in range(vm.kind.phys_in)
+            },
+            **{
+                f"STRIP {i}||LABEL": vm.strip[i].label
+                if vm.strip[i].label
+                else f"Virtual Input {i - vm.kind.phys_in + 1}"
+                for i in range(vm.kind.phys_in, vm.kind.phys_in + vm.kind.virt_in)
+            },
+        },
+        "bus": {
+            **{
+                f"BUS {i}||LABEL": vm.bus[i].label if vm.bus[i].label else f"Physical Bus {i + 1}"
+                for i in range(vm.kind.phys_out)
+            },
+            **{
+                f"BUS {i}||LABEL": vm.bus[i].label if vm.bus[i].label else f"Virtual Bus {i - vm.kind.phys_out + 1}"
+                for i in range(vm.kind.phys_out, vm.kind.phys_out + vm.kind.virt_out)
+            },
+        },
+    }

@@ -5,7 +5,7 @@ from pathlib import Path
 import PySimpleGUI as psg
 
 from .builder import Builder
-from .models import _make_bus_mode_cache, _make_output_cache
+from .models import _make_bus_mode_cache, _make_label_cache, _make_output_cache
 from .nvda import Nvda
 from .parser import Parser
 from .util import (
@@ -30,7 +30,11 @@ class NVDAVMWindow(psg.Window):
         self.vm = vm
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
-        self.cache = {"outputs": _make_output_cache(self.vm), "busmode": _make_bus_mode_cache(self.vm)}
+        self.cache = {
+            "outputs": _make_output_cache(self.vm),
+            "busmode": _make_bus_mode_cache(self.vm),
+            "labels": _make_label_cache(self.vm),
+        }
         self.nvda = Nvda()
         self.parser = Parser()
         self.builder = Builder(self)
@@ -139,7 +143,7 @@ class NVDAVMWindow(psg.Window):
             event, values = window.read()
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
-            if event.endswith("||FOCUS IN"):
+            elif event.endswith("||FOCUS IN"):
                 if values["Browse"]:
                     filepath = values["Browse"]
                     break
@@ -154,6 +158,61 @@ class NVDAVMWindow(psg.Window):
         window.close()
         if filepath:
             return Path(filepath)
+
+    def popup_rename(self, message, title=None, tab=None):
+        if tab == "Physical Strip":
+            upper = self.kind.phys_out + 1
+        elif tab == "Virtual Strip":
+            upper = self.kind.virt_out + 1
+        elif tab == "Buses":
+            upper = self.kind.num_bus + 1
+
+        layout = [
+            [psg.Text(message)],
+            [
+                [
+                    psg.Spin(
+                        list(range(1, upper)), initial_value=1, size=2, enable_events=True, key=f"Index", readonly=True
+                    ),
+                    psg.Input(key="Edit"),
+                ],
+                [psg.Button("Ok"), psg.Button("Cancel")],
+            ],
+        ]
+        window = psg.Window(title, layout, finalize=True)
+        window["Index"].bind("<FocusIn>", "||FOCUS IN")
+        window["Edit"].bind("<FocusIn>", "||FOCUS IN")
+        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
+        window["Ok"].bind("<Return>", "||KEY ENTER")
+        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
+        window["Cancel"].bind("<Return>", "||KEY ENTER")
+        data = {}
+        while True:
+            event, values = window.read()
+            print(f"event: {event}")
+            print(f"values: {values}")
+            if event in (psg.WIN_CLOSED, "Cancel"):
+                break
+            elif event.endswith("||KEY ENTER"):
+                window.find_element_with_focus().click()
+            elif event == "Index":
+                val = values["Index"]
+                self.nvda.speak(f"Index {val}")
+            elif event.startswith("Index") and event.endswith("||FOCUS IN"):
+                val = values["Index"]
+                self.nvda.speak(f"Index {val}")
+            elif event.startswith("Edit") and event.endswith("||FOCUS IN"):
+                self.nvda.speak("Edit")
+            elif event == "Ok":
+                data = values
+                break
+            elif event.startswith("Ok") and event.endswith("||FOCUS IN"):
+                self.nvda.speak("Ok")
+            elif event.startswith("Cancel") and event.endswith("||FOCUS IN"):
+                self.nvda.speak("Cancel")
+
+        window.close()
+        return data
 
     def run(self):
         """
@@ -175,6 +234,27 @@ class NVDAVMWindow(psg.Window):
                 # Focus tabgroup
                 case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
                     self["tabs"].set_focus()
+
+                # Rename popups
+                case ["F2:113"]:
+                    tab = values["tabs"]
+                    if tab in ("Physical Strip", "Virtual Strip", "Buses"):
+                        data = self.popup_rename("Label", title=f"Rename {tab}", tab=tab)
+                    if not data:
+                        continue
+                    index = int(data["Index"]) - 1
+                    match tab:
+                        case "Physical Strip" | "Virtual Strip":
+                            print(self.cache["labels"]["strip"][f"STRIP {index}||LABEL"])
+                            label = data.get("Edit") or self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
+                            self.vm.strip[index].label = label
+                            self[f"STRIP {index}||LABEL"].update(value=label)
+                            self.cache["labels"]["strip"][f"STRIP {index}||LABEL"] = label
+                        case "Buses":
+                            label = data.get("Edit") or self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
+                            self.vm.bus[index].label = label
+                            self[f"BUS {index}||LABEL"].update(value=label)
+                            self.cache["labels"]["bus"][f"BUS {index}||LABEL"] = label
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:
@@ -335,8 +415,8 @@ class NVDAVMWindow(psg.Window):
                     self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
                 case [["STRIP", index], [output], ["FOCUS", "IN"]]:
                     val = self.cache["outputs"][f"STRIP {index}||{output}"]
-                    label = self.vm.strip[int(index)].label
-                    self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
+                    label = self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
+                    self.nvda.speak(f"{label} {output} {'on' if val else 'off'}")
                 case [["STRIP", index], [output], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
@@ -349,17 +429,15 @@ class NVDAVMWindow(psg.Window):
                     else:
                         self.vm.bus[int(index)].mode.composite = True
                         self.cache["busmode"][event] = "composite"
-                    label = self.vm.bus[int(index)].label
+                    label = self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
                     self.TKroot.after(
                         200,
                         self.nvda.speak,
-                        f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][event]}",
+                        f"{label} bus mode {self.cache['busmode'][event]}",
                     )
                 case [["BUS", index], ["MODE"], ["FOCUS", "IN"]]:
-                    label = self.vm.bus[int(index)].label
-                    self.nvda.speak(
-                        f"BUS {index} {label if label else ''} bus mode {self.cache['busmode'][f'BUS {index}||MODE']}"
-                    )
+                    label = self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
+                    self.nvda.speak(f"{label} bus mode {self.cache['busmode'][f'BUS {index}||MODE']}")
 
                 # Unknown
                 case _:
