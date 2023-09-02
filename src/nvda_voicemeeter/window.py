@@ -141,6 +141,8 @@ class NVDAVMWindow(psg.Window):
         filepath = None
         while True:
             event, values = window.read()
+            self.logger.debug(f"event::{event}")
+            self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
             elif event.endswith("||FOCUS IN"):
@@ -189,8 +191,8 @@ class NVDAVMWindow(psg.Window):
         data = {}
         while True:
             event, values = window.read()
-            print(f"event: {event}")
-            print(f"values: {values}")
+            self.logger.debug(f"event::{event}")
+            self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
             elif event.endswith("||KEY ENTER"):
