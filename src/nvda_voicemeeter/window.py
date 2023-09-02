@@ -247,7 +247,6 @@ class NVDAVMWindow(psg.Window):
                     index = int(data["Index"]) - 1
                     match tab:
                         case "Physical Strip" | "Virtual Strip":
-                            print(self.cache["labels"]["strip"][f"STRIP {index}||LABEL"])
                             label = data.get("Edit") or self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
                             self.vm.strip[index].label = label
                             self[f"STRIP {index}||LABEL"].update(value=label)
