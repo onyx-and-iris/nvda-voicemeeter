@@ -242,20 +242,20 @@ class NVDAVMWindow(psg.Window):
                     tab = values["tabs"]
                     if tab in ("Physical Strip", "Virtual Strip", "Buses"):
                         data = self.popup_rename("Label", title=f"Rename {tab}", tab=tab)
-                    if not data:
-                        continue
-                    index = int(data["Index"]) - 1
-                    match tab:
-                        case "Physical Strip" | "Virtual Strip":
-                            label = data.get("Edit") or self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
-                            self.vm.strip[index].label = label
-                            self[f"STRIP {index}||LABEL"].update(value=label)
-                            self.cache["labels"]["strip"][f"STRIP {index}||LABEL"] = label
-                        case "Buses":
-                            label = data.get("Edit") or self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
-                            self.vm.bus[index].label = label
-                            self[f"BUS {index}||LABEL"].update(value=label)
-                            self.cache["labels"]["bus"][f"BUS {index}||LABEL"] = label
+                        if not data:
+                            continue
+                        index = int(data["Index"]) - 1
+                        match tab:
+                            case "Physical Strip" | "Virtual Strip":
+                                label = data.get("Edit") or self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
+                                self.vm.strip[index].label = label
+                                self[f"STRIP {index}||LABEL"].update(value=label)
+                                self.cache["labels"]["strip"][f"STRIP {index}||LABEL"] = label
+                            case "Buses":
+                                label = data.get("Edit") or self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
+                                self.vm.bus[index].label = label
+                                self[f"BUS {index}||LABEL"].update(value=label)
+                                self.cache["labels"]["bus"][f"BUS {index}||LABEL"] = label
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:
