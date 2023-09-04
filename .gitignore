@@ -171,7 +171,7 @@ banana.py
 potato.py
 
 # persistent storage
-default.bin
+settings.json
 
 # quick test
 quick.py

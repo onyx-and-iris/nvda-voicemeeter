@@ -1,5 +1,5 @@
+import json
 import logging
-import pickle
 from pathlib import Path
 
 import PySimpleGUI as psg
@@ -24,7 +24,7 @@ psg.theme("Dark Blue 3")
 class NVDAVMWindow(psg.Window):
     """Represents the main window of the Voicemeeter NVDA application"""
 
-    DEFAULT_BIN = "default.bin"
+    SETTINGS = "settings.json"
 
     def __init__(self, title, vm):
         self.vm = vm
@@ -49,11 +49,12 @@ class NVDAVMWindow(psg.Window):
         self.register_events()
 
     def __enter__(self):
-        default_config = Path.cwd() / self.DEFAULT_BIN
+        default_config = Path.cwd() / self.SETTINGS
         if default_config.exists():
             try:
-                with open(default_config, "rb") as f:
-                    config = pickle.load(f)
+                with open(default_config, "r") as f:
+                    data = json.load(f)
+                config = data["default_config"]
                 if Path(config).exists():
                     self.vm.set("command.load", config)
                     self.logger.debug(f"config {config} loaded")
@@ -62,8 +63,8 @@ class NVDAVMWindow(psg.Window):
                         self.nvda.speak,
                         f"config {Path(config).stem} has been loaded",
                     )
-            except EOFError:
-                self.logger.debug("no data in default bin. silently continuing...")
+            except json.JSONDecodeError:
+                self.logger.debug("no data in settings.json. silently continuing...")
 
         return self
 
@@ -305,15 +306,15 @@ class NVDAVMWindow(psg.Window):
                         file_types=(("XML", ".xml"),),
                     ):
                         filepath = Path(filepath)
-                        with open(self.DEFAULT_BIN, "wb") as f:
-                            pickle.dump(str(filepath), f)
+                        with open(self.SETTINGS, "w") as f:
+                            json.dump({"default_config": str(filepath)}, f)
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
                             f"config {filepath.stem} set as default on startup",
                         )
                     else:
-                        with open(self.DEFAULT_BIN, "wb") as f:
+                        with open(self.SETTINGS, "wb") as f:
                             f.truncate()
                         self.logger.debug("default bin was truncated")
 
