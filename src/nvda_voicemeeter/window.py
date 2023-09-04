@@ -54,14 +54,14 @@ class NVDAVMWindow(psg.Window):
             try:
                 with open(default_config, "r") as f:
                     data = json.load(f)
-                config = data["default_config"]
-                if Path(config).exists():
-                    self.vm.set("command.load", config)
-                    self.logger.debug(f"config {config} loaded")
+                configpath = Path(data["default_config"])
+                if configpath.exists():
+                    self.vm.set("command.load", str(configpath))
+                    self.logger.debug(f"config {configpath} loaded")
                     self.TKroot.after(
                         200,
                         self.nvda.speak,
-                        f"config {Path(config).stem} has been loaded",
+                        f"config {configpath.stem} has been loaded",
                     )
             except json.JSONDecodeError:
                 self.logger.debug("no data in settings.json. silently continuing...")
@@ -119,6 +119,7 @@ class NVDAVMWindow(psg.Window):
         # Bus Modes
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||MODE"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"BUS {i}||MODE"].bind("<Return>", "||KEY ENTER")
 
         # ASIO Buffer
         if self.kind.name != "basic":
@@ -440,6 +441,8 @@ class NVDAVMWindow(psg.Window):
                 case [["BUS", index], ["MODE"], ["FOCUS", "IN"]]:
                     label = self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
                     self.nvda.speak(f"{label} bus mode {self.cache['busmode'][f'BUS {index}||MODE']}")
+                case [["BUS", index], ["MODE"], ["KEY", "ENTER"]]:
+                    self.find_element_with_focus().click()
 
                 # Unknown
                 case _:
