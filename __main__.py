@@ -1,10 +1,6 @@
-import logging
-
 import voicemeeterlib
 
 import nvda_voicemeeter
-
-logging.basicConfig(level=logging.DEBUG)
 
 KIND_ID = "potato"
 
