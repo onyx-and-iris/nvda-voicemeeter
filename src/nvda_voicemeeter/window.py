@@ -491,7 +491,7 @@ class NVDAVMWindow(psg.Window):
 
                 # Unknown
                 case _:
-                    self.logger.error(f"Unknown event {event}")
+                    self.logger.debug(f"Unknown event {event}")
             self.logger.debug(f"parsed::{parsed_cmd}")
 
 
