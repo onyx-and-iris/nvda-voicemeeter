@@ -1,5 +1,5 @@
 def _make_hardware_outs_cache(vm) -> dict:
-    pass
+    return {**{f"HARDWARE OUT||A{i + 1}": vm.bus[i].device.name for i in range(vm.kind.phys_out)}}
 
 
 def _make_output_cache(vm) -> dict:

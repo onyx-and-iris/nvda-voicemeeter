@@ -39,6 +39,7 @@ class NVDAVMWindow(psg.Window):
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
         self.cache = {
+            "hw_outs": _make_hardware_outs_cache(self.vm),
             "outputs": _make_output_cache(self.vm),
             "busmode": _make_bus_mode_cache(self.vm),
             "labels": _make_label_cache(self.vm),
@@ -91,6 +92,7 @@ class NVDAVMWindow(psg.Window):
 
     def on_pdirty(self):
         self.cache = {
+            "hw_outs": _make_hardware_outs_cache(self.vm),
             "outputs": _make_output_cache(self.vm),
             "busmode": _make_bus_mode_cache(self.vm),
             "labels": _make_label_cache(self.vm),
@@ -382,7 +384,7 @@ class NVDAVMWindow(psg.Window):
                                 f"HARDWARE OUT {key} set {phonetic.get(driver, driver)} {device_name}",
                             )
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
-                    self.nvda.speak(f"HARDWARE OUT {key} {self.vm.bus[int(key[-1]) - 1].device.name}")
+                    self.nvda.speak(f"HARDWARE OUT {key} {self.cache['hw_outs'][f'HARDWARE OUT||{key}']}")
                 case [["HARDWARE", "OUT"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     open_context_menu_for_buttonmenu(self, f"HARDWARE OUT||{key}")
 
