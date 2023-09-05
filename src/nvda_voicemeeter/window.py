@@ -239,18 +239,15 @@ class NVDAVMWindow(psg.Window):
             elif event == "Index":
                 val = values["Index"]
                 self.nvda.speak(f"Index {val}")
-            elif event.startswith("Index") and event.endswith("||FOCUS IN"):
-                val = values["Index"]
-                self.nvda.speak(f"Index {val}")
-            elif event.startswith("Edit") and event.endswith("||FOCUS IN"):
-                self.nvda.speak("Edit")
+            elif event.endswith("||FOCUS IN"):
+                if event.startswith("Index"):
+                    val = values["Index"]
+                    self.nvda.speak(f"Index {val}")
+                else:
+                    self.nvda.speak(event.split("||")[0])
             elif event == "Ok":
                 data = values
                 break
-            elif event.startswith("Ok") and event.endswith("||FOCUS IN"):
-                self.nvda.speak("Ok")
-            elif event.startswith("Cancel") and event.endswith("||FOCUS IN"):
-                self.nvda.speak("Cancel")
 
         window.close()
         return data
