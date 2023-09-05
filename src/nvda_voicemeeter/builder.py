@@ -5,6 +5,7 @@ from .util import (
     get_asio_samples_list,
     get_input_device_list,
     get_insert_checkbox_index,
+    get_output_device_list,
     get_patch_composite_list,
     get_tabs_labels,
 )
@@ -23,7 +24,10 @@ class Builder:
 
         layout0 = []
         if self.kind.name == "basic":
-            steps = (self.make_tab0_row0,)
+            steps = (
+                self.make_tab0_row0,
+                self.make_tab0_row1,
+            )
         else:
             steps = (
                 self.make_tab0_row0,
@@ -31,6 +35,7 @@ class Builder:
                 self.make_tab0_row2,
                 self.make_tab0_row3,
                 self.make_tab0_row4,
+                self.make_tab0_row5,
             )
         for step in steps:
             layout0.append([step()])
@@ -72,10 +77,32 @@ class Builder:
         return psg.Menu(menu_def, key="menus")
 
     def make_tab0_row0(self) -> psg.Frame:
-        """tab0 row0 represents hardware outs"""
+        """tab0 row0 represents hardware ins"""
 
         def add_physical_device_opts(layout):
             devices = get_input_device_list(self.vm)
+            devices.append("- remove device selection -")
+            layout.append(
+                [
+                    psg.ButtonMenu(
+                        f"IN {i + 1}",
+                        size=(6, 3),
+                        menu_def=["", devices],
+                        key=f"HARDWARE IN||{i + 1}",
+                    )
+                    for i in range(self.kind.phys_in)
+                ]
+            )
+
+        hardware_in = list()
+        [step(hardware_in) for step in (add_physical_device_opts,)]
+        return psg.Frame("Hardware In", hardware_in)
+
+    def make_tab0_row1(self) -> psg.Frame:
+        """tab0 row1 represents hardware outs"""
+
+        def add_physical_device_opts(layout):
+            devices = get_output_device_list(self.vm)
             devices.append("- remove device selection -")
             if self.kind.name == "basic":
                 num_outs = self.kind.phys_out + self.kind.virt_out
@@ -97,8 +124,8 @@ class Builder:
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("Hardware Out", hardware_out)
 
-    def make_tab0_row1(self) -> psg.Frame:
-        """tab0 row1 represents patch asio inputs to strips"""
+    def make_tab0_row2(self) -> psg.Frame:
+        """tab0 row2 represents patch asio inputs to strips"""
 
         def add_asio_checkboxes(layout, i):
             nums = list(range(99))
@@ -134,8 +161,8 @@ class Builder:
         asio_checkboxes = [inner]
         return psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
 
-    def make_tab0_row2(self) -> psg.Frame:
-        """tab0 row2 represents patch composite"""
+    def make_tab0_row3(self) -> psg.Frame:
+        """tab0 row3 represents patch composite"""
 
         def add_physical_device_opts(layout):
             outputs = get_patch_composite_list(self.vm.kind)
@@ -155,8 +182,8 @@ class Builder:
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("PATCH COMPOSITE", hardware_out)
 
-    def make_tab0_row3(self) -> psg.Frame:
-        """tab0 row3 represents patch insert"""
+    def make_tab0_row4(self) -> psg.Frame:
+        """tab0 row4 represents patch insert"""
 
         def add_insert_checkboxes(layout, i):
             if i <= self.kind.phys_in:
@@ -200,8 +227,8 @@ class Builder:
 
         return psg.Frame("PATCH INSERT", asio_checkboxes)
 
-    def make_tab0_row4(self) -> psg.Frame:
-        """tab0 row4 represents asio buffer"""
+    def make_tab0_row5(self) -> psg.Frame:
+        """tab0 row5 represents asio buffer"""
 
         samples = get_asio_samples_list()
         samples.append("Default")
@@ -218,6 +245,7 @@ class Builder:
                     )
                 ]
             ],
+            key="ASIO BUFFER FRAME",
         )
 
     def make_tab1_row(self, i) -> psg.Frame:
@@ -234,7 +262,14 @@ class Builder:
                         else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
                     )
                     for j in range(self.kind.phys_out + self.kind.virt_out)
-                ]
+                ],
+            )
+            layout.append(
+                [
+                    psg.Button("Mono", size=(6, 2), key=f"STRIP {i}||MONO"),
+                    psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
+                    psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
+                ],
             )
 
         outputs = list()
@@ -261,6 +296,22 @@ class Builder:
                     for j in range(self.kind.phys_out + self.kind.virt_out)
                 ]
             )
+            if i == self.kind.phys_in + self.kind.virt_in - 2:
+                layout.append(
+                    [
+                        psg.Button("K", size=(6, 2), key=f"STRIP {i}||MONO"),
+                        psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
+                        psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
+                    ],
+                )
+            else:
+                layout.append(
+                    [
+                        psg.Button("MC", size=(6, 2), key=f"STRIP {i}||MONO"),
+                        psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
+                        psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
+                    ],
+                )
 
         outputs = list()
         [step(outputs) for step in (add_strip_outputs,)]
@@ -274,7 +325,14 @@ class Builder:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
-            layout.append([psg.Button(f"BUSMODE", size=(12, 2), key=f"BUS {i}||MODE")])
+            layout.append(
+                [
+                    psg.Button("Mono", size=(6, 2), key=f"BUS {i}||MONO"),
+                    psg.Button("EQ", size=(6, 2), key=f"BUS {i}||EQ"),
+                    psg.Button("Mute", size=(6, 2), key=f"BUS {i}||MUTE"),
+                    psg.Button(f"BUSMODE", size=(12, 2), key=f"BUS {i}||MODE"),
+                ]
+            )
 
         outputs = list()
         [step(outputs) for step in (add_strip_outputs,)]

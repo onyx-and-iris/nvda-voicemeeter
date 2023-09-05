@@ -6,10 +6,10 @@ import PySimpleGUI as psg
 
 from .builder import Builder
 from .models import (
-    _make_bus_mode_cache,
+    _make_hardware_ins_cache,
     _make_hardware_outs_cache,
     _make_label_cache,
-    _make_output_cache,
+    _make_param_cache,
     _make_patch_asio_cache,
     _make_patch_insert_cache,
 )
@@ -18,6 +18,7 @@ from .parser import Parser
 from .util import (
     _patch_insert_channels,
     get_asio_checkbox_index,
+    get_bus_modes,
     get_channel_identifier_list,
     get_insert_checkbox_index,
     get_patch_composite_list,
@@ -39,9 +40,10 @@ class NVDAVMWindow(psg.Window):
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
         self.cache = {
+            "hw_ins": _make_hardware_ins_cache(self.vm),
             "hw_outs": _make_hardware_outs_cache(self.vm),
-            "outputs": _make_output_cache(self.vm),
-            "busmode": _make_bus_mode_cache(self.vm),
+            "strip": _make_param_cache(self.vm, "strip"),
+            "bus": _make_param_cache(self.vm, "bus"),
             "labels": _make_label_cache(self.vm),
             "asio": _make_patch_asio_cache(self.vm),
             "insert": _make_patch_insert_cache(self.vm),
@@ -52,11 +54,16 @@ class NVDAVMWindow(psg.Window):
         layout = self.builder.run()
         super().__init__(title, layout, return_keyboard_events=True, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
+        for i in range(self.kind.phys_in):
+            self[f"HARDWARE IN||{i + 1}"].Widget.config(**buttonmenu_opts)
         for i in range(self.kind.phys_out):
             self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
             self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
+        if self.kind.name != "basic":
+            self["ASIO BUFFER FRAME"].update(visible=False)
+            self["ASIO BUFFER FRAME"].hide_row()
         self.register_events()
 
     def __enter__(self):
@@ -92,23 +99,25 @@ class NVDAVMWindow(psg.Window):
 
     def on_pdirty(self):
         self.cache = {
+            "hw_ins": _make_hardware_ins_cache(self.vm),
             "hw_outs": _make_hardware_outs_cache(self.vm),
-            "outputs": _make_output_cache(self.vm),
-            "busmode": _make_bus_mode_cache(self.vm),
+            "strip": _make_param_cache(self.vm, "strip"),
+            "bus": _make_param_cache(self.vm, "bus"),
             "labels": _make_label_cache(self.vm),
             "asio": _make_patch_asio_cache(self.vm),
             "insert": _make_patch_insert_cache(self.vm),
         }
         for key, value in self.cache["labels"].items():
             self[key].update(value=value)
-        for key, value in self.cache["asio"].items():
-            identifier, i = key.split("||")
-            partial = get_channel_identifier_list(self.vm)[int(i)]
-            self[f"{identifier}||{partial}"].update(value=value)
-        for key, value in self.cache["insert"].items():
-            identifier, i = key.split("||")
-            partial = get_channel_identifier_list(self.vm)[int(i)]
-            self[f"{identifier}||{partial}"].update(value=value)
+        if self.kind.name != "basic":
+            for key, value in self.cache["asio"].items():
+                identifier, i = key.split("||")
+                partial = get_channel_identifier_list(self.vm)[int(i)]
+                self[f"{identifier}||{partial}"].update(value=value)
+            for key, value in self.cache["insert"].items():
+                identifier, i = key.split("||")
+                partial = get_channel_identifier_list(self.vm)[int(i)]
+                self[f"{identifier}||{partial}"].update(value=value)
 
     def register_events(self):
         """Registers events for widgets"""
@@ -117,6 +126,12 @@ class NVDAVMWindow(psg.Window):
         self["tabs"].bind("<FocusIn>", "||FOCUS IN")
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
         self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
+
+        # Hardware In
+        for i in range(self.vm.kind.phys_in):
+            self[f"HARDWARE IN||{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"HARDWARE IN||{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
+            self[f"HARDWARE IN||{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Hardware Out
         for i in range(self.vm.kind.phys_out):
@@ -146,7 +161,7 @@ class NVDAVMWindow(psg.Window):
                 else:
                     [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
 
-        # Strip Outputs
+        # Strip Params
         for i in range(self.kind.num_strip):
             for j in range(self.kind.phys_out):
                 self[f"STRIP {i}||A{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
@@ -154,11 +169,20 @@ class NVDAVMWindow(psg.Window):
             for j in range(self.kind.virt_out):
                 self[f"STRIP {i}||B{j + 1}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"STRIP {i}||B{j + 1}"].bind("<Return>", "||KEY ENTER")
+            if i < self.kind.phys_in:
+                for param in ("MONO", "SOLO", "MUTE"):
+                    self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
+            else:
+                for param in ("MONO", "SOLO", "MUTE"):
+                    self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
-        # Bus Modes
+        # Bus Params
         for i in range(self.kind.num_bus):
-            self[f"BUS {i}||MODE"].bind("<FocusIn>", "||FOCUS IN")
-            self[f"BUS {i}||MODE"].bind("<Return>", "||KEY ENTER")
+            for param in ("MONO", "EQ", "MUTE", "MODE"):
+                self[f"BUS {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"BUS {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
         # ASIO Buffer
         if self.kind.name != "basic":
@@ -367,6 +391,27 @@ class NVDAVMWindow(psg.Window):
                 case [["tabs"], ["FOCUS", "IN"]]:
                     self.nvda.speak(f"tab {values['tabs']}")
 
+                # Hardware In
+                case [["HARDWARE", "IN"], [key]]:
+                    selection = values[f"HARDWARE IN||{key}"]
+                    index = int(key) - 1
+                    match selection.split(":"):
+                        case [device_name]:
+                            setattr(self.vm.strip[index].device, "wdm", "")
+                            self.TKroot.after(200, self.nvda.speak, f"HARDWARE IN {key} device selection removed")
+                        case [driver, device_name]:
+                            setattr(self.vm.strip[index].device, driver, device_name.strip())
+                            phonetic = {"mme": "em em e"}
+                            self.TKroot.after(
+                                200,
+                                self.nvda.speak,
+                                f"HARDWARE IN {key} set {phonetic.get(driver, driver)} {device_name}",
+                            )
+                case [["HARDWARE", "IN"], [key], ["FOCUS", "IN"]]:
+                    self.nvda.speak(f"HARDWARE INPUT {key} {self.cache['hw_ins'][f'HARDWARE IN||{key}']}")
+                case [["HARDWARE", "IN"], [key], ["KEY", "SPACE" | "ENTER"]]:
+                    open_context_menu_for_buttonmenu(self, f"HARDWARE IN||{key}")
+
                 # Hardware out
                 case [["HARDWARE", "OUT"], [key]]:
                     selection = values[f"HARDWARE OUT||{key}"]
@@ -454,38 +499,116 @@ class NVDAVMWindow(psg.Window):
                 case [["ASIO", "BUFFER"], ["KEY", "SPACE" | "ENTER"]]:
                     open_context_menu_for_buttonmenu(self, "ASIO BUFFER")
 
-                # Strip outputs
-                case [["STRIP", index], [output]]:
-                    val = not self.cache["outputs"][f"STRIP {index}||{output}"]
-                    setattr(self.vm.strip[int(index)], output, val)
-                    self.cache["outputs"][f"STRIP {index}||{output}"] = val
-                    self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
-                case [["STRIP", index], [output], ["FOCUS", "IN"]]:
-                    val = self.cache["outputs"][f"STRIP {index}||{output}"]
+                # Strip Params
+                case [["STRIP", index], [param]]:
                     label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    self.nvda.speak(f"{label} {output} {'on' if val else 'off'}")
-                case [["STRIP", index], [output], ["KEY", "ENTER"]]:
+                    match param:
+                        case "MONO":
+                            if int(index) < self.kind.phys_in:
+                                actual = param.lower()
+                            elif int(index) == self.kind.phys_in + self.kind.virt_in - 2:
+                                actual = "k"
+                            else:
+                                actual = "mc"
+                            phonetic = {"k": "karaoke"}
+                            if actual == "k":
+                                next_val = self.vm.strip[int(index)].k + 1
+                                if next_val == 4:
+                                    next_val = 0
+                                setattr(self.vm.strip[int(index)], actual, next_val)
+                                self.cache["strip"][f"STRIP {index}||{param}"] = next_val
+                                self.nvda.speak(
+                                    f"{label} {phonetic.get(actual, actual)} {['off', 'k m', 'k 1', 'k 2'][next_val]}"
+                                )
+                            else:
+                                val = not self.cache["strip"][f"STRIP {index}||{param}"]
+                                setattr(self.vm.strip[int(index)], actual, val)
+                                self.cache["strip"][f"STRIP {index}||{param}"] = val
+                                self.nvda.speak(f"{label} {phonetic.get(actual, actual)} {'on' if val else 'off'}")
+                        case _:
+                            val = not self.cache["strip"][f"STRIP {index}||{param}"]
+                            setattr(self.vm.strip[int(index)], param if param[0] in ("A", "B") else param.lower(), val)
+                            self.cache["strip"][f"STRIP {index}||{param}"] = val
+                            self.nvda.speak(f"{label} {param} {'on' if val else 'off'}")
+                case [["STRIP", index], [param], ["FOCUS", "IN"]]:
+                    val = self.cache["strip"][f"STRIP {index}||{param}"]
+                    match param:
+                        case "MONO":
+                            if int(index) < self.kind.phys_in:
+                                actual = param.lower()
+                            elif int(index) == self.kind.phys_in + self.kind.virt_in - 2:
+                                actual = "k"
+                            else:
+                                actual = "mc"
+                        case _:
+                            actual = param
+                    phonetic = {"k": "karaoke"}
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                    if actual == "k":
+                        self.nvda.speak(
+                            f"{label} {phonetic.get(actual, actual)} {['off', 'k m', 'k 1', 'k 2'][self.cache['strip'][f'STRIP {int(index)}||{param}']]}"
+                        )
+                    else:
+                        self.nvda.speak(f"{label} {phonetic.get(actual, actual)} {'on' if val else 'off'}")
+                case [["STRIP", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
-                # Bus modes
-                case [["BUS", index], ["MODE"]]:
-                    val = self.cache["busmode"][event]
-                    if val != "normal":
-                        self.vm.bus[int(index)].mode.normal = True
-                        self.cache["busmode"][event] = "normal"
+                # Bus Params
+                case [["BUS", index], [param]]:
+                    val = self.cache["bus"][event]
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
+                    match param:
+                        case "EQ":
+                            val = not val
+                            self.vm.bus[int(index)].eq.on = val
+                            self.cache["bus"][event] = val
+                            self.TKroot.after(
+                                200,
+                                self.nvda.speak,
+                                f"{label} bus {param} {'on' if val else 'off'}",
+                            )
+                        case "MONO" | "MUTE":
+                            val = not val
+                            setattr(self.vm.bus[int(index)], param.lower(), val)
+                            self.cache["bus"][event] = val
+                            self.TKroot.after(
+                                200,
+                                self.nvda.speak,
+                                f"{label} bus {param} {'on' if val else 'off'}",
+                            )
+                        case "MODE":
+                            bus_modes = get_bus_modes()
+                            next_index = bus_modes.index(val) + 1
+                            if next_index == len(bus_modes):
+                                next_index = 0
+                            next_bus = bus_modes[next_index]
+                            phonetic = {
+                                "amix": "Mix Down A",
+                                "bmix": "Mix Down B",
+                                "repeat": "Stereo Repeat",
+                                "tvmix": "Up Mix TV",
+                                "upmix21": "Up Mix 2.1",
+                                "upmix41": "Up Mix 4.1",
+                                "upmix61": "Up Mix 6.1",
+                                "centeronly": "Center Only",
+                                "lfeonly": "Low Frequency Effect Only",
+                                "rearonly": "Rear Only",
+                            }
+                            setattr(self.vm.bus[int(index)].mode, next_bus, True)
+                            self.cache["bus"][event] = next_bus
+                            self.TKroot.after(
+                                200,
+                                self.nvda.speak,
+                                f"{label} bus mode {phonetic.get(next_bus, next_bus)}",
+                            )
+                case [["BUS", index], [param], ["FOCUS", "IN"]]:
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
+                    val = self.cache["bus"][f"BUS {index}||{param}"]
+                    if param == "MODE":
+                        self.nvda.speak(f"{label} bus {param} {val}")
                     else:
-                        self.vm.bus[int(index)].mode.composite = True
-                        self.cache["busmode"][event] = "composite"
-                    label = self.cache["labels"][f"BUS {index}||LABEL"]
-                    self.TKroot.after(
-                        200,
-                        self.nvda.speak,
-                        f"{label} bus mode {self.cache['busmode'][event]}",
-                    )
-                case [["BUS", index], ["MODE"], ["FOCUS", "IN"]]:
-                    label = self.cache["labels"][f"BUS {index}||LABEL"]
-                    self.nvda.speak(f"{label} bus mode {self.cache['busmode'][f'BUS {index}||MODE']}")
-                case [["BUS", index], ["MODE"], ["KEY", "ENTER"]]:
+                        self.nvda.speak(f"{label} bus {param} {'on' if val else 'off'}")
+                case [["BUS", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
                 # Unknown

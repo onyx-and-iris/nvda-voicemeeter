@@ -14,6 +14,10 @@ def get_insert_checkbox_index(kind, channel, num) -> int:
 
 
 def get_input_device_list(vm) -> list:
+    return ["{type}: {name}".format(**vm.device.input(i)) for i in range(vm.device.ins)]
+
+
+def get_output_device_list(vm) -> list:
     return ["{type}: {name}".format(**vm.device.output(i)) for i in range(vm.device.outs)]
 
 
@@ -88,3 +92,20 @@ def get_channel_identifier_list(vm) -> list:
         for j in range(8):
             identifiers.append(f"IN{i + 1} {j}")
     return identifiers
+
+
+def get_bus_modes() -> list:
+    return [
+        "normal",
+        "amix",
+        "bmix",
+        "repeat",
+        "composite",
+        "tvmix",
+        "upmix21",
+        "upmix41",
+        "upmix61",
+        "centeronly",
+        "lfeonly",
+        "rearonly",
+    ]
