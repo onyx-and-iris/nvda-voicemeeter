@@ -5,12 +5,20 @@ from pathlib import Path
 import PySimpleGUI as psg
 
 from .builder import Builder
-from .models import _make_bus_mode_cache, _make_label_cache, _make_output_cache
+from .models import (
+    _make_bus_mode_cache,
+    _make_hardware_outs_cache,
+    _make_label_cache,
+    _make_output_cache,
+    _make_patch_asio_cache,
+    _make_patch_insert_cache,
+)
 from .nvda import Nvda
 from .parser import Parser
 from .util import (
     _patch_insert_channels,
     get_asio_checkbox_index,
+    get_channel_identifier_list,
     get_insert_checkbox_index,
     get_patch_composite_list,
     open_context_menu_for_buttonmenu,
@@ -34,6 +42,8 @@ class NVDAVMWindow(psg.Window):
             "outputs": _make_output_cache(self.vm),
             "busmode": _make_bus_mode_cache(self.vm),
             "labels": _make_label_cache(self.vm),
+            "asio": _make_patch_asio_cache(self.vm),
+            "insert": _make_patch_insert_cache(self.vm),
         }
         self.nvda = Nvda()
         self.parser = Parser()
@@ -49,27 +59,55 @@ class NVDAVMWindow(psg.Window):
         self.register_events()
 
     def __enter__(self):
-        default_config = Path.cwd() / self.SETTINGS
-        if default_config.exists():
+        settings_path = Path.cwd() / self.SETTINGS
+        if settings_path.exists():
             try:
-                with open(default_config, "r") as f:
+                with open(settings_path, "r") as f:
                     data = json.load(f)
-                configpath = Path(data["default_config"])
-                if configpath.exists():
-                    self.vm.set("command.load", str(configpath))
-                    self.logger.debug(f"config {configpath} loaded")
+                defaultconfig = Path(data["default_config"])
+                if defaultconfig.exists():
+                    self.vm.set("command.load", str(defaultconfig))
+                    self.logger.debug(f"config {defaultconfig} loaded")
                     self.TKroot.after(
                         200,
                         self.nvda.speak,
-                        f"config {configpath.stem} has been loaded",
+                        f"config {defaultconfig.stem} has been loaded",
                     )
             except json.JSONDecodeError:
                 self.logger.debug("no data in settings.json. silently continuing...")
 
+        self.vm.init_thread()
+        self.vm.observer.add(self.on_pdirty)
+        self.TKroot.after(1000, self.enable_parameter_updates)
+
         return self
 
+    def enable_parameter_updates(self):
+        self.vm.event.pdirty = True
+
     def __exit__(self, exc_type, exc_value, traceback):
+        self.vm.end_thread()
         self.close()
+
+    def on_pdirty(self):
+        self.cache = {
+            "outputs": _make_output_cache(self.vm),
+            "busmode": _make_bus_mode_cache(self.vm),
+            "labels": _make_label_cache(self.vm),
+            "asio": _make_patch_asio_cache(self.vm),
+            "insert": _make_patch_insert_cache(self.vm),
+        }
+        for key, value in self.cache["labels"].items():
+            self[key].update(value=value)
+        for key, value in self.cache["asio"].items():
+            identifier, i = key.split("||")
+            in_num = int(int(i) / 2) + 1
+            channel = int(i) % 2
+            self[f"{identifier}||IN{in_num} {channel}"].update(value=value)
+        for key, value in self.cache["insert"].items():
+            identifier, i = key.split("||")
+            partial = get_channel_identifier_list(self.vm)[int(i)]
+            self[f"{identifier}||{partial}"].update(value=value)
 
     def register_events(self):
         """Registers events for widgets"""
@@ -244,20 +282,28 @@ class NVDAVMWindow(psg.Window):
                     tab = values["tabs"]
                     if tab in ("Physical Strip", "Virtual Strip", "Buses"):
                         data = self.popup_rename("Label", title=f"Rename {tab}", tab=tab)
-                        if not data:
+                        if not data:  # cancel was pressed
                             continue
                         index = int(data["Index"]) - 1
                         match tab:
-                            case "Physical Strip" | "Virtual Strip":
-                                label = data.get("Edit") or self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
+                            case "Physical Strip":
+                                label = data.get("Edit") or f"Hardware Input {index + 1}"
                                 self.vm.strip[index].label = label
                                 self[f"STRIP {index}||LABEL"].update(value=label)
-                                self.cache["labels"]["strip"][f"STRIP {index}||LABEL"] = label
+                                self.cache["labels"][f"STRIP {index}||LABEL"] = label
+                            case "Virtual Strip":
+                                label = data.get("Edit") or f"Virtual Input {index + 1}"
+                                self.vm.strip[index].label = label
+                                self[f"STRIP {index}||LABEL"].update(value=label)
+                                self.cache["labels"][f"STRIP {index}||LABEL"] = label
                             case "Buses":
-                                label = data.get("Edit") or self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
+                                if index < self.kind.phys_out:
+                                    label = data.get("Edit") or f"Physical Bus {index + 1}"
+                                else:
+                                    label = data.get("Edit") or f"Virtual Bus {index - self.kind.phys_out + 1}"
                                 self.vm.bus[index].label = label
                                 self[f"BUS {index}||LABEL"].update(value=label)
-                                self.cache["labels"]["bus"][f"BUS {index}||LABEL"] = label
+                                self.cache["labels"][f"BUS {index}||LABEL"] = label
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:
@@ -418,7 +464,7 @@ class NVDAVMWindow(psg.Window):
                     self.nvda.speak(f"STRIP {index} {output} {label if label else ''} {'on' if val else 'off'}")
                 case [["STRIP", index], [output], ["FOCUS", "IN"]]:
                     val = self.cache["outputs"][f"STRIP {index}||{output}"]
-                    label = self.cache["labels"]["strip"][f"STRIP {index}||LABEL"]
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
                     self.nvda.speak(f"{label} {output} {'on' if val else 'off'}")
                 case [["STRIP", index], [output], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
@@ -432,14 +478,14 @@ class NVDAVMWindow(psg.Window):
                     else:
                         self.vm.bus[int(index)].mode.composite = True
                         self.cache["busmode"][event] = "composite"
-                    label = self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
                     self.TKroot.after(
                         200,
                         self.nvda.speak,
                         f"{label} bus mode {self.cache['busmode'][event]}",
                     )
                 case [["BUS", index], ["MODE"], ["FOCUS", "IN"]]:
-                    label = self.cache["labels"]["bus"][f"BUS {index}||LABEL"]
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
                     self.nvda.speak(f"{label} bus mode {self.cache['busmode'][f'BUS {index}||MODE']}")
                 case [["BUS", index], ["MODE"], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()

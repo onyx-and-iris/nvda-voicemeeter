@@ -106,7 +106,7 @@ class Builder:
                 [
                     psg.Spin(
                         nums,
-                        initial_value=self.vm.patch.asio[get_asio_checkbox_index(0, i)].get(),
+                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{get_asio_checkbox_index(0, i)}"],
                         size=2,
                         enable_events=True,
                         key=f"ASIO CHECKBOX||IN{i} 0",
@@ -117,7 +117,7 @@ class Builder:
                 [
                     psg.Spin(
                         nums,
-                        initial_value=self.vm.patch.asio[get_asio_checkbox_index(1, i)].get(),
+                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{get_asio_checkbox_index(1, i)}"],
                         size=2,
                         enable_events=True,
                         key=f"ASIO CHECKBOX||IN{i} 1",
@@ -239,7 +239,7 @@ class Builder:
 
         outputs = list()
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.window.cache["labels"]["strip"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
+        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
 
     def make_tab1_rows(self) -> psg.Frame:
         layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_in)]
@@ -264,22 +264,22 @@ class Builder:
 
         outputs = list()
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.window.cache["labels"]["strip"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
+        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
 
     def make_tab2_rows(self) -> psg.Frame:
         layout = [[self.make_tab2_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)]
         return psg.Frame(None, layout, border_width=0)
 
-    def make_tab3_row(self, i):
+    def make_tab3_row(self, i) -> psg.Frame:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
             layout.append([psg.Button(f"BUSMODE", size=(12, 2), key=f"BUS {i}||MODE")])
 
-        buses = list()
-        [step(buses) for step in (add_strip_outputs,)]
-        return psg.Frame(self.window.cache["labels"]["bus"][f"BUS {i}||LABEL"], buses)
+        outputs = list()
+        [step(outputs) for step in (add_strip_outputs,)]
+        return psg.Frame(self.window.cache["labels"][f"BUS {i}||LABEL"], outputs, key=f"BUS {i}||LABEL")
 
-    def make_tab3_rows(self):
+    def make_tab3_rows(self) -> psg.Frame:
         layout = [[self.make_tab3_row(i)] for i in range(self.kind.num_bus)]
         return psg.Frame(None, layout, border_width=0)

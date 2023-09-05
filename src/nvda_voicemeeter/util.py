@@ -77,3 +77,14 @@ def open_context_menu_for_buttonmenu(window, identifier) -> None:
     x = widget.winfo_rootx()
     y = widget.winfo_rooty() + widget.winfo_height()
     element.TKMenu.post(x, y)
+
+
+def get_channel_identifier_list(vm) -> list:
+    identifiers = []
+    for i in range(vm.kind.phys_in):
+        for j in range(2):
+            identifiers.append(f"IN{i + 1} {j}")
+    for i in range(vm.kind.phys_in, vm.kind.phys_in + vm.kind.virt_in):
+        for j in range(8):
+            identifiers.append(f"IN{i + 1} {j}")
+    return identifiers
