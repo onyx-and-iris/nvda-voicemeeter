@@ -101,9 +101,8 @@ class NVDAVMWindow(psg.Window):
             self[key].update(value=value)
         for key, value in self.cache["asio"].items():
             identifier, i = key.split("||")
-            in_num = int(int(i) / 2) + 1
-            channel = int(i) % 2
-            self[f"{identifier}||IN{in_num} {channel}"].update(value=value)
+            partial = get_channel_identifier_list(self.vm)[int(i)]
+            self[f"{identifier}||{partial}"].update(value=value)
         for key, value in self.cache["insert"].items():
             identifier, i = key.split("||")
             partial = get_channel_identifier_list(self.vm)[int(i)]
