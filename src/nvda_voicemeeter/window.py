@@ -185,8 +185,11 @@ class NVDAVMWindow(psg.Window):
                     self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
         # Bus Params
+        params = ["MONO", "EQ", "MUTE", "MODE"]
+        if self.vm.kind.name == "basic":
+            params.remove("EQ")
         for i in range(self.kind.num_bus):
-            for param in ("MONO", "EQ", "MUTE", "MODE"):
+            for param in params:
                 self[f"BUS {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"BUS {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
@@ -583,7 +586,7 @@ class NVDAVMWindow(psg.Window):
                                 f"{label} bus {param} {'on' if val else 'off'}",
                             )
                         case "MODE":
-                            bus_modes = get_bus_modes()
+                            bus_modes = get_bus_modes(self.vm)
                             next_index = bus_modes.index(val) + 1
                             if next_index == len(bus_modes):
                                 next_index = 0
