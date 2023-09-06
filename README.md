@@ -4,7 +4,7 @@
 
 # NVDA Voicemeeter
 
-A remote control app designed to be used with the [NVDA screen reader][nvda].
+A remote control app for [Voicemeeter][voicemeeter], designed to be used with the [NVDA screen reader][nvda].
 
 This is still an early release but it should be usable.
 
@@ -54,6 +54,7 @@ The `Save Settings` option opens a popup window with two buttons, `Browse` and `
 
 If you have any questions/suggestions feel free to raise an issue or open a new discussion.
 
+[voicemeeter]: https://voicemeeter.com/
 [nvda]: https://www.nvaccess.org/
 [controller_client]: https://github.com/nvaccess/nvda/tree/master/extras/controllerClient
 [releases]: https://github.com/onyx-and-iris/nvda-voicemeeter/releases
