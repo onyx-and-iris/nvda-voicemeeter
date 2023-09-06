@@ -94,7 +94,14 @@ def get_channel_identifier_list(vm) -> list:
     return identifiers
 
 
-def get_bus_modes() -> list:
+def get_bus_modes(vm) -> list:
+    if vm.kind.name == "basic":
+        return [
+            "normal",
+            "amix",
+            "repeat",
+            "composite",
+        ]
     return [
         "normal",
         "amix",
