@@ -506,7 +506,7 @@ class NVDAVMWindow(psg.Window):
                         case "MONO":
                             if int(index) < self.kind.phys_in:
                                 actual = param.lower()
-                            elif int(index) == self.kind.phys_in + self.kind.virt_in - 2:
+                            elif int(index) == self.kind.phys_in + 1:
                                 actual = "k"
                             else:
                                 actual = "mc"
@@ -536,7 +536,7 @@ class NVDAVMWindow(psg.Window):
                         case "MONO":
                             if int(index) < self.kind.phys_in:
                                 actual = param.lower()
-                            elif int(index) == self.kind.phys_in + self.kind.virt_in - 2:
+                            elif int(index) == self.kind.phys_in + 1:
                                 actual = "k"
                             else:
                                 actual = "mc"

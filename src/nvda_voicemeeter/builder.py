@@ -296,7 +296,7 @@ class Builder:
                     for j in range(self.kind.phys_out + self.kind.virt_out)
                 ]
             )
-            if i == self.kind.phys_in + self.kind.virt_in - 2:
+            if i == self.kind.phys_in + 1:
                 layout.append(
                     [
                         psg.Button("K", size=(6, 2), key=f"STRIP {i}||MONO"),
