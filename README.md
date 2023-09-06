@@ -8,24 +8,53 @@ A remote control app for [Voicemeeter][voicemeeter], designed to be used with th
 
 This is still an early release but it should be usable.
 
+<img src="./img/settings.png" width=350 alt="Image of Voicemeeter NVDA app settings tab">
+
 ## Requirements
 
 - [NVDA screen reader][nvda]
 - [NVDA's Controller Client files][controller_client]
 - Python 3.10 or greater
 
-### Run
+### Installation
 
-To run this project from source you'll need to first download the [Controller Client][controller_client] and place the files into the directory `controllerClient`. For more information check the documentation linked.
+First clone the source files from this repository
 
-You should be able to then run the example `\__main__.py`. Adjust the KIND_ID value to whichever version of Voicemeeter you use.
+`git clone https://github.com/onyx-and-iris/nvda-voicemeeter.git`
+
+Then download the [Controller Client][controller_client] and place the files into the directory `controllerClient`.
 
 If you want to get started quickly and easily I have uploaded some compiled versions of the app in the [Releases][releases] section.
 
+### Run
+
+Once the repository is downloaded and the controller client files in place you can launch the GUI with the following `__main__.py`:
+
+```python
+import voicemeeterlib
+
+import nvda_voicemeeter
+
+KIND_ID = "potato"
+
+with voicemeeterlib.api(KIND_ID, sync=True) as vm:
+    with nvda_voicemeeter.draw(KIND_ID, vm) as window:
+        window.run()
+```
+
+### `KIND_ID`
+
+May be one of the following:
+
+- `basic`
+- `banana`
+- `potato`
+
 ### Use
 
-The app presents four tabs `Settings`, `Physical Strip`, `Virtual Strip` and `Buses`. Navigate between the tabs with `Control + TAB`.
-All controls in the app can be navigated between using `TAB`.
+The app presents four tabs `Settings`, `Physical Strip`, `Virtual Strip` and `Buses`. Navigate between the tabs with `Control + TAB` and `Control + SHIFT + TAB`.
+
+All controls within the tabs may be navigated between using `TAB`.
 
 The following controls offer context menus accessed by pressing `SPACE` or `ENTER`:
 
@@ -48,6 +77,7 @@ A single menu item `Voicemeeter` can be opened using `Alt` and then `v`. The men
 - Set a config to load automatically on app startup.
 
 The `Save Settings` option opens a popup window with two buttons, `Browse` and `Cancel`. Browse opens a Save As dialog, Cancel returns to the main app window.
+
 `Load Settings` and `Load on Startup` both open an Open dialog box immediately.
 
 ### Issues
