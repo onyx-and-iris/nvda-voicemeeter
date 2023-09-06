@@ -1,18 +1,20 @@
 [project]
 name = "nvda_voicemeeter"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Voicemeeter app compatible with NVDA"
 authors = [
-    {name = "onyx-and-iris", email = "code@onyxandiris.online"},
+    { name = "onyx-and-iris", email = "code@onyxandiris.online" },
 ]
 dependencies = [
     "pysimplegui>=4.60.5",
     "pyparsing>=3.1.1",
-    "voicemeeter-api>=2.4.8",
+    "voicemeeter-api>=2.4.9",
 ]
 requires-python = ">=3.10,<3.11"
 readme = "README.md"
-license = {text = "MIT"}
+
+[project.license]
+text = "MIT"
 
 [tool.pdm.dev-dependencies]
 build = [
@@ -26,5 +28,5 @@ test = [
     "psgdemos>=1.12.1",
 ]
 
-[tool.pdm.scripts]
-build = {shell = "build.ps1"}
+[tool.pdm.scripts.build]
+shell = "build.ps1"

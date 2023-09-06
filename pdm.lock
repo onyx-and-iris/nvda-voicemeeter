@@ -6,7 +6,7 @@ groups = ["default", "build", "lint", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:2aaf88f0abb701968bc22eb31fd189810850a505bb93553f67216e4d1d259750"
+content_hash = "sha256:9051151ac4ac0edefdfaf52faa91dbff89d8bbc942a6ffa61b6ec6fee502aa8a"
 
 [[package]]
 name = "altgraph"
@@ -271,13 +271,13 @@ files = [
 
 [[package]]
 name = "voicemeeter-api"
-version = "2.4.8"
+version = "2.4.9"
 requires_python = ">=3.10,<4.0"
 summary = "A Python wrapper for the Voiceemeter API"
 dependencies = [
     "tomli<3.0.0,>=2.0.1; python_version < \"3.11\"",
 ]
 files = [
-    {file = "voicemeeter_api-2.4.8-py3-none-any.whl", hash = "sha256:a3ff9e6f7516d2adedde93f6976526b385d8ae6d86598bfe541a44f498f42ea6"},
-    {file = "voicemeeter_api-2.4.8.tar.gz", hash = "sha256:0d37a9f2af0f68087aa9c76a8cfb2ba44c6b75bb344e8dfa9fd18ad2c862730c"},
+    {file = "voicemeeter_api-2.4.9-py3-none-any.whl", hash = "sha256:a09fd07fe3799cd5c880d491048da81d94e49aa97ec753aa1f9289acd27be965"},
+    {file = "voicemeeter_api-2.4.9.tar.gz", hash = "sha256:47ad614a8b9ccb0b4e47acf65666ce0f0537a0890fffda9949e995bea70e679c"},
 ]

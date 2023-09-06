@@ -58,6 +58,8 @@ class NVDAVMWindow(psg.Window):
             self[f"HARDWARE IN||{i + 1}"].Widget.config(**buttonmenu_opts)
         for i in range(self.kind.phys_out):
             self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts)
+        if self.kind.name == "basic":
+            self[f"HARDWARE OUT||A2"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
             self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
@@ -138,6 +140,10 @@ class NVDAVMWindow(psg.Window):
             self[f"HARDWARE OUT||A{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
             self[f"HARDWARE OUT||A{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
             self[f"HARDWARE OUT||A{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
+        if self.vm.kind.name == "basic":
+            self[f"HARDWARE OUT||A2"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"HARDWARE OUT||A2"].bind("<space>", "||KEY SPACE", propagate=False)
+            self[f"HARDWARE OUT||A2"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Patch ASIO
         if self.kind.name != "basic":
