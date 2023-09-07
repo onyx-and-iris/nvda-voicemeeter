@@ -42,7 +42,7 @@ with voicemeeterlib.api(KIND_ID, sync=True) as vm:
         window.run()
 ```
 
-### `KIND_ID`
+### KIND_ID
 
 May be one of the following:
 
@@ -83,6 +83,16 @@ The `Save Settings` option opens a popup window with two buttons, `Browse` and `
 ### Issues
 
 If you have any questions/suggestions feel free to raise an issue or open a new discussion.
+
+### Special Thanks
+
+[Mario Loreti](https://www.marioloreti.net/en/) for his help in testing and offering feedback during development.
+
+[NVAccess](https://www.nvaccess.org/) for creating the open source NVDA screen reader and its controller client.
+
+[Vincent Burel](https://github.com/vburel2018) for creating Voicemeeter and its SDK.
+
+[PySimpleGUI](https://github.com/PySimpleGUI) team for creating an awesome GUI framework.
 
 [voicemeeter]: https://voicemeeter.com/
 [nvda]: https://www.nvaccess.org/
