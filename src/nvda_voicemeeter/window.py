@@ -237,9 +237,9 @@ class NVDAVMWindow(psg.Window):
 
     def popup_rename(self, message, title=None, tab=None):
         if tab == "Physical Strip":
-            upper = self.kind.phys_out + 1
+            upper = self.kind.phys_in + 1
         elif tab == "Virtual Strip":
-            upper = self.kind.virt_out + 1
+            upper = self.kind.virt_in + 1
         elif tab == "Buses":
             upper = self.kind.num_bus + 1
 
@@ -323,6 +323,7 @@ class NVDAVMWindow(psg.Window):
                                 self[f"STRIP {index}||LABEL"].update(value=label)
                                 self.cache["labels"][f"STRIP {index}||LABEL"] = label
                             case "Virtual Strip":
+                                index += self.kind.phys_in
                                 label = data.get("Edit") or f"Virtual Input {index + 1}"
                                 self.vm.strip[index].label = label
                                 self[f"STRIP {index}||LABEL"].update(value=label)
