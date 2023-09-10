@@ -324,7 +324,7 @@ class NVDAVMWindow(psg.Window):
                                 self.cache["labels"][f"STRIP {index}||LABEL"] = label
                             case "Virtual Strip":
                                 index += self.kind.phys_in
-                                label = data.get("Edit") or f"Virtual Input {index + 1}"
+                                label = data.get("Edit") or f"Virtual Input {index - self.kind.phys_in + 1}"
                                 self.vm.strip[index].label = label
                                 self[f"STRIP {index}||LABEL"].update(value=label)
                                 self.cache["labels"][f"STRIP {index}||LABEL"] = label
