@@ -17,8 +17,12 @@ def get_input_device_list(vm) -> list:
     return ["{type}: {name}".format(**vm.device.input(i)) for i in range(vm.device.ins)]
 
 
-def get_output_device_list(vm) -> list:
-    return ["{type}: {name}".format(**vm.device.output(i)) for i in range(vm.device.outs)]
+def get_output_device_list(i, vm) -> list:
+    devices = ["{type}: {name}".format(**vm.device.output(j)) for j in range(vm.device.outs)]
+    if i == 0:
+        return devices
+    devices.append("- remove device selection -")
+    return [device for device in devices if not device.startswith("asio")]
 
 
 def get_patch_composite_list(kind) -> list:
