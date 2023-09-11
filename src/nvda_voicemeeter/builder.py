@@ -228,24 +228,20 @@ class Builder:
         return psg.Frame("PATCH INSERT", asio_checkboxes)
 
     def make_tab0_row5(self) -> psg.Frame:
-        """tab0 row5 represents asio buffer"""
-
-        samples = get_asio_samples_list()
-        samples.append("Default")
+        """tab0 row5 represents advanced settings"""
 
         return psg.Frame(
-            "ASIO BUFFER",
+            "ADVANCED SETTINGS",
             [
                 [
-                    psg.ButtonMenu(
-                        "ASIO BUFFER",
-                        size=(14, 2),
-                        menu_def=["", samples],
-                        key="ASIO BUFFER",
+                    psg.Button(
+                        "ADVANCED SETTINGS",
+                        size=(20, 2),
+                        key="ADVANCED SETTINGS",
                     )
-                ]
+                ],
             ],
-            key="ASIO BUFFER FRAME",
+            key="ADVANCED SETTINGS FRAME",
         )
 
     def make_tab1_row(self, i) -> psg.Frame:

@@ -18,6 +18,7 @@ from .parser import Parser
 from .util import (
     _patch_insert_channels,
     get_asio_checkbox_index,
+    get_asio_samples_list,
     get_bus_modes,
     get_channel_identifier_list,
     get_insert_checkbox_index,
@@ -62,10 +63,7 @@ class NVDAVMWindow(psg.Window):
             self[f"HARDWARE OUT||A2"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
-            self["ASIO BUFFER"].Widget.config(**buttonmenu_opts)
-        if self.kind.name != "basic":
-            self["ASIO BUFFER FRAME"].update(visible=False)
-            self["ASIO BUFFER FRAME"].hide_row()
+
         self.register_events()
 
     def __enter__(self):
@@ -128,6 +126,7 @@ class NVDAVMWindow(psg.Window):
         self["tabs"].bind("<FocusIn>", "||FOCUS IN")
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
         self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
+        self.bind("<Control-a>", "CTRL-A")
 
         # Hardware In
         for i in range(self.vm.kind.phys_in):
@@ -167,6 +166,10 @@ class NVDAVMWindow(psg.Window):
                 else:
                     [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
 
+        # Advanced Settings
+        if self.kind.name != "basic":
+            self["ADVANCED SETTINGS"].bind("<Return>", "||KEY ENTER")
+
         # Strip Params
         for i in range(self.kind.num_strip):
             for j in range(self.kind.phys_out):
@@ -193,12 +196,6 @@ class NVDAVMWindow(psg.Window):
                 self[f"BUS {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"BUS {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
-        # ASIO Buffer
-        if self.kind.name != "basic":
-            self["ASIO BUFFER"].bind("<FocusIn>", "||FOCUS IN")
-            self["ASIO BUFFER"].bind("<space>", "||KEY SPACE", propagate=False)
-            self["ASIO BUFFER"].bind("<Return>", "||KEY ENTER", propagate=False)
-
     def popup_save_as(self, message, title=None, initial_folder=None):
         layout = [
             [psg.Text(message)],
@@ -219,18 +216,15 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
-            elif event.endswith("||FOCUS IN"):
-                if values["Browse"]:
-                    filepath = values["Browse"]
-                    break
-                label = event.split("||")[0]
-                self.TKroot.after(
-                    200 if label == "Edit" else 1,
-                    self.nvda.speak,
-                    label,
-                )
-            elif event.endswith("||KEY ENTER"):
-                window.find_element_with_focus().click()
+            match parsed_cmd := self.parser.match.parseString(event):
+                case [[button], ["FOCUS", "IN"]]:
+                    if values["Browse"]:
+                        filepath = values["Browse"]
+                        break
+                    self.nvda.speak(button)
+                case [[button], ["KEY", "ENTER"]]:
+                    window.find_element_with_focus().click()
+            self.logger.debug(f"parsed::{parsed_cmd}")
         window.close()
         if filepath:
             return Path(filepath)
@@ -269,23 +263,78 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
-            elif event.endswith("||KEY ENTER"):
-                window.find_element_with_focus().click()
-            elif event == "Index":
-                val = values["Index"]
-                self.nvda.speak(f"Index {val}")
-            elif event.endswith("||FOCUS IN"):
-                if event.startswith("Index"):
+            match parsed_cmd := self.parser.match.parseString(event):
+                case ["Index"]:
                     val = values["Index"]
                     self.nvda.speak(f"Index {val}")
-                else:
-                    self.nvda.speak(event.split("||")[0])
-            elif event == "Ok":
-                data = values
-                break
-
+                case [[button], ["FOCUS", "IN"]]:
+                    if button == "Index":
+                        val = values["Index"]
+                        self.nvda.speak(f"Index {val}")
+                    else:
+                        self.nvda.speak(button)
+                case [[button], ["KEY", "ENTER"]]:
+                    window.find_element_with_focus().click()
+                case ["Ok"]:
+                    data = values
+                    break
+            self.logger.debug(f"parsed::{parsed_cmd}")
         window.close()
         return data
+
+    def popup_advanced_settings(self, title):
+        def _make_buffering_frame() -> psg.Frame:
+            buffer = [
+                [
+                    psg.ButtonMenu(
+                        driver,
+                        size=(14, 2),
+                        menu_def=["", get_asio_samples_list(driver)],
+                        key=f"BUFFER {driver}",
+                    )
+                    for driver in ("MME", "WDM", "KS", "ASIO")
+                ],
+            ]
+            return psg.Frame("BUFFERING", buffer)
+
+        buffer_frame = _make_buffering_frame()
+        layout = [[buffer_frame], [psg.Button("Exit")]]
+
+        window = psg.Window(title, layout, finalize=True)
+        buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
+        for driver in ("MME", "WDM", "KS", "ASIO"):
+            window[f"BUFFER {driver}"].Widget.config(**buttonmenu_opts)
+            window[f"BUFFER {driver}"].bind("<FocusIn>", "||FOCUS IN")
+            window[f"BUFFER {driver}"].bind("<space>", "||KEY SPACE", propagate=False)
+            window[f"BUFFER {driver}"].bind("<Return>", "||KEY ENTER", propagate=False)
+        window["Exit"].bind("<FocusIn>", "||FOCUS IN")
+        window["Exit"].bind("<Return>", "||KEY ENTER")
+        while True:
+            event, values = window.read()
+            self.logger.debug(f"event::{event}")
+            self.logger.debug(f"values::{values}")
+            if event in (psg.WIN_CLOSED, "Exit"):
+                break
+            match parsed_cmd := self.parser.match.parseString(event):
+                case ["BUFFER MME" | "BUFFER WDM" | "BUFFER KS" | "BUFFER ASIO"]:
+                    if values[event] == "Default":
+                        val = 0
+                    else:
+                        val = int(values[event])
+                    driver = event.split()[1]
+                    self.vm.set(f"option.buffer.{driver.lower()}", val)
+                    self.TKroot.after(200, self.nvda.speak, f"{driver} BUFFER {val if val else 'default'}")
+                case [["BUFFER", driver], ["FOCUS", "IN"]]:
+                    val = int(self.vm.get(f"option.buffer.{driver.lower()}"))
+                    self.nvda.speak(f"{driver} BUFFER {val if val else 'default'}")
+                case [["BUFFER", driver], ["KEY", "SPACE" | "ENTER"]]:
+                    open_context_menu_for_buttonmenu(window, f"BUFFER {driver}")
+                case [[button], ["FOCUS", "IN"]]:
+                    self.nvda.speak(button)
+                case [[button], ["KEY", "ENTER"]]:
+                    window.find_element_with_focus().click()
+            self.logger.debug(f"parsed::{parsed_cmd}")
+        window.close()
 
     def run(self):
         """
@@ -495,19 +544,11 @@ class NVDAVMWindow(psg.Window):
                     num = int(in_num[-1])
                     self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
 
-                # ASIO Buffer
-                case ["ASIO BUFFER"]:
-                    if values[event] == "Default":
-                        val = 0
-                    else:
-                        val = values[event]
-                    self.vm.option.buffer("asio", val)
-                    self.TKroot.after(200, self.nvda.speak, f"ASIO BUFFER {val if val else 'default'}")
-                case [["ASIO", "BUFFER"], ["FOCUS", "IN"]]:
-                    val = int(self.vm.get("option.buffer.asio"))
-                    self.nvda.speak(f"ASIO BUFFER {val if val else 'default'}")
-                case [["ASIO", "BUFFER"], ["KEY", "SPACE" | "ENTER"]]:
-                    open_context_menu_for_buttonmenu(self, "ASIO BUFFER")
+                # Advanced Settings
+                case ["ADVANCED SETTINGS"] | ["CTRL-A"]:
+                    self.popup_advanced_settings(title="Advanced Settings")
+                case [["ADVANCED", "SETTINGS"], ["KEY", "ENTER"]]:
+                    self.find_element_with_focus().click()
 
                 # Strip Params
                 case [["STRIP", index], [param]]:

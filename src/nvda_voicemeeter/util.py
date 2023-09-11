@@ -47,28 +47,20 @@ def get_patch_insert_channels() -> list:
 _patch_insert_channels = get_patch_insert_channels()
 
 
-def get_asio_samples_list() -> list:
-    return [
-        "1024",
-        "768",
-        "704",
-        "640",
-        "576",
-        "512",
-        "480",
-        "448",
-        "441",
-        "416",
-        "384",
-        "352",
-        "320",
-        "288",
-        "256",
-        "224",
-        "192",
-        "160",
-        "128",
-    ]
+def get_asio_samples_list(driver) -> list:
+    if driver == "MME":
+        samples = ["2048", "1536", "1024", "896", "768", "704", "640", "576", "512", "480", "441"]
+    else:
+        # fmt: off
+        samples = [
+            "2048", "1536", "1024", "768", "704", "640", "576", "512", "480", "448", "441", "416", "384",
+            "352", "320", "288", "256", "224", "192", "160", "128"
+        ]
+        # fmt: on
+        if driver == "ASIO":
+            samples = [x for x in samples if x not in ("2048", "1536")]
+    samples.append("Default")
+    return samples
 
 
 def get_tabs_labels() -> list:
