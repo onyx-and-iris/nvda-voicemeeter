@@ -168,6 +168,7 @@ class NVDAVMWindow(psg.Window):
 
         # Advanced Settings
         if self.kind.name != "basic":
+            self["ADVANCED SETTINGS"].bind("<FocusIn>", "||FOCUS IN")
             self["ADVANCED SETTINGS"].bind("<Return>", "||KEY ENTER")
 
         # Strip Params
@@ -297,8 +298,11 @@ class NVDAVMWindow(psg.Window):
             ]
             return psg.Frame("BUFFERING", buffer)
 
-        buffer_frame = _make_buffering_frame()
-        layout = [[buffer_frame], [psg.Button("Exit")]]
+        layout = []
+        steps = (_make_buffering_frame,)
+        for step in steps:
+            layout.append([step()])
+        layout.append([psg.Button("Exit", size=(8, 2))])
 
         window = psg.Window(title, layout, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
@@ -318,7 +322,12 @@ class NVDAVMWindow(psg.Window):
             match parsed_cmd := self.parser.match.parseString(event):
                 case ["BUFFER MME" | "BUFFER WDM" | "BUFFER KS" | "BUFFER ASIO"]:
                     if values[event] == "Default":
-                        val = 0
+                        if "MME" in event:
+                            val = 1024
+                        elif "WDM" in event or "KS" in event:
+                            val = 512
+                        else:
+                            val = 0
                     else:
                         val = int(values[event])
                     driver = event.split()[1]
@@ -546,7 +555,10 @@ class NVDAVMWindow(psg.Window):
 
                 # Advanced Settings
                 case ["ADVANCED SETTINGS"] | ["CTRL-A"]:
-                    self.popup_advanced_settings(title="Advanced Settings")
+                    if values["tabs"] == "Settings":
+                        self.popup_advanced_settings(title="Advanced Settings")
+                case [["ADVANCED", "SETTINGS"], ["FOCUS", "IN"]]:
+                    self.nvda.speak("ADVANCED SETTINGS")
                 case [["ADVANCED", "SETTINGS"], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
