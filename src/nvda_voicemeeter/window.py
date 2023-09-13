@@ -167,9 +167,8 @@ class NVDAVMWindow(psg.Window):
                     [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
 
         # Advanced Settings
-        if self.kind.name != "basic":
-            self["ADVANCED SETTINGS"].bind("<FocusIn>", "||FOCUS IN")
-            self["ADVANCED SETTINGS"].bind("<Return>", "||KEY ENTER")
+        self["ADVANCED SETTINGS"].bind("<FocusIn>", "||FOCUS IN")
+        self["ADVANCED SETTINGS"].bind("<Return>", "||KEY ENTER")
 
         # Strip Params
         for i in range(self.kind.num_strip):

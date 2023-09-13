@@ -27,6 +27,7 @@ class Builder:
             steps = (
                 self.make_tab0_row0,
                 self.make_tab0_row1,
+                self.make_tab0_row5,
             )
         else:
             steps = (
