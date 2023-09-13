@@ -13,12 +13,32 @@ def get_insert_checkbox_index(kind, channel, num) -> int:
     return (2 * kind.phys_in) + (8 * (num - kind.phys_in - 1)) + channel
 
 
+_rejected_ids = (
+    "VBAudio100VMVAIO3",
+    "{F5735BD4-6EAF-4758-9710-9886E5AD0FF3}",
+    "{0239BE07-CEEF-4236-A900-AA778D432FD4}",
+)
+
+
 def get_input_device_list(vm) -> list:
-    return ["{type}: {name}".format(**vm.device.input(i)) for i in range(vm.device.ins)]
+    devices = []
+    for j in range(vm.device.ins):
+        device = vm.device.input(j)
+        if device["id"] not in _rejected_ids:
+            devices.append("{type}: {name}".format(**device))
+    return devices
 
 
-def get_output_device_list(vm) -> list:
-    return ["{type}: {name}".format(**vm.device.output(i)) for i in range(vm.device.outs)]
+def get_output_device_list(i, vm) -> list:
+    devices = []
+    for j in range(vm.device.outs):
+        device = vm.device.output(j)
+        if device["id"] not in _rejected_ids:
+            devices.append("{type}: {name}".format(**device))
+    if i == 0:
+        return devices
+    devices.append("- remove device selection -")
+    return [device for device in devices if not device.startswith("asio")]
 
 
 def get_patch_composite_list(kind) -> list:

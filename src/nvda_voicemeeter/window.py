@@ -459,7 +459,7 @@ class NVDAVMWindow(psg.Window):
                             setattr(self.vm.strip[index].device, "wdm", "")
                             self.TKroot.after(200, self.nvda.speak, f"HARDWARE IN {key} device selection removed")
                         case [driver, device_name]:
-                            setattr(self.vm.strip[index].device, driver, device_name.strip())
+                            setattr(self.vm.strip[index].device, driver, device_name.lstrip())
                             phonetic = {"mme": "em em e"}
                             self.TKroot.after(
                                 200,
@@ -480,7 +480,7 @@ class NVDAVMWindow(psg.Window):
                             setattr(self.vm.bus[index].device, "wdm", "")
                             self.TKroot.after(200, self.nvda.speak, f"HARDWARE OUT {key} device selection removed")
                         case [driver, device_name]:
-                            setattr(self.vm.bus[index].device, driver, device_name.strip())
+                            setattr(self.vm.bus[index].device, driver, device_name.lstrip())
                             phonetic = {"mme": "em em e"}
                             self.TKroot.after(
                                 200,

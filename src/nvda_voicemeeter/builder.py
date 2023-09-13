@@ -102,8 +102,6 @@ class Builder:
         """tab0 row1 represents hardware outs"""
 
         def add_physical_device_opts(layout):
-            devices = get_output_device_list(self.vm)
-            devices.append("- remove device selection -")
             if self.kind.name == "basic":
                 num_outs = self.kind.phys_out + self.kind.virt_out
             else:
@@ -113,7 +111,7 @@ class Builder:
                     psg.ButtonMenu(
                         f"A{i + 1}",
                         size=(6, 3),
-                        menu_def=["", devices],
+                        menu_def=["", get_output_device_list(i, self.vm)],
                         key=f"HARDWARE OUT||A{i + 1}",
                     )
                     for i in range(num_outs)
