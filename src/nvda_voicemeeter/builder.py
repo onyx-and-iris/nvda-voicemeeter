@@ -2,7 +2,6 @@ import PySimpleGUI as psg
 
 from .util import (
     get_asio_checkbox_index,
-    get_asio_samples_list,
     get_input_device_list,
     get_insert_checkbox_index,
     get_output_device_list,
@@ -41,25 +40,49 @@ class Builder:
         for step in steps:
             layout0.append([step()])
 
-        layout1 = []
+        layout1_1 = []
         steps = (self.make_tab1_rows,)
         for step in steps:
-            layout1.append([step()])
+            layout1_1.append([step()])
 
-        layout2 = []
+        layout2_1 = []
         steps = (self.make_tab2_rows,)
         for step in steps:
-            layout2.append([step()])
+            layout2_1.append([step()])
 
-        layout3 = []
+        layout3_1 = []
         steps = (self.make_tab3_rows,)
         for step in steps:
-            layout3.append([step()])
+            layout3_1.append([step()])
 
-        layouts = [layout0, layout1, layout2, layout3]
+        def _make_inner_tabgroup(layouts, identifier) -> psg.TabGroup:
+            inner_layout = []
+            for i, tabname in enumerate(("buttons", "sliders")):
+                inner_layout.append([psg.Tab(tabname.capitalize(), layouts[i], key=f"tab||{identifier}||{tabname}")])
+            return psg.TabGroup(
+                inner_layout,
+                change_submits=True,
+                enable_events=True,
+                key=f"tabgroup||{identifier}",
+            )
 
-        tabs = [psg.Tab(identifier, layouts[i], key=identifier) for i, identifier in enumerate(get_tabs_labels())]
-        tab_group = psg.TabGroup([tabs], change_submits=True, key="tabs")
+        def _make_tabs(identifier) -> psg.Tab:
+            match identifier:
+                case "Settings":
+                    return psg.Tab("Settings", layout0, key="tab||Settings")
+                case "Physical Strip":
+                    tabgroup = _make_inner_tabgroup((layout1_1, []), identifier)
+                case "Virtual Strip":
+                    tabgroup = _make_inner_tabgroup((layout2_1, []), identifier)
+                case "Buses":
+                    tabgroup = _make_inner_tabgroup((layout3_1, []), identifier)
+            return psg.Tab(identifier, [[tabgroup]], key=f"tab||{identifier}")
+
+        tabs = []
+        for tab in get_tabs_labels():
+            tabs.append(_make_tabs(tab))
+
+        tab_group = psg.TabGroup([tabs], change_submits=True, enable_events=True, key="tabgroup")
 
         return [[menu], [tab_group]]
 

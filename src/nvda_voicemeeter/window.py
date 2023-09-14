@@ -23,6 +23,7 @@ from .util import (
     get_channel_identifier_list,
     get_insert_checkbox_index,
     get_patch_composite_list,
+    get_tabs_labels,
     open_context_menu_for_buttonmenu,
 )
 
@@ -65,6 +66,7 @@ class NVDAVMWindow(psg.Window):
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
 
         self.register_events()
+        self["tabgroup"].set_focus()
 
     def __enter__(self):
         settings_path = Path.cwd() / self.SETTINGS
@@ -123,7 +125,10 @@ class NVDAVMWindow(psg.Window):
         """Registers events for widgets"""
 
         # TABS
-        self["tabs"].bind("<FocusIn>", "||FOCUS IN")
+        self["tabgroup"].bind("<FocusIn>", "||FOCUS IN")
+        for tabname in get_tabs_labels()[1:]:
+            self[f"tabgroup||{tabname}"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"tabgroup||{tabname}"].bind("<Shift-KeyPress-Tab>", "||KEY SHIFT TAB")
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
         self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
         self.bind("<Control-a>", "CTRL-A")
@@ -357,17 +362,16 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            elif event == "tabs":
-                self.nvda.speak(f"tab {values['tabs']}")
 
             match parsed_cmd := self.parser.match.parseString(event):
                 # Focus tabgroup
                 case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
-                    self["tabs"].set_focus()
+                    self["tabgroup"].set_focus()
+                    self.nvda.speak(f"{values['tabgroup']}")
 
                 # Rename popups
                 case ["F2:113"]:
-                    tab = values["tabs"]
+                    tab = values["tabgroup"]
                     if tab in ("Physical Strip", "Virtual Strip", "Buses"):
                         data = self.popup_rename("Label", title=f"Rename {tab}", tab=tab)
                         if not data:  # cancel was pressed
@@ -452,11 +456,18 @@ class NVDAVMWindow(psg.Window):
                     else:
                         with open(self.SETTINGS, "wb") as f:
                             f.truncate()
-                        self.logger.debug("default bin was truncated")
+                        self.logger.debug("settings.json was truncated")
 
                 # Tabs
-                case [["tabs"], ["FOCUS", "IN"]]:
-                    self.nvda.speak(f"tab {values['tabs']}")
+                case ["tabgroup"] | [["tabgroup"], ["FOCUS", "IN"]]:
+                    if self.find_element_with_focus() is None:
+                        self.nvda.speak(f"{values['tabgroup']}")
+                case [["tabgroup"], tabname] | [["tabgroup"], tabname, ["FOCUS", "IN"]]:
+                    if self.find_element_with_focus() is None:
+                        name = " ".join(tabname)
+                        self.nvda.speak(f"{values[f'tabgroup||{name}']}")
+                case [["tabgroup"], _, ["KEY", "SHIFT", "TAB"]]:
+                    self.nvda.speak(values["tabgroup"])
 
                 # Hardware In
                 case [["HARDWARE", "IN"], [key]]:
@@ -475,7 +486,8 @@ class NVDAVMWindow(psg.Window):
                                 f"HARDWARE IN {key} set {phonetic.get(driver, driver)} {device_name}",
                             )
                 case [["HARDWARE", "IN"], [key], ["FOCUS", "IN"]]:
-                    self.nvda.speak(f"HARDWARE INPUT {key} {self.cache['hw_ins'][f'HARDWARE IN||{key}']}")
+                    if self.find_element_with_focus() is not None:
+                        self.nvda.speak(f"HARDWARE INPUT {key} {self.cache['hw_ins'][f'HARDWARE IN||{key}']}")
                 case [["HARDWARE", "IN"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     open_context_menu_for_buttonmenu(self, f"HARDWARE IN||{key}")
 
@@ -496,7 +508,8 @@ class NVDAVMWindow(psg.Window):
                                 f"HARDWARE OUT {key} set {phonetic.get(driver, driver)} {device_name}",
                             )
                 case [["HARDWARE", "OUT"], [key], ["FOCUS", "IN"]]:
-                    self.nvda.speak(f"HARDWARE OUT {key} {self.cache['hw_outs'][f'HARDWARE OUT||{key}']}")
+                    if self.find_element_with_focus() is not None:
+                        self.nvda.speak(f"HARDWARE OUT {key} {self.cache['hw_outs'][f'HARDWARE OUT||{key}']}")
                 case [["HARDWARE", "OUT"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     open_context_menu_for_buttonmenu(self, f"HARDWARE OUT||{key}")
 
@@ -508,10 +521,11 @@ class NVDAVMWindow(psg.Window):
                     channel = ("left", "right")[int(channel)]
                     self.nvda.speak(f"Patch ASIO {in_num} {channel} set to {val}")
                 case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
-                    val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
-                    channel = ("left", "right")[int(channel)]
-                    num = int(in_num[-1])
-                    self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {val}")
+                    if self.find_element_with_focus() is not None:
+                        val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
+                        channel = ("left", "right")[int(channel)]
+                        num = int(in_num[-1])
+                        self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {val}")
 
                 # Patch COMPOSITE
                 case [["PATCH", "COMPOSITE"], [key]]:
@@ -520,12 +534,13 @@ class NVDAVMWindow(psg.Window):
                     self.vm.patch.composite[index].set(get_patch_composite_list(self.kind).index(val) + 1)
                     self.TKroot.after(200, self.nvda.speak, f"PATCH COMPOSITE {key[-1]} set {val}")
                 case [["PATCH", "COMPOSITE"], [key], ["FOCUS", "IN"]]:
-                    if values[f"PATCH COMPOSITE||{key}"]:
-                        val = values[f"PATCH COMPOSITE||{key}"]
-                    else:
-                        index = int(key[-1]) - 1
-                        val = get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
-                    self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
+                    if self.find_element_with_focus() is not None:
+                        if values[f"PATCH COMPOSITE||{key}"]:
+                            val = values[f"PATCH COMPOSITE||{key}"]
+                        else:
+                            index = int(key[-1]) - 1
+                            val = get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
+                        self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
                 case [["PATCH", "COMPOSITE"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     open_context_menu_for_buttonmenu(self, f"PATCH COMPOSITE||{key}")
 
@@ -542,19 +557,20 @@ class NVDAVMWindow(psg.Window):
                         f"PATCH INSERT {in_num} {_patch_insert_channels[int(channel)]} set to {'on' if val else 'off'}"
                     )
                 case [["INSERT", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
-                    index = get_insert_checkbox_index(
-                        self.kind,
-                        int(channel),
-                        int(in_num[-1]),
-                    )
-                    val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
-                    channel = _patch_insert_channels[int(channel)]
-                    num = int(in_num[-1])
-                    self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
+                    if self.find_element_with_focus() is not None:
+                        index = get_insert_checkbox_index(
+                            self.kind,
+                            int(channel),
+                            int(in_num[-1]),
+                        )
+                        val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
+                        channel = _patch_insert_channels[int(channel)]
+                        num = int(in_num[-1])
+                        self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
 
                 # Advanced Settings
                 case ["ADVANCED SETTINGS"] | ["CTRL-A"]:
-                    if values["tabs"] == "Settings":
+                    if values["tabgroup"] == "tab||Settings":
                         self.popup_advanced_settings(title="Advanced Settings")
                 case [["ADVANCED", "SETTINGS"], ["FOCUS", "IN"]]:
                     self.nvda.speak("ADVANCED SETTINGS")
@@ -593,25 +609,26 @@ class NVDAVMWindow(psg.Window):
                             self.cache["strip"][f"STRIP {index}||{param}"] = val
                             self.nvda.speak(f"{label} {param} {'on' if val else 'off'}")
                 case [["STRIP", index], [param], ["FOCUS", "IN"]]:
-                    val = self.cache["strip"][f"STRIP {index}||{param}"]
-                    match param:
-                        case "MONO":
-                            if int(index) < self.kind.phys_in:
-                                actual = param.lower()
-                            elif int(index) == self.kind.phys_in + 1:
-                                actual = "k"
-                            else:
-                                actual = "mc"
-                        case _:
-                            actual = param
-                    phonetic = {"k": "karaoke"}
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    if actual == "k":
-                        self.nvda.speak(
-                            f"{label} {phonetic.get(actual, actual)} {['off', 'k m', 'k 1', 'k 2'][self.cache['strip'][f'STRIP {int(index)}||{param}']]}"
-                        )
-                    else:
-                        self.nvda.speak(f"{label} {phonetic.get(actual, actual)} {'on' if val else 'off'}")
+                    if self.find_element_with_focus() is not None:
+                        val = self.cache["strip"][f"STRIP {index}||{param}"]
+                        match param:
+                            case "MONO":
+                                if int(index) < self.kind.phys_in:
+                                    actual = param.lower()
+                                elif int(index) == self.kind.phys_in + 1:
+                                    actual = "k"
+                                else:
+                                    actual = "mc"
+                            case _:
+                                actual = param
+                        phonetic = {"k": "karaoke"}
+                        label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                        if actual == "k":
+                            self.nvda.speak(
+                                f"{label} {phonetic.get(actual, actual)} {['off', 'k m', 'k 1', 'k 2'][self.cache['strip'][f'STRIP {int(index)}||{param}']]}"
+                            )
+                        else:
+                            self.nvda.speak(f"{label} {phonetic.get(actual, actual)} {'on' if val else 'off'}")
                 case [["STRIP", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
@@ -664,12 +681,13 @@ class NVDAVMWindow(psg.Window):
                                 f"{label} bus mode {phonetic.get(next_bus, next_bus)}",
                             )
                 case [["BUS", index], [param], ["FOCUS", "IN"]]:
-                    label = self.cache["labels"][f"BUS {index}||LABEL"]
-                    val = self.cache["bus"][f"BUS {index}||{param}"]
-                    if param == "MODE":
-                        self.nvda.speak(f"{label} bus {param} {val}")
-                    else:
-                        self.nvda.speak(f"{label} bus {param} {'on' if val else 'off'}")
+                    if self.find_element_with_focus() is not None:
+                        label = self.cache["labels"][f"BUS {index}||LABEL"]
+                        val = self.cache["bus"][f"BUS {index}||{param}"]
+                        if param == "MODE":
+                            self.nvda.speak(f"{label} bus {param} {val}")
+                        else:
+                            self.nvda.speak(f"{label} bus {param} {'on' if val else 'off'}")
                 case [["BUS", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
