@@ -6,7 +6,7 @@
 
 A remote control app for [Voicemeeter][voicemeeter], designed to be used with the [NVDA screen reader][nvda].
 
-This is still an early release but it should be usable.
+For an outline of this projects goals see the [SPECIFICATION][spec].
 
 <img src="./img/settings.png" width=350 alt="Image of Voicemeeter NVDA app settings tab">
 
@@ -18,11 +18,31 @@ This is still an early release but it should be usable.
 
 ### Installation
 
-First clone the source files from this repository
+#### `From Source`
 
-`git clone https://github.com/onyx-and-iris/nvda-voicemeeter.git`
+First clone the source files from this repository and install the dependencies.
 
-Then download the [Controller Client][controller_client] and place the files into the directory `controllerClient`.
+```
+git clone https://github.com/onyx-and-iris/nvda-voicemeeter.git
+cd nvda-voicemeeter
+pip install .
+```
+
+Then download the [Controller Client][controller_client] and place the dll files into the directory `controllerClient`.
+
+Your directory structure should look like this:
+
+├── `controllerClient/`
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── `x64/`
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── nvdaControllerClient64.dll
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── `x86/`
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── nvdaControllerClient32.dll
+
+#### `From Releases`
 
 If you want to get started quickly and easily I have uploaded some compiled versions of the app in the [Releases][releases] section.
 
@@ -52,9 +72,13 @@ May be one of the following:
 
 ### Use
 
-The app presents four tabs `Settings`, `Physical Strip`, `Virtual Strip` and `Buses`. Navigate between the tabs with `Control + TAB` and `Control + SHIFT + TAB`.
+#### `Tabs`
+
+The app presents four tabs `Settings`, `Physical Strip`, `Virtual Strip` and `Buses`. Navigate between the tabs with `Control + TAB` and `Control + SHIFT + TAB` or once focused on any tab, `Left` and `Right` arrow keys.
 
 All controls within the tabs may be navigated between using `TAB`.
+
+#### `Settings`
 
 The following controls offer context menus accessed by pressing `SPACE` or `ENTER`:
 
@@ -62,13 +86,23 @@ The following controls offer context menus accessed by pressing `SPACE` or `ENTE
 - Hardware Out
 - Patch Composite
 
+Press `ESCAPE` to exit any context menu.
+
 All other buttons can be triggered by pressing `SPACE` or `ENTER`.
 
 To adjust Patch Asio Inputs to Strips and Patch Insert values use `UP` and `DOWN` arrows when in focus.
 
+To access Advanced Settings you may press the Advanced Settings button or use `Control + A` when in the `Settings` tab.
+
+#### `Strip/Bus`
+
 To rename a strip/bus channel navigate to the relevant tab, then press `F2`. This will open a popup window where you can set the channel index (with a spinbox) and set the new label using a text input box.
+
 Pressing the `OK` button with an empty text input will clear the label. In this case the label will be read as a default value for that channel. For example, if the leftmost Strip label were cleared, the screen reader will now read `Hardware Input 1`.
+
 Pressing `Cancel` will close the popup window with no affect on the label.
+
+#### `Menu`
 
 A single menu item `Voicemeeter` can be opened using `Alt` and then `v`. The menu allows you to:
 
@@ -94,6 +128,7 @@ If you have any questions/suggestions feel free to raise an issue or open a new 
 
 [PySimpleGUI](https://github.com/PySimpleGUI) team for creating an awesome GUI framework.
 
+[spec]: ./SPECIFICATION.md
 [voicemeeter]: https://voicemeeter.com/
 [nvda]: https://www.nvaccess.org/
 [controller_client]: https://github.com/nvaccess/nvda/tree/master/extras/controllerClient
