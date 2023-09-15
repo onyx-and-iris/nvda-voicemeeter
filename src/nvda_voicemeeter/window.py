@@ -212,6 +212,12 @@ class NVDAVMWindow(psg.Window):
             self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Right>", "||KEY SHIFT RIGHT")
             self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Left>", "||KEY CTRL LEFT")
             self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Right>", "||KEY CTRL RIGHT")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<Up>", "||KEY UP")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<Down>", "||KEY DOWN")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Up>", "||KEY SHIFT UP")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
 
         # Bus Params
         params = ["MONO", "EQ", "MUTE", "MODE"]
@@ -232,6 +238,12 @@ class NVDAVMWindow(psg.Window):
             self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Right>", "||KEY SHIFT RIGHT")
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Left>", "||KEY CTRL LEFT")
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Right>", "||KEY CTRL RIGHT")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Up>", "||KEY UP")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Down>", "||KEY DOWN")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Up>", "||KEY SHIFT UP")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
 
     def popup_save_as(self, message, title=None, initial_folder=None):
         layout = [
@@ -678,22 +690,45 @@ class NVDAVMWindow(psg.Window):
                         self.nvda.speak(f"{label} gain slider {val}")
                 case [["STRIP", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
                     self.vm.event.pdirty = True
-                case [["STRIP", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" as direction]]:
+                case [["STRIP", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction]]:
                     val = values[f"STRIP {index}||SLIDER GAIN"]
-                    if direction == "LEFT":
-                        val -= 0.9
-                    else:
-                        val += 0.9
+                    match direction:
+                        case "LEFT":
+                            val -= 0.9
+                        case "DOWN":
+                            val -= 1.1
+                        case "RIGHT":
+                            val += 0.9
+                        case "UP":
+                            val += 1.1
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
-                case [["STRIP", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "LEFT" | "RIGHT" as direction]]:
+                case [
+                    ["STRIP", index],
+                    ["SLIDER", "GAIN"],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                ]:
                     val = values[f"STRIP {index}||SLIDER GAIN"]
-                    if direction == "LEFT":
-                        val += 4.2
-                    else:
-                        val -= 4.2
+                    match direction:
+                        case "LEFT":
+                            val += 4.2
+                        case "DOWN":
+                            val -= 10.2
+                        case "RIGHT":
+                            val -= 4.2
+                        case "UP":
+                            val += 10.2
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
-                case [["STRIP", index], ["SLIDER", "GAIN"], ["KEY", "SHIFT", "LEFT" | "RIGHT" as direction]]:
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=values[f"STRIP {index}||SLIDER GAIN"])
+                case [
+                    ["STRIP", index],
+                    ["SLIDER", "GAIN"],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                ]:
+                    val = values[f"STRIP {index}||SLIDER GAIN"]
+                    if direction == "UP":
+                        val += 0.2
+                    elif direction == "DOWN":
+                        val -= 0.2
+                    self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
 
                 # Bus Params
                 case [["BUS", index], [param]]:
@@ -768,22 +803,45 @@ class NVDAVMWindow(psg.Window):
                         self.nvda.speak(f"{label} gain slider {val}")
                 case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
                     self.vm.event.pdirty = True
-                case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" as direction]]:
+                case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction]]:
                     val = values[f"BUS {index}||SLIDER GAIN"]
-                    if direction == "LEFT":
-                        val -= 0.9
-                    else:
-                        val += 0.9
+                    match direction:
+                        case "LEFT":
+                            val -= 0.9
+                        case "DOWN":
+                            val -= 1.1
+                        case "RIGHT":
+                            val += 0.9
+                        case "UP":
+                            val += 1.1
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "LEFT" | "RIGHT" as direction]]:
+                case [
+                    ["BUS", index],
+                    ["SLIDER", "GAIN"],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                ]:
                     val = values[f"BUS {index}||SLIDER GAIN"]
-                    if direction == "LEFT":
-                        val += 4.2
-                    else:
-                        val -= 4.2
+                    match direction:
+                        case "LEFT":
+                            val += 4.2
+                        case "DOWN":
+                            val -= 10.2
+                        case "RIGHT":
+                            val -= 4.2
+                        case "UP":
+                            val += 10.2
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "SHIFT", "LEFT" | "RIGHT" as direction]]:
-                    self[f"BUS {index}||SLIDER GAIN"].update(value=values[f"BUS {index}||SLIDER GAIN"])
+                case [
+                    ["BUS", index],
+                    ["SLIDER", "GAIN"],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                ]:
+                    val = values[f"BUS {index}||SLIDER GAIN"]
+                    if direction == "UP":
+                        val += 0.2
+                    elif direction == "DOWN":
+                        val -= 0.2
+                    self[f"BUS {index}||SLIDER GAIN"].update(value=val)
 
                 # Unknown
                 case _:
