@@ -41,19 +41,31 @@ class Builder:
             layout0.append([step()])
 
         layout1_1 = []
-        steps = (self.make_tab1_rows,)
+        steps = (self.make_tab1_button_rows,)
         for step in steps:
             layout1_1.append([step()])
+        layout1_2 = []
+        steps = (self.make_tab1_slider_rows,)
+        for step in steps:
+            layout1_2.append([step()])
 
         layout2_1 = []
-        steps = (self.make_tab2_rows,)
+        steps = (self.make_tab2_button_rows,)
         for step in steps:
             layout2_1.append([step()])
+        layout2_2 = []
+        steps = (self.make_tab2_slider_rows,)
+        for step in steps:
+            layout2_2.append([step()])
 
         layout3_1 = []
-        steps = (self.make_tab3_rows,)
+        steps = (self.make_tab3_button_rows,)
         for step in steps:
             layout3_1.append([step()])
+        layout3_2 = []
+        steps = (self.make_tab3_slider_rows,)
+        for step in steps:
+            layout3_2.append([step()])
 
         def _make_inner_tabgroup(layouts, identifier) -> psg.TabGroup:
             inner_layout = []
@@ -71,11 +83,11 @@ class Builder:
                 case "Settings":
                     return psg.Tab("Settings", layout0, key="tab||Settings")
                 case "Physical Strip":
-                    tabgroup = _make_inner_tabgroup((layout1_1, []), identifier)
+                    tabgroup = _make_inner_tabgroup((layout1_1, layout1_2), identifier)
                 case "Virtual Strip":
-                    tabgroup = _make_inner_tabgroup((layout2_1, []), identifier)
+                    tabgroup = _make_inner_tabgroup((layout2_1, layout2_2), identifier)
                 case "Buses":
-                    tabgroup = _make_inner_tabgroup((layout3_1, []), identifier)
+                    tabgroup = _make_inner_tabgroup((layout3_1, layout3_2), identifier)
             return psg.Tab(identifier, [[tabgroup]], key=f"tab||{identifier}")
 
         tabs = []
@@ -118,7 +130,7 @@ class Builder:
                 ]
             )
 
-        hardware_in = list()
+        hardware_in = []
         [step(hardware_in) for step in (add_physical_device_opts,)]
         return psg.Frame("Hardware In", hardware_in)
 
@@ -142,7 +154,7 @@ class Builder:
                 ]
             )
 
-        hardware_out = list()
+        hardware_out = []
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("Hardware Out", hardware_out)
 
@@ -174,7 +186,7 @@ class Builder:
                 ],
             )
 
-        inner = list()
+        inner = []
         asio_checkboxlists = ([] for _ in range(self.kind.phys_out))
         for i, checkbox_list in enumerate(asio_checkboxlists):
             [step(checkbox_list, i + 1) for step in (add_asio_checkboxes,)]
@@ -200,7 +212,7 @@ class Builder:
                 ]
             )
 
-        hardware_out = list()
+        hardware_out = []
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("PATCH COMPOSITE", hardware_out)
 
@@ -235,8 +247,8 @@ class Builder:
                     ],
                 )
 
-        asio_checkboxes = list()
-        inner = list()
+        asio_checkboxes = []
+        inner = []
         checkbox_lists = ([] for _ in range(self.kind.num_strip))
         for i, checkbox_list in enumerate(checkbox_lists):
             if i < self.kind.phys_in:
@@ -266,7 +278,7 @@ class Builder:
             key="ADVANCED SETTINGS FRAME",
         )
 
-    def make_tab1_row(self, i) -> psg.Frame:
+    def make_tab1_button_row(self, i) -> psg.Frame:
         """tab1 row represents a strip's outputs (A1-A5, B1-B3)"""
 
         def add_strip_outputs(layout):
@@ -290,15 +302,40 @@ class Builder:
                 ],
             )
 
-        outputs = list()
+        outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
 
-    def make_tab1_rows(self) -> psg.Frame:
-        layout = [[self.make_tab1_row(i)] for i in range(self.kind.phys_in)]
+    def make_tab1_button_rows(self) -> psg.Frame:
+        layout = [[self.make_tab1_button_row(i)] for i in range(self.kind.phys_in)]
         return psg.Frame(None, layout, border_width=0)
 
-    def make_tab2_row(self, i) -> psg.Frame:
+    def make_tab1_slider_row(self, i) -> psg.Frame:
+        def add_gain_slider(layout):
+            layout.append(
+                [
+                    psg.Slider(
+                        range=(-60, 12),
+                        default_value=self.vm.strip[i].gain,
+                        resolution=0.1,
+                        disable_number_display=True,
+                        expand_x=True,
+                        enable_events=True,
+                        orientation="horizontal",
+                        key=f"STRIP {i}||SLIDER GAIN",
+                    )
+                ]
+            )
+
+        outputs = []
+        [step(outputs) for step in (add_gain_slider,)]
+        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL||SLIDER")
+
+    def make_tab1_slider_rows(self) -> psg.Frame:
+        layout = [[self.make_tab1_slider_row(i)] for i in range(self.kind.phys_in)]
+        return psg.Frame(None, layout, border_width=0)
+
+    def make_tab2_button_row(self, i) -> psg.Frame:
         """tab2 row represents a strip's outputs (A1-A5, B1-B3)"""
 
         def add_strip_outputs(layout):
@@ -331,15 +368,44 @@ class Builder:
                     ],
                 )
 
-        outputs = list()
+        outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
 
-    def make_tab2_rows(self) -> psg.Frame:
-        layout = [[self.make_tab2_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)]
+    def make_tab2_button_rows(self) -> psg.Frame:
+        layout = [
+            [self.make_tab2_button_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)
+        ]
         return psg.Frame(None, layout, border_width=0)
 
-    def make_tab3_row(self, i) -> psg.Frame:
+    def make_tab2_slider_row(self, i) -> psg.Frame:
+        def add_gain_slider(layout):
+            layout.append(
+                [
+                    psg.Slider(
+                        range=(-60, 12),
+                        default_value=self.vm.strip[i].gain,
+                        resolution=0.1,
+                        disable_number_display=True,
+                        expand_x=True,
+                        enable_events=True,
+                        orientation="horizontal",
+                        key=f"STRIP {i}||SLIDER GAIN",
+                    )
+                ]
+            )
+
+        outputs = []
+        [step(outputs) for step in (add_gain_slider,)]
+        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL||SLIDER")
+
+    def make_tab2_slider_rows(self) -> psg.Frame:
+        layout = [
+            [self.make_tab2_slider_row(i)] for i in range(self.kind.phys_in, self.kind.phys_in + self.kind.virt_in)
+        ]
+        return psg.Frame(None, layout, border_width=0)
+
+    def make_tab3_button_row(self, i) -> psg.Frame:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
@@ -358,10 +424,35 @@ class Builder:
                 ]
             )
 
-        outputs = list()
+        outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(self.window.cache["labels"][f"BUS {i}||LABEL"], outputs, key=f"BUS {i}||LABEL")
 
-    def make_tab3_rows(self) -> psg.Frame:
-        layout = [[self.make_tab3_row(i)] for i in range(self.kind.num_bus)]
+    def make_tab3_button_rows(self) -> psg.Frame:
+        layout = [[self.make_tab3_button_row(i)] for i in range(self.kind.num_bus)]
+        return psg.Frame(None, layout, border_width=0)
+
+    def make_tab3_slider_row(self, i) -> psg.Frame:
+        def add_gain_slider(layout):
+            layout.append(
+                [
+                    psg.Slider(
+                        range=(-60, 12),
+                        default_value=self.vm.bus[i].gain,
+                        resolution=0.1,
+                        disable_number_display=True,
+                        expand_x=True,
+                        enable_events=True,
+                        orientation="horizontal",
+                        key=f"BUS {i}||SLIDER GAIN",
+                    )
+                ]
+            )
+
+        outputs = []
+        [step(outputs) for step in (add_gain_slider,)]
+        return psg.Frame(self.window.cache["labels"][f"BUS {i}||LABEL"], outputs, key=f"BUS {i}||LABEL||SLIDER")
+
+    def make_tab3_slider_rows(self) -> psg.Frame:
+        layout = [[self.make_tab3_slider_row(i)] for i in range(self.kind.num_bus)]
         return psg.Frame(None, layout, border_width=0)

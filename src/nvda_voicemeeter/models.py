@@ -42,14 +42,14 @@ def _make_param_cache(vm, channel_type) -> dict:
             **{f"STRIP {i}||SOLO": vm.strip[i].solo for i in range(vm.kind.num_strip)},
             **{f"STRIP {i}||MUTE": vm.strip[i].mute for i in range(vm.kind.num_strip)},
         }
-        return params
     else:
-        return {
+        params |= {
             **{f"BUS {i}||MONO": vm.bus[i].mono for i in range(vm.kind.num_bus)},
             **{f"BUS {i}||EQ": vm.bus[i].eq.on for i in range(vm.kind.num_bus)},
             **{f"BUS {i}||MUTE": vm.bus[i].mute for i in range(vm.kind.num_bus)},
             **{f"BUS {i}||MODE": vm.bus[i].mode.get() for i in range(vm.kind.num_bus)},
         }
+    return params
 
 
 def _make_label_cache(vm) -> dict:

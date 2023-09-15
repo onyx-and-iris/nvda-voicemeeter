@@ -64,6 +64,11 @@ class NVDAVMWindow(psg.Window):
             self[f"HARDWARE OUT||A2"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
+        slider_opts = {"takefocus": 1, "highlightthickness": 1}
+        for i in range(self.kind.num_strip):
+            self[f"STRIP {i}||SLIDER GAIN"].Widget.config(**slider_opts)
+        for i in range(self.kind.num_bus):
+            self[f"BUS {i}||SLIDER GAIN"].Widget.config(**slider_opts)
 
         self.register_events()
         self["tabgroup"].set_focus()
@@ -111,6 +116,11 @@ class NVDAVMWindow(psg.Window):
         }
         for key, value in self.cache["labels"].items():
             self[key].update(value=value)
+            self[f"{key}||SLIDER"].update(value=value)
+        for i in range(self.kind.num_strip):
+            self[f"STRIP {i}||SLIDER GAIN"].update(value=self.vm.strip[i].gain)
+        for i in range(self.kind.num_bus):
+            self[f"BUS {i}||SLIDER GAIN"].update(value=self.vm.bus[i].gain)
         if self.kind.name != "basic":
             for key, value in self.cache["asio"].items():
                 identifier, i = key.split("||")
@@ -192,6 +202,11 @@ class NVDAVMWindow(psg.Window):
                     self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
                     self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
+        # Strip Sliders
+        for i in range(self.kind.num_strip):
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"STRIP {i}||SLIDER GAIN"].bind("<FocusOut>", "||FOCUS OUT")
+
         # Bus Params
         params = ["MONO", "EQ", "MUTE", "MODE"]
         if self.vm.kind.name == "basic":
@@ -200,6 +215,11 @@ class NVDAVMWindow(psg.Window):
             for param in params:
                 self[f"BUS {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"BUS {i}||{param}"].bind("<Return>", "||KEY ENTER")
+
+        # Bus Sliders
+        for i in range(self.kind.num_bus):
+            self[f"BUS {i}||SLIDER GAIN"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<FocusOut>", "||FOCUS OUT")
 
     def popup_save_as(self, message, title=None, initial_folder=None):
         layout = [
@@ -632,6 +652,21 @@ class NVDAVMWindow(psg.Window):
                 case [["STRIP", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 
+                # Strip Sliders
+                case [["STRIP", index], ["SLIDER", "GAIN"]]:
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                    val = values[event]
+                    self.vm.strip[int(index)].gain = val
+                    self.nvda.speak(f"{label} gain slider {val}")
+                case [["STRIP", index], ["SLIDER", "GAIN"], ["FOCUS", "IN"]]:
+                    if self.find_element_with_focus() is not None:
+                        self.vm.event.pdirty = False
+                        label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                        val = values[f"STRIP {index}||SLIDER GAIN"]
+                        self.nvda.speak(f"{label} gain slider {val}")
+                case [["STRIP", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
+                    self.vm.event.pdirty = True
+
                 # Bus Params
                 case [["BUS", index], [param]]:
                     val = self.cache["bus"][event]
@@ -690,6 +725,21 @@ class NVDAVMWindow(psg.Window):
                             self.nvda.speak(f"{label} bus {param} {'on' if val else 'off'}")
                 case [["BUS", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
+
+                # Bus Sliders
+                case [["BUS", index], ["SLIDER", "GAIN"]]:
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
+                    val = values[event]
+                    self.vm.bus[int(index)].gain = val
+                    self.nvda.speak(f"{label} gain slider {val}")
+                case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "IN"]]:
+                    if self.find_element_with_focus() is not None:
+                        self.vm.event.pdirty = False
+                        label = self.cache["labels"][f"BUS {index}||LABEL"]
+                        val = values[f"BUS {index}||SLIDER GAIN"]
+                        self.nvda.speak(f"{label} gain slider {val}")
+                case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
+                    self.vm.event.pdirty = True
 
                 # Unknown
                 case _:
