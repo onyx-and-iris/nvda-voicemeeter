@@ -17,6 +17,7 @@ from .nvda import Nvda
 from .parser import Parser
 from .util import (
     _patch_insert_channels,
+    check_bounds,
     get_asio_checkbox_index,
     get_asio_samples_list,
     get_bus_modes,
@@ -697,7 +698,7 @@ class NVDAVMWindow(psg.Window):
                             val += 1
                         case "LEFT" | "DOWN":
                             val -= 1
-                    self.vm.strip[int(index)].gain = val
+                    self.vm.strip[int(index)].gain = check_bounds(val, (-60, 12))
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["STRIP", index],
@@ -710,7 +711,7 @@ class NVDAVMWindow(psg.Window):
                             val += 3
                         case "LEFT" | "DOWN":
                             val -= 3
-                    self.vm.strip[int(index)].gain = val
+                    self.vm.strip[int(index)].gain = check_bounds(val, (-60, 12))
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["STRIP", index],
@@ -723,7 +724,7 @@ class NVDAVMWindow(psg.Window):
                             val += 0.1
                         case "LEFT" | "DOWN":
                             val -= 0.1
-                    self.vm.strip[int(index)].gain = val
+                    self.vm.strip[int(index)].gain = check_bounds(val, (-60, 12))
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
 
                 # Bus Params
@@ -806,7 +807,7 @@ class NVDAVMWindow(psg.Window):
                             val += 1
                         case "LEFT" | "DOWN":
                             val -= 1
-                    self.vm.bus[int(index)].gain = val
+                    self.vm.bus[int(index)].gain = check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["BUS", index],
@@ -819,7 +820,7 @@ class NVDAVMWindow(psg.Window):
                             val += 3
                         case "LEFT" | "DOWN":
                             val -= 3
-                    self.vm.bus[int(index)].gain = val
+                    self.vm.bus[int(index)].gain = check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["BUS", index],
@@ -832,7 +833,7 @@ class NVDAVMWindow(psg.Window):
                             val += 0.1
                         case "LEFT" | "DOWN":
                             val -= 0.1
-                    self.vm.bus[int(index)].gain = val
+                    self.vm.bus[int(index)].gain = check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
 
                 # Unknown

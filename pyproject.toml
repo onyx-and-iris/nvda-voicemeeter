@@ -1,6 +1,6 @@
 [project]
 name = "nvda_voicemeeter"
-version = "0.2.1a2"
+version = "0.2.1a3"
 description = "A Voicemeeter app compatible with NVDA"
 authors = [
     { name = "onyx-and-iris", email = "code@onyxandiris.online" },

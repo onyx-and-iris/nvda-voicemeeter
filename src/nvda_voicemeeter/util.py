@@ -128,3 +128,12 @@ def get_bus_modes(vm) -> list:
         "lfeonly",
         "rearonly",
     ]
+
+
+def check_bounds(val, bounds):
+    lower, upper = bounds
+    if val > upper:
+        val = upper
+    elif val < lower:
+        val = lower
+    return val
