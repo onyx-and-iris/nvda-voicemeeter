@@ -4,29 +4,10 @@ from pathlib import Path
 
 import PySimpleGUI as psg
 
+from . import models, util
 from .builder import Builder
-from .models import (
-    _make_hardware_ins_cache,
-    _make_hardware_outs_cache,
-    _make_label_cache,
-    _make_param_cache,
-    _make_patch_asio_cache,
-    _make_patch_insert_cache,
-)
 from .nvda import Nvda
 from .parser import Parser
-from .util import (
-    _patch_insert_channels,
-    check_bounds,
-    get_asio_checkbox_index,
-    get_asio_samples_list,
-    get_bus_modes,
-    get_channel_identifier_list,
-    get_insert_checkbox_index,
-    get_patch_composite_list,
-    get_tabs_labels,
-    open_context_menu_for_buttonmenu,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +24,13 @@ class NVDAVMWindow(psg.Window):
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
         self.cache = {
-            "hw_ins": _make_hardware_ins_cache(self.vm),
-            "hw_outs": _make_hardware_outs_cache(self.vm),
-            "strip": _make_param_cache(self.vm, "strip"),
-            "bus": _make_param_cache(self.vm, "bus"),
-            "labels": _make_label_cache(self.vm),
-            "asio": _make_patch_asio_cache(self.vm),
-            "insert": _make_patch_insert_cache(self.vm),
+            "hw_ins": models._make_hardware_ins_cache(self.vm),
+            "hw_outs": models._make_hardware_outs_cache(self.vm),
+            "strip": models._make_param_cache(self.vm, "strip"),
+            "bus": models._make_param_cache(self.vm, "bus"),
+            "labels": models._make_label_cache(self.vm),
+            "asio": models._make_patch_asio_cache(self.vm),
+            "insert": models._make_patch_insert_cache(self.vm),
         }
         self.nvda = Nvda()
         self.parser = Parser()
@@ -107,13 +88,13 @@ class NVDAVMWindow(psg.Window):
 
     def on_pdirty(self):
         self.cache = {
-            "hw_ins": _make_hardware_ins_cache(self.vm),
-            "hw_outs": _make_hardware_outs_cache(self.vm),
-            "strip": _make_param_cache(self.vm, "strip"),
-            "bus": _make_param_cache(self.vm, "bus"),
-            "labels": _make_label_cache(self.vm),
-            "asio": _make_patch_asio_cache(self.vm),
-            "insert": _make_patch_insert_cache(self.vm),
+            "hw_ins": models._make_hardware_ins_cache(self.vm),
+            "hw_outs": models._make_hardware_outs_cache(self.vm),
+            "strip": models._make_param_cache(self.vm, "strip"),
+            "bus": models._make_param_cache(self.vm, "bus"),
+            "labels": models._make_label_cache(self.vm),
+            "asio": models._make_patch_asio_cache(self.vm),
+            "insert": models._make_patch_insert_cache(self.vm),
         }
         for key, value in self.cache["labels"].items():
             self[key].update(value=value)
@@ -125,11 +106,11 @@ class NVDAVMWindow(psg.Window):
         if self.kind.name != "basic":
             for key, value in self.cache["asio"].items():
                 identifier, i = key.split("||")
-                partial = get_channel_identifier_list(self.vm)[int(i)]
+                partial = util.get_channel_identifier_list(self.vm)[int(i)]
                 self[f"{identifier}||{partial}"].update(value=value)
             for key, value in self.cache["insert"].items():
                 identifier, i = key.split("||")
-                partial = get_channel_identifier_list(self.vm)[int(i)]
+                partial = util.get_channel_identifier_list(self.vm)[int(i)]
                 self[f"{identifier}||{partial}"].update(value=value)
 
     def register_events(self):
@@ -137,7 +118,7 @@ class NVDAVMWindow(psg.Window):
 
         # TABS
         self["tabgroup"].bind("<FocusIn>", "||FOCUS IN")
-        for tabname in get_tabs_labels()[1:]:
+        for tabname in util.get_tabs_labels()[1:]:
             self[f"tabgroup||{tabname}"].bind("<FocusIn>", "||FOCUS IN")
             self[f"tabgroup||{tabname}"].bind("<Shift-KeyPress-Tab>", "||KEY SHIFT TAB")
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
@@ -339,7 +320,7 @@ class NVDAVMWindow(psg.Window):
                     psg.ButtonMenu(
                         driver,
                         size=(14, 2),
-                        menu_def=["", get_asio_samples_list(driver)],
+                        menu_def=["", util.get_asio_samples_list(driver)],
                         key=f"BUFFER {driver}",
                     )
                     for driver in ("MME", "WDM", "KS", "ASIO")
@@ -386,7 +367,7 @@ class NVDAVMWindow(psg.Window):
                     val = int(self.vm.get(f"option.buffer.{driver.lower()}"))
                     self.nvda.speak(f"{driver} BUFFER {val if val else 'default'}")
                 case [["BUFFER", driver], ["KEY", "SPACE" | "ENTER"]]:
-                    open_context_menu_for_buttonmenu(window, f"BUFFER {driver}")
+                    util.open_context_menu_for_buttonmenu(window, f"BUFFER {driver}")
                 case [[button], ["FOCUS", "IN"]]:
                     self.nvda.speak(button)
                 case [[button], ["KEY", "ENTER"]]:
@@ -424,21 +405,21 @@ class NVDAVMWindow(psg.Window):
                         index = int(data["Index"]) - 1
                         match tab:
                             case "Physical Strip":
-                                label = data.get("Edit") or f"Hardware Input {index + 1}"
+                                label = data.get("Edit", f"Hardware Input {index + 1}")
                                 self.vm.strip[index].label = label
                                 self[f"STRIP {index}||LABEL"].update(value=label)
                                 self.cache["labels"][f"STRIP {index}||LABEL"] = label
                             case "Virtual Strip":
                                 index += self.kind.phys_in
-                                label = data.get("Edit") or f"Virtual Input {index - self.kind.phys_in + 1}"
+                                label = data.get("Edit", f"Virtual Input {index - self.kind.phys_in + 1}")
                                 self.vm.strip[index].label = label
                                 self[f"STRIP {index}||LABEL"].update(value=label)
                                 self.cache["labels"][f"STRIP {index}||LABEL"] = label
                             case "Buses":
                                 if index < self.kind.phys_out:
-                                    label = data.get("Edit") or f"Physical Bus {index + 1}"
+                                    label = data.get("Edit", f"Physical Bus {index + 1}")
                                 else:
-                                    label = data.get("Edit") or f"Virtual Bus {index - self.kind.phys_out + 1}"
+                                    label = data.get("Edit", f"Virtual Bus {index - self.kind.phys_out + 1}")
                                 self.vm.bus[index].label = label
                                 self[f"BUS {index}||LABEL"].update(value=label)
                                 self.cache["labels"][f"BUS {index}||LABEL"] = label
@@ -536,7 +517,7 @@ class NVDAVMWindow(psg.Window):
                     if self.find_element_with_focus() is not None:
                         self.nvda.speak(f"HARDWARE INPUT {key} {self.cache['hw_ins'][f'HARDWARE IN||{key}']}")
                 case [["HARDWARE", "IN"], [key], ["KEY", "SPACE" | "ENTER"]]:
-                    open_context_menu_for_buttonmenu(self, f"HARDWARE IN||{key}")
+                    util.open_context_menu_for_buttonmenu(self, f"HARDWARE IN||{key}")
 
                 # Hardware out
                 case [["HARDWARE", "OUT"], [key]]:
@@ -558,11 +539,11 @@ class NVDAVMWindow(psg.Window):
                     if self.find_element_with_focus() is not None:
                         self.nvda.speak(f"HARDWARE OUT {key} {self.cache['hw_outs'][f'HARDWARE OUT||{key}']}")
                 case [["HARDWARE", "OUT"], [key], ["KEY", "SPACE" | "ENTER"]]:
-                    open_context_menu_for_buttonmenu(self, f"HARDWARE OUT||{key}")
+                    util.open_context_menu_for_buttonmenu(self, f"HARDWARE OUT||{key}")
 
                 # Patch ASIO
                 case [["ASIO", "CHECKBOX"], [in_num, channel]]:
-                    index = get_asio_checkbox_index(int(channel), int(in_num[-1]))
+                    index = util.get_asio_checkbox_index(int(channel), int(in_num[-1]))
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.asio[index].set(val)
                     channel = ("left", "right")[int(channel)]
@@ -578,7 +559,7 @@ class NVDAVMWindow(psg.Window):
                 case [["PATCH", "COMPOSITE"], [key]]:
                     val = values[f"PATCH COMPOSITE||{key}"]
                     index = int(key[-1]) - 1
-                    self.vm.patch.composite[index].set(get_patch_composite_list(self.kind).index(val) + 1)
+                    self.vm.patch.composite[index].set(util.get_patch_composite_list(self.kind).index(val) + 1)
                     self.TKroot.after(200, self.nvda.speak, f"PATCH COMPOSITE {key[-1]} set {val}")
                 case [["PATCH", "COMPOSITE"], [key], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
@@ -586,14 +567,14 @@ class NVDAVMWindow(psg.Window):
                             val = values[f"PATCH COMPOSITE||{key}"]
                         else:
                             index = int(key[-1]) - 1
-                            val = get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
+                            val = util.get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
                         self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
                 case [["PATCH", "COMPOSITE"], [key], ["KEY", "SPACE" | "ENTER"]]:
-                    open_context_menu_for_buttonmenu(self, f"PATCH COMPOSITE||{key}")
+                    util.open_context_menu_for_buttonmenu(self, f"PATCH COMPOSITE||{key}")
 
                 # Patch INSERT
                 case [["INSERT", "CHECKBOX"], [in_num, channel]]:
-                    index = get_insert_checkbox_index(
+                    index = util.get_insert_checkbox_index(
                         self.kind,
                         int(channel),
                         int(in_num[-1]),
@@ -601,17 +582,17 @@ class NVDAVMWindow(psg.Window):
                     val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.insert[index].on = val
                     self.nvda.speak(
-                        f"PATCH INSERT {in_num} {_patch_insert_channels[int(channel)]} set to {'on' if val else 'off'}"
+                        f"PATCH INSERT {in_num} {util._patch_insert_channels[int(channel)]} set to {'on' if val else 'off'}"
                     )
                 case [["INSERT", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
-                        index = get_insert_checkbox_index(
+                        index = util.get_insert_checkbox_index(
                             self.kind,
                             int(channel),
                             int(in_num[-1]),
                         )
                         val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
-                        channel = _patch_insert_channels[int(channel)]
+                        channel = util._patch_insert_channels[int(channel)]
                         num = int(in_num[-1])
                         self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
 
@@ -700,7 +681,7 @@ class NVDAVMWindow(psg.Window):
                             val += 1
                         case "LEFT" | "DOWN":
                             val -= 1
-                    self.vm.strip[int(index)].gain = check_bounds(val, (-60, 12))
+                    self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["STRIP", index],
@@ -713,7 +694,7 @@ class NVDAVMWindow(psg.Window):
                             val += 3
                         case "LEFT" | "DOWN":
                             val -= 3
-                    self.vm.strip[int(index)].gain = check_bounds(val, (-60, 12))
+                    self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["STRIP", index],
@@ -726,7 +707,7 @@ class NVDAVMWindow(psg.Window):
                             val += 0.1
                         case "LEFT" | "DOWN":
                             val -= 0.1
-                    self.vm.strip[int(index)].gain = check_bounds(val, (-60, 12))
+                    self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
 
                 # Bus Params
@@ -753,7 +734,7 @@ class NVDAVMWindow(psg.Window):
                                 f"{label} bus {param} {'on' if val else 'off'}",
                             )
                         case "MODE":
-                            bus_modes = get_bus_modes(self.vm)
+                            bus_modes = util.get_bus_modes(self.vm)
                             next_index = bus_modes.index(val) + 1
                             if next_index == len(bus_modes):
                                 next_index = 0
@@ -809,7 +790,7 @@ class NVDAVMWindow(psg.Window):
                             val += 1
                         case "LEFT" | "DOWN":
                             val -= 1
-                    self.vm.bus[int(index)].gain = check_bounds(val, (-60, 12))
+                    self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["BUS", index],
@@ -822,7 +803,7 @@ class NVDAVMWindow(psg.Window):
                             val += 3
                         case "LEFT" | "DOWN":
                             val -= 3
-                    self.vm.bus[int(index)].gain = check_bounds(val, (-60, 12))
+                    self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
                 case [
                     ["BUS", index],
@@ -835,7 +816,7 @@ class NVDAVMWindow(psg.Window):
                             val += 0.1
                         case "LEFT" | "DOWN":
                             val -= 0.1
-                    self.vm.bus[int(index)].gain = check_bounds(val, (-60, 12))
+                    self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
 
                 # Unknown

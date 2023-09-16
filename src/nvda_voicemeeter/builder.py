@@ -1,14 +1,6 @@
 import PySimpleGUI as psg
 
-from .util import (
-    get_asio_checkbox_index,
-    get_input_device_list,
-    get_insert_checkbox_index,
-    get_output_device_list,
-    get_patch_composite_list,
-    get_slider_params,
-    get_tabs_labels,
-)
+from . import util
 
 
 class Builder:
@@ -92,7 +84,7 @@ class Builder:
             return psg.Tab(identifier, [[tabgroup]], key=f"tab||{identifier}")
 
         tabs = []
-        for tab in get_tabs_labels():
+        for tab in util.get_tabs_labels():
             tabs.append(_make_tabs(tab))
 
         tab_group = psg.TabGroup([tabs], change_submits=True, enable_events=True, key="tabgroup")
@@ -117,7 +109,7 @@ class Builder:
         """tab0 row0 represents hardware ins"""
 
         def add_physical_device_opts(layout):
-            devices = get_input_device_list(self.vm)
+            devices = util.get_input_device_list(self.vm)
             devices.append("- remove device selection -")
             layout.append(
                 [
@@ -148,7 +140,7 @@ class Builder:
                     psg.ButtonMenu(
                         f"A{i + 1}",
                         size=(6, 3),
-                        menu_def=["", get_output_device_list(i, self.vm)],
+                        menu_def=["", util.get_output_device_list(i, self.vm)],
                         key=f"HARDWARE OUT||A{i + 1}",
                     )
                     for i in range(num_outs)
@@ -168,7 +160,7 @@ class Builder:
                 [
                     psg.Spin(
                         nums,
-                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{get_asio_checkbox_index(0, i)}"],
+                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{util.get_asio_checkbox_index(0, i)}"],
                         size=2,
                         enable_events=True,
                         key=f"ASIO CHECKBOX||IN{i} 0",
@@ -179,7 +171,7 @@ class Builder:
                 [
                     psg.Spin(
                         nums,
-                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{get_asio_checkbox_index(1, i)}"],
+                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{util.get_asio_checkbox_index(1, i)}"],
                         size=2,
                         enable_events=True,
                         key=f"ASIO CHECKBOX||IN{i} 1",
@@ -200,7 +192,7 @@ class Builder:
         """tab0 row3 represents patch composite"""
 
         def add_physical_device_opts(layout):
-            outputs = get_patch_composite_list(self.vm.kind)
+            outputs = util.get_patch_composite_list(self.vm.kind)
             layout.append(
                 [
                     psg.ButtonMenu(
@@ -227,7 +219,7 @@ class Builder:
                         [
                             psg.Checkbox(
                                 text=channel,
-                                default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, j, i)].on,
+                                default=self.vm.patch.insert[util.get_insert_checkbox_index(self.kind, j, i)].on,
                                 enable_events=True,
                                 key=f"INSERT CHECKBOX||IN{i} {j}",
                             )
@@ -240,7 +232,7 @@ class Builder:
                     [
                         psg.Checkbox(
                             text=channel,
-                            default=self.vm.patch.insert[get_insert_checkbox_index(self.kind, j, i)].on,
+                            default=self.vm.patch.insert[util.get_insert_checkbox_index(self.kind, j, i)].on,
                             enable_events=True,
                             key=f"INSERT CHECKBOX||IN{i} {j}",
                         )
@@ -348,7 +340,7 @@ class Builder:
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER {param}",
                     )
-                    for param in get_slider_params(i, self.vm)
+                    for param in util.get_slider_params(i, self.vm)
                 ]
             )
 
@@ -456,7 +448,7 @@ class Builder:
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER {param}",
                     )
-                    for param in get_slider_params(i, self.vm)
+                    for param in util.get_slider_params(i, self.vm)
                 ]
             )
 

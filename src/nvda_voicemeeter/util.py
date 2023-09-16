@@ -1,3 +1,6 @@
+from typing import Iterable
+
+
 def get_asio_checkbox_index(channel, num) -> int:
     if channel == 0:
         return 2 * num - 2
@@ -8,8 +11,7 @@ def get_insert_checkbox_index(kind, channel, num) -> int:
     if num <= kind.phys_in:
         if channel == 0:
             return 2 * num - 2
-        else:
-            return 2 * num - 1
+        return 2 * num - 1
     return (2 * kind.phys_in) + (8 * (num - kind.phys_in - 1)) + channel
 
 
@@ -130,7 +132,7 @@ def get_bus_modes(vm) -> list:
     ]
 
 
-def check_bounds(val, bounds) -> int | float:
+def check_bounds(val, bounds: tuple) -> int | float:
     lower, upper = bounds
     if val > upper:
         val = upper
@@ -139,13 +141,12 @@ def check_bounds(val, bounds) -> int | float:
     return val
 
 
-def get_slider_params(i, vm) -> list:
+def get_slider_params(i, vm) -> Iterable:
     if i < vm.kind.phys_in:
         if vm.kind.name == "basic":
             return ("AUDIBILITY",)
-        elif vm.kind.name == "banana":
+        if vm.kind.name == "banana":
             return ("COMP", "GATE")
-        elif vm.kind.name == "potato":
+        if vm.kind.name == "potato":
             return ("COMP", "GATE", "DENOISER")
-    else:
-        return ("BASS", "MID", "TREBLE")
+    return ("BASS", "MID", "TREBLE")
