@@ -1,6 +1,7 @@
 import PySimpleGUI as psg
 
 from . import util
+from .compound import LabelSlider
 
 
 class Builder:
@@ -307,6 +308,7 @@ class Builder:
         def add_gain_slider(layout):
             layout.append(
                 [
+                    psg.Text("Gain"),
                     psg.Slider(
                         range=(-60, 12),
                         default_value=self.vm.strip[i].gain,
@@ -316,37 +318,17 @@ class Builder:
                         enable_events=True,
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER GAIN",
-                    )
+                    ),
                 ]
             )
 
         def add_param_sliders(layout):
-            def default_value(i, param):
-                target = getattr(self.vm.strip[i], param.lower())
-                if param in ("COMP", "GATE", "DENOISER"):
-                    return target.knob
-                return target
-
-            layout.append(
-                [
-                    psg.Slider(
-                        range=(0, 10),
-                        default_value=default_value(i, param),
-                        resolution=0.1,
-                        disable_number_display=True,
-                        size=(12, 10),
-                        expand_x=True,
-                        enable_events=True,
-                        orientation="horizontal",
-                        key=f"STRIP {i}||SLIDER {param}",
-                    )
-                    for param in util.get_slider_params(i, self.vm)
-                ]
-            )
+            layout.append([LabelSlider(self.window, i, param) for param in util.get_slider_params(i, self.vm)])
 
         def add_limit_slider(layout):
             layout.append(
                 [
+                    psg.Text("Limit"),
                     psg.Slider(
                         range=(-40, 12),
                         default_value=self.vm.strip[i].limit,
@@ -356,7 +338,7 @@ class Builder:
                         enable_events=True,
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER LIMIT",
-                    )
+                    ),
                 ]
             )
 
@@ -418,6 +400,7 @@ class Builder:
         def add_gain_slider(layout):
             layout.append(
                 [
+                    psg.Text("Gain"),
                     psg.Slider(
                         range=(-60, 12),
                         default_value=self.vm.strip[i].gain,
@@ -427,34 +410,26 @@ class Builder:
                         enable_events=True,
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER GAIN",
-                    )
+                    ),
                 ]
             )
 
         def add_param_sliders(layout):
-            def default_value(i, param):
-                return getattr(self.vm.strip[i], param.lower())
-
-            layout.append(
-                [
-                    psg.Slider(
-                        range=(0, 10),
-                        default_value=default_value(i, param),
-                        resolution=0.1,
-                        disable_number_display=True,
-                        size=(12, 10),
-                        expand_x=True,
-                        enable_events=True,
-                        orientation="horizontal",
-                        key=f"STRIP {i}||SLIDER {param}",
-                    )
-                    for param in util.get_slider_params(i, self.vm)
-                ]
-            )
+            if self.kind.name in ("basic", "banana"):
+                for param in util.get_slider_params(i, self.vm):
+                    layout.append([LabelSlider(self.window, i, param, range_=(-12, 12))])
+            else:
+                layout.append(
+                    [
+                        LabelSlider(self.window, i, param, range_=(-12, 12))
+                        for param in util.get_slider_params(i, self.vm)
+                    ]
+                )
 
         def add_limit_slider(layout):
             layout.append(
                 [
+                    psg.Text("Limit"),
                     psg.Slider(
                         range=(-40, 12),
                         default_value=self.vm.strip[i].limit,
@@ -464,13 +439,16 @@ class Builder:
                         enable_events=True,
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER LIMIT",
-                    )
+                    ),
                 ]
             )
 
-        outputs = []
-        [step(outputs) for step in (add_gain_slider, add_param_sliders, add_limit_slider)]
-        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL||SLIDER")
+        layout = []
+        steps = (add_gain_slider, add_param_sliders)
+        if self.kind.name in ("banana", "potato"):
+            steps += (add_limit_slider,)
+        [step(layout) for step in steps]
+        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], layout, key=f"STRIP {i}||LABEL||SLIDER")
 
     def make_tab2_slider_rows(self) -> psg.Frame:
         layout = [

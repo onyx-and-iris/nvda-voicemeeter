@@ -48,7 +48,15 @@ class NVDAVMWindow(psg.Window):
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
         slider_opts = {"takefocus": 1, "highlightthickness": 1}
         for i in range(self.kind.num_strip):
+            if i < self.kind.phys_in:
+                for param in util.get_slider_params(i, self.vm):
+                    self[f"STRIP {i}||SLIDER {param}"].Widget.config(**slider_opts)
+            else:
+                for param in ("BASS", "MID", "TREBLE"):
+                    self[f"STRIP {i}||SLIDER {param}"].Widget.config(**slider_opts)
             self[f"STRIP {i}||SLIDER GAIN"].Widget.config(**slider_opts)
+            if self.kind.name != "basic":
+                self[f"STRIP {i}||SLIDER LIMIT"].Widget.config(**slider_opts)
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||SLIDER GAIN"].Widget.config(**slider_opts)
 
