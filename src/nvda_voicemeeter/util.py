@@ -130,10 +130,22 @@ def get_bus_modes(vm) -> list:
     ]
 
 
-def check_bounds(val, bounds):
+def check_bounds(val, bounds) -> int | float:
     lower, upper = bounds
     if val > upper:
         val = upper
     elif val < lower:
         val = lower
     return val
+
+
+def get_slider_params(i, vm) -> list:
+    if i < vm.kind.phys_in:
+        if vm.kind.name == "basic":
+            return ("AUDIBILITY",)
+        elif vm.kind.name == "banana":
+            return ("COMP", "GATE")
+        elif vm.kind.name == "potato":
+            return ("COMP", "GATE", "DENOISER")
+    else:
+        return ("BASS", "MID", "TREBLE")

@@ -476,6 +476,8 @@ class NVDAVMWindow(psg.Window):
                         filepath = Path(filepath)
                         self.vm.set("command.load", str(filepath))
                         self.logger.debug(f"loading config file from {filepath}")
+                        for i in (25, 50):  # for the benefit of the sliders
+                            self.TKroot.after(i, self.on_pdirty)
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
