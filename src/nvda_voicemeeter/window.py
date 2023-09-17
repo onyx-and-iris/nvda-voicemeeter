@@ -137,6 +137,8 @@ class NVDAVMWindow(psg.Window):
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
         self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
         self.bind("<Control-a>", "CTRL-A")
+        for i in range(1, 10):
+            self.bind(f"<Control-Key-{i}>", f"CTRL-{i}")
 
         # Hardware In
         for i in range(self.vm.kind.phys_in):
@@ -410,6 +412,35 @@ class NVDAVMWindow(psg.Window):
                 case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
                     self["tabgroup"].set_focus()
                     self.nvda.speak(f"{values['tabgroup']}")
+
+                # Quick Navigation
+                case ["CTRL-1" | "CTRL-2" | "CTRL-3" | "CTRL-4" | "CTRL-5" | "CTRL-6" | "CTRL-7" | "CTRL-8" as bind]:
+                    key, index = bind.split("-")
+                    match values["tabgroup"]:
+                        case "tab||Physical Strip":
+                            self[f"STRIP {int(index) - 1}||A1"].set_focus()
+                            if (
+                                self.find_element_with_focus() is None
+                                or self.find_element_with_focus().Key != f"STRIP {int(index) - 1}||A1"
+                            ):
+                                self[f"STRIP {int(index) - 1}||SLIDER GAIN"].set_focus()
+                        case "tab||Virtual Strip":
+                            index = int(index) + self.kind.phys_in
+                            if index > self.kind.num_strip:
+                                continue
+                            self[f"STRIP {index - 1}||A1"].set_focus()
+                            if (
+                                self.find_element_with_focus() is None
+                                or self.find_element_with_focus().Key != f"STRIP {int(index) - 1}||A1"
+                            ):
+                                self[f"STRIP {int(index) - 1}||SLIDER GAIN"].set_focus()
+                        case "tab||Buses":
+                            self[f"BUS {int(index) - 1}||MONO"].set_focus()
+                            if (
+                                self.find_element_with_focus() is None
+                                or self.find_element_with_focus().Key != f"BUS {int(index) - 1}||MONO"
+                            ):
+                                self[f"BUS {int(index) - 1}||SLIDER GAIN"].set_focus()
 
                 # Rename popups
                 case ["F2:113"]:
