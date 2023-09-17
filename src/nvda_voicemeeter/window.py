@@ -48,12 +48,8 @@ class NVDAVMWindow(psg.Window):
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
         slider_opts = {"takefocus": 1, "highlightthickness": 1}
         for i in range(self.kind.num_strip):
-            if i < self.kind.phys_in:
-                for param in util.get_slider_params(i, self.vm):
-                    self[f"STRIP {i}||SLIDER {param}"].Widget.config(**slider_opts)
-            else:
-                for param in ("BASS", "MID", "TREBLE"):
-                    self[f"STRIP {i}||SLIDER {param}"].Widget.config(**slider_opts)
+            for param in util.get_slider_params(i, self.vm):
+                self[f"STRIP {i}||SLIDER {param}"].Widget.config(**slider_opts)
             self[f"STRIP {i}||SLIDER GAIN"].Widget.config(**slider_opts)
             if self.kind.name != "basic":
                 self[f"STRIP {i}||SLIDER LIMIT"].Widget.config(**slider_opts)
@@ -109,6 +105,15 @@ class NVDAVMWindow(psg.Window):
             self[f"{key}||SLIDER"].update(value=value)
         for i in range(self.kind.num_strip):
             self[f"STRIP {i}||SLIDER GAIN"].update(value=self.vm.strip[i].gain)
+            if self.kind.name != "basic":
+                self[f"STRIP {i}||SLIDER LIMIT"].update(value=self.vm.strip[i].limit)
+            for param in util.get_slider_params(i, self.vm):
+                if param in ("AUDIBILITY", "BASS", "MID", "TREBLE"):
+                    val = getattr(self.vm.strip[i], param.lower())
+                else:
+                    target = getattr(self.vm.strip[i], param.lower())
+                    val = target.knob
+                self[f"STRIP {i}||SLIDER {param}"].update(value=val)
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||SLIDER GAIN"].update(value=self.vm.bus[i].gain)
         if self.kind.name != "basic":
@@ -723,9 +728,7 @@ class NVDAVMWindow(psg.Window):
                         self.vm.event.pdirty = False
                         label = self.cache["labels"][f"STRIP {index}||LABEL"]
                         val = values[f"STRIP {index}||SLIDER {param}"]
-                        if param == "LIMIT":
-                            val = int(val)
-                        self.nvda.speak(f"{label} {param} slider {val}")
+                        self.nvda.speak(f"{label} {param} slider {int(val) if param == 'LIMIT' else val}")
                 case [
                     ["STRIP", index],
                     [
