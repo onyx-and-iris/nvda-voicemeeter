@@ -672,52 +672,142 @@ class NVDAVMWindow(psg.Window):
                     self.find_element_with_focus().click()
 
                 # Strip Sliders
-                case [["STRIP", index], ["SLIDER", "GAIN"]]:
+                case [
+                    ["STRIP", index],
+                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
+                ]:
                     label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    self.nvda.speak(f"{label} gain slider {val}")
-                case [["STRIP", index], ["SLIDER", "GAIN"], ["FOCUS", "IN"]]:
+                    val = values[event]
+                    match param:
+                        case "GAIN":
+                            self.vm.strip[int(index)].gain = val
+                        case "COMP" | "GATE" | "DENOISER":
+                            target = getattr(self.vm.strip[int(index)], param.lower())
+                            target.knob = val
+                        case "AUDIBILITY":
+                            self.vm.strip[int(index)].audibility = val
+                        case "LIMIT":
+                            val = int(val)
+                            self.vm.strip[int(index)].limit = val
+                    self.nvda.speak(f"{label} {param} slider {val}")
+                case [
+                    ["STRIP", index],
+                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
+                    ["FOCUS", "IN"],
+                ]:
                     if self.find_element_with_focus() is not None:
                         self.vm.event.pdirty = False
                         label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                        val = values[f"STRIP {index}||SLIDER GAIN"]
-                        self.nvda.speak(f"{label} gain slider {val}")
-                case [["STRIP", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
+                        val = values[f"STRIP {index}||SLIDER {param}"]
+                        if param == "LIMIT":
+                            val = int(val)
+                        self.nvda.speak(f"{label} {param} slider {val}")
+                case [
+                    ["STRIP", index],
+                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT"],
+                    ["FOCUS", "OUT"],
+                ]:
                     self.vm.event.pdirty = True
-                case [["STRIP", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction]]:
-                    val = self.vm.strip[int(index)].gain
+                case [
+                    ["STRIP", index],
+                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
+                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                ]:
+                    match param:
+                        case "GAIN":
+                            val = self.vm.strip[int(index)].gain
+                        case "LIMIT":
+                            val = self.vm.strip[int(index)].limit
+                        case "COMP" | "GATE" | "DENOISER":
+                            target = getattr(self.vm.strip[int(index)], param.lower())
+                            val = target.knob
+                        case "AUDIBILITY":
+                            val = self.vm.strip[int(index)].audibility
+
                     match direction:
                         case "RIGHT" | "UP":
                             val += 1
                         case "LEFT" | "DOWN":
                             val -= 1
-                    self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=util.check_bounds(val, (-60, 12)))
+
+                    match param:
+                        case "GAIN":
+                            self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-60, 12)))
+                        case "LIMIT":
+                            self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
+                        case "COMP" | "GATE" | "DENOISER":
+                            setattr(target, "knob", util.check_bounds(val, (0, 10)))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                        case "AUDIBILITY":
+                            self.vm.strip[int(index)].audibility = util.check_bounds(val, (0, 10))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN"],
+                    ["SLIDER", "GAIN" | "LIMIT" as param],
                     ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
                 ]:
-                    val = self.vm.strip[int(index)].gain
+                    match param:
+                        case "GAIN":
+                            val = self.vm.strip[int(index)].gain
+                        case "LIMIT":
+                            val = self.vm.strip[int(index)].limit
+
                     match direction:
                         case "RIGHT" | "UP":
                             val += 3
                         case "LEFT" | "DOWN":
                             val -= 3
-                    self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=util.check_bounds(val, (-60, 12)))
+
+                    match param:
+                        case "GAIN":
+                            self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-60, 12)))
+                        case "LIMIT":
+                            self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN"],
+                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
                     ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
                 ]:
-                    val = self.vm.strip[int(index)].gain
+                    match param:
+                        case "GAIN":
+                            val = self.vm.strip[int(index)].gain
+                        case "COMP" | "GATE" | "DENOISER":
+                            target = getattr(self.vm.strip[int(index)], param.lower())
+                            val = target.knob
+                        case "AUDIBILITY":
+                            val = self.vm.strip[int(index)].audibility
+                        case "LIMIT":
+                            val = self.vm.strip[int(index)].limit
+
                     match direction:
                         case "RIGHT" | "UP":
-                            val += 0.1
+                            if param == "LIMIT":
+                                val += 1
+                            else:
+                                val += 0.1
                         case "LEFT" | "DOWN":
-                            val -= 0.1
-                    self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=util.check_bounds(val, (-60, 12)))
+                            if param == "LIMIT":
+                                val -= 1
+                            else:
+                                val -= 0.1
+
+                    match param:
+                        case "GAIN":
+                            self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-60, 12)))
+                        case "COMP" | "GATE" | "DENOISER":
+                            setattr(target, "knob", util.check_bounds(val, (0, 10)))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                        case "AUDIBILITY":
+                            self.vm.strip[int(index)].audibility = util.check_bounds(val, (0, 10))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                        case "LIMIT":
+                            self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
 
                 # Bus Params
                 case [["BUS", index], [param]]:

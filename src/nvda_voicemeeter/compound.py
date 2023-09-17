@@ -10,13 +10,17 @@ class LabelSlider(psg.Frame):
             size = 7
         else:
             size = 4
+        if param == "LIMIT":
+            resolution = 1
+        else:
+            resolution = 0.1
         layout = [
             [
                 psg.Text(param.capitalize(), size=size),
                 psg.Slider(
                     range=range_,
                     default_value=self.default_value(i, param),
-                    resolution=0.1,
+                    resolution=resolution,
                     disable_number_display=True,
                     size=(12, 16),
                     expand_x=True,
