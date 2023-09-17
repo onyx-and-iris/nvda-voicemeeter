@@ -194,12 +194,9 @@ class NVDAVMWindow(psg.Window):
 
         # Strip Sliders
         for i in range(self.kind.num_strip):
-            for param in ("GAIN", "LIMIT"):
+            for param in util.get_slider_params(i, self.vm) + ("GAIN", "LIMIT"):
                 if self.kind.name == "basic" and param == "LIMIT":
                     continue
-                self[f"STRIP {i}||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
-            for param in util.get_slider_params(i, self.vm):
                 self[f"STRIP {i}||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Left>", "||KEY LEFT")
@@ -677,8 +674,6 @@ class NVDAVMWindow(psg.Window):
                 # Strip Sliders
                 case [["STRIP", index], ["SLIDER", "GAIN"]]:
                     label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    val = values[event]
-                    self.vm.strip[int(index)].gain = val
                     self.nvda.speak(f"{label} gain slider {val}")
                 case [["STRIP", index], ["SLIDER", "GAIN"], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
@@ -696,7 +691,7 @@ class NVDAVMWindow(psg.Window):
                         case "LEFT" | "DOWN":
                             val -= 1
                     self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
+                    self[f"STRIP {index}||SLIDER GAIN"].update(value=util.check_bounds(val, (-60, 12)))
                 case [
                     ["STRIP", index],
                     ["SLIDER", "GAIN"],
@@ -709,7 +704,7 @@ class NVDAVMWindow(psg.Window):
                         case "LEFT" | "DOWN":
                             val -= 3
                     self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
+                    self[f"STRIP {index}||SLIDER GAIN"].update(value=util.check_bounds(val, (-60, 12)))
                 case [
                     ["STRIP", index],
                     ["SLIDER", "GAIN"],
@@ -722,7 +717,7 @@ class NVDAVMWindow(psg.Window):
                         case "LEFT" | "DOWN":
                             val -= 0.1
                     self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                    self[f"STRIP {index}||SLIDER GAIN"].update(value=val)
+                    self[f"STRIP {index}||SLIDER GAIN"].update(value=util.check_bounds(val, (-60, 12)))
 
                 # Bus Params
                 case [["BUS", index], [param]]:
