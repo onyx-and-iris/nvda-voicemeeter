@@ -728,7 +728,10 @@ class NVDAVMWindow(psg.Window):
                         self.nvda.speak(f"{label} {param} slider {val}")
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT"],
+                    [
+                        "SLIDER",
+                        "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" | "BASS" | "MID" | "TREBLE",
+                    ],
                     ["FOCUS", "OUT"],
                 ]:
                     self.vm.event.pdirty = True
