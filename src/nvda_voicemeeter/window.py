@@ -674,7 +674,18 @@ class NVDAVMWindow(psg.Window):
                 # Strip Sliders
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
+                    [
+                        "SLIDER",
+                        "GAIN"
+                        | "COMP"
+                        | "GATE"
+                        | "DENOISER"
+                        | "AUDIBILITY"
+                        | "LIMIT"
+                        | "BASS"
+                        | "MID"
+                        | "TREBLE" as param,
+                    ],
                 ]:
                     label = self.cache["labels"][f"STRIP {index}||LABEL"]
                     val = values[event]
@@ -689,10 +700,23 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             val = int(val)
                             self.vm.strip[int(index)].limit = val
+                        case "BASS" | "MID" | "TREBLE":
+                            setattr(self.vm.strip[int(index)], param.lower(), val)
                     self.nvda.speak(f"{label} {param} slider {val}")
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
+                    [
+                        "SLIDER",
+                        "GAIN"
+                        | "COMP"
+                        | "GATE"
+                        | "DENOISER"
+                        | "AUDIBILITY"
+                        | "LIMIT"
+                        | "BASS"
+                        | "MID"
+                        | "TREBLE" as param,
+                    ],
                     ["FOCUS", "IN"],
                 ]:
                     if self.find_element_with_focus() is not None:
@@ -710,7 +734,18 @@ class NVDAVMWindow(psg.Window):
                     self.vm.event.pdirty = True
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
+                    [
+                        "SLIDER",
+                        "GAIN"
+                        | "COMP"
+                        | "GATE"
+                        | "DENOISER"
+                        | "AUDIBILITY"
+                        | "LIMIT"
+                        | "BASS"
+                        | "MID"
+                        | "TREBLE" as param,
+                    ],
                     ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
                 ]:
                     match param:
@@ -723,6 +758,8 @@ class NVDAVMWindow(psg.Window):
                             val = target.knob
                         case "AUDIBILITY":
                             val = self.vm.strip[int(index)].audibility
+                        case "BASS" | "MID" | "TREBLE":
+                            val = getattr(self.vm.strip[int(index)], param.lower())
 
                     match direction:
                         case "RIGHT" | "UP":
@@ -743,9 +780,12 @@ class NVDAVMWindow(psg.Window):
                         case "AUDIBILITY":
                             self.vm.strip[int(index)].audibility = util.check_bounds(val, (0, 10))
                             self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                        case "BASS" | "MID" | "TREBLE":
+                            setattr(self.vm.strip[int(index)], param.lower(), util.check_bounds(val, (-12, 12)))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-12, 12)))
                 case [
                     ["STRIP", index],
-                    ["SLIDER", "GAIN" | "LIMIT" as param],
+                    ["SLIDER", "GAIN" | "LIMIT" | "BASS" | "MID" | "TREBLE" as param],
                     ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
                 ]:
                     match param:
@@ -756,9 +796,15 @@ class NVDAVMWindow(psg.Window):
 
                     match direction:
                         case "RIGHT" | "UP":
-                            val += 3
+                            if param in ("BASS", "MID", "TREBLE"):
+                                val += 1
+                            else:
+                                val += 3
                         case "LEFT" | "DOWN":
-                            val -= 3
+                            if param in ("BASS", "MID", "TREBLE"):
+                                val -= 1
+                            else:
+                                val -= 3
 
                     match param:
                         case "GAIN":
@@ -767,6 +813,9 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
                             self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
+                        case "BASS" | "MID" | "TREBLE":
+                            setattr(self.vm.strip[int(index)], param.lower(), util.check_bounds(val, (-12, 12)))
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-12, 12)))
                 case [
                     ["STRIP", index],
                     ["SLIDER", "GAIN" | "COMP" | "GATE" | "DENOISER" | "AUDIBILITY" | "LIMIT" as param],
