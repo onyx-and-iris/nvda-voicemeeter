@@ -194,20 +194,26 @@ class NVDAVMWindow(psg.Window):
 
         # Strip Sliders
         for i in range(self.kind.num_strip):
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<FocusIn>", "||FOCUS IN")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<FocusOut>", "||FOCUS OUT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Left>", "||KEY LEFT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Right>", "||KEY RIGHT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Left>", "||KEY SHIFT LEFT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Right>", "||KEY SHIFT RIGHT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Left>", "||KEY CTRL LEFT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Right>", "||KEY CTRL RIGHT")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Up>", "||KEY UP")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Down>", "||KEY DOWN")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Up>", "||KEY SHIFT UP")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
-            self[f"STRIP {i}||SLIDER GAIN"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
+            for param in ("GAIN", "LIMIT"):
+                if self.kind.name == "basic" and param == "LIMIT":
+                    continue
+                self[f"STRIP {i}||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
+            for param in util.get_slider_params(i, self.vm):
+                self[f"STRIP {i}||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Left>", "||KEY LEFT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Right>", "||KEY RIGHT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Left>", "||KEY SHIFT LEFT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Right>", "||KEY SHIFT RIGHT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Left>", "||KEY CTRL LEFT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Right>", "||KEY CTRL RIGHT")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Up>", "||KEY UP")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Down>", "||KEY DOWN")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Up>", "||KEY SHIFT UP")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
 
         # Bus Params
         params = ["MONO", "EQ", "MUTE", "MODE"]
