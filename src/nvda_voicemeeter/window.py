@@ -420,6 +420,8 @@ class NVDAVMWindow(psg.Window):
                     key, index = bind.split("-")
                     match values["tabgroup"]:
                         case "tab||Physical Strip":
+                            if int(index) > self.kind.phys_in:
+                                continue
                             self[f"STRIP {int(index) - 1}||A1"].set_focus()
                             if (
                                 self.find_element_with_focus() is None
@@ -437,6 +439,8 @@ class NVDAVMWindow(psg.Window):
                             ):
                                 self[f"STRIP {int(index) - 1}||SLIDER GAIN"].set_focus()
                         case "tab||Buses":
+                            if int(index) > self.kind.num_bus:
+                                continue
                             self[f"BUS {int(index) - 1}||MONO"].set_focus()
                             if (
                                 self.find_element_with_focus() is None
