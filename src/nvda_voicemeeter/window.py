@@ -218,6 +218,7 @@ class NVDAVMWindow(psg.Window):
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
+                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
 
         # Bus Params
         params = ["MONO", "EQ", "MUTE", "MODE"]
@@ -244,6 +245,7 @@ class NVDAVMWindow(psg.Window):
             self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
 
     def popup_save_as(self, message, title=None, initial_folder=None):
         layout = [
@@ -934,6 +936,23 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
                             self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
+                case [["STRIP", index], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
+                    match param:
+                        case "GAIN":
+                            self.vm.strip[int(index)].gain = 0
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=0)
+                        case "COMP" | "GATE" | "DENOISER":
+                            setattr(target, "knob", 0)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=0)
+                        case "AUDIBILITY":
+                            self.vm.strip[int(index)].audibility = 0
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=0)
+                        case "BASS" | "MID" | "TREBLE":
+                            setattr(self.vm.strip[int(index)], param.lower(), 0)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=0)
+                        case "LIMIT":
+                            self.vm.strip[int(index)].limit = 12
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=12)
 
                 # Bus Params
                 case [["BUS", index], [param]]:
@@ -1043,6 +1062,9 @@ class NVDAVMWindow(psg.Window):
                             val -= 0.1
                     self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:
+                    self.vm.bus[int(index)].gain = 0
+                    self[f"BUS {index}||SLIDER GAIN"].update(value=0)
 
                 # Unknown
                 case _:
