@@ -683,7 +683,7 @@ class NVDAVMWindow(psg.Window):
                     val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.asio[index].set(val)
                     channel = ("left", "right")[int(channel)]
-                    self.nvda.speak(f"Patch ASIO {in_num} {channel} set to {val}")
+                    self.nvda.speak(str(val))
                 case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
@@ -717,9 +717,7 @@ class NVDAVMWindow(psg.Window):
                     )
                     val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.insert[index].on = val
-                    self.nvda.speak(
-                        f"PATCH INSERT {in_num} {util._patch_insert_channels[int(channel)]} set to {'on' if val else 'off'}"
-                    )
+                    self.nvda.speak(f"{'on' if val else 'off'}")
                 case [["INSERT", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         index = util.get_insert_checkbox_index(
@@ -759,19 +757,17 @@ class NVDAVMWindow(psg.Window):
                                     next_val = 0
                                 setattr(self.vm.strip[int(index)], actual, next_val)
                                 self.cache["strip"][f"STRIP {index}||{param}"] = next_val
-                                self.nvda.speak(
-                                    f"{label} {phonetic.get(actual, actual)} {['off', 'k m', 'k 1', 'k 2'][next_val]}"
-                                )
+                                self.nvda.speak(["off", "k m", "k 1", "k 2"][next_val])
                             else:
                                 val = not self.cache["strip"][f"STRIP {index}||{param}"]
                                 setattr(self.vm.strip[int(index)], actual, val)
                                 self.cache["strip"][f"STRIP {index}||{param}"] = val
-                                self.nvda.speak(f"{label} {phonetic.get(actual, actual)} {'on' if val else 'off'}")
+                                self.nvda.speak("on" if val else "off")
                         case _:
                             val = not self.cache["strip"][f"STRIP {index}||{param}"]
                             setattr(self.vm.strip[int(index)], param if param[0] in ("A", "B") else param.lower(), val)
                             self.cache["strip"][f"STRIP {index}||{param}"] = val
-                            self.nvda.speak(f"{label} {param} {'on' if val else 'off'}")
+                            self.nvda.speak("on" if val else "off")
                 case [["STRIP", index], [param], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         val = self.cache["strip"][f"STRIP {index}||{param}"]
@@ -844,9 +840,9 @@ class NVDAVMWindow(psg.Window):
                 ]:
                     if self.find_element_with_focus() is not None:
                         self.vm.event.pdirty = False
-                        label = self.cache["labels"][f"STRIP {index}||LABEL"]
                         val = values[f"STRIP {index}||SLIDER {param}"]
-                        self.nvda.speak(f"{label} {param} slider {int(val) if param == 'LIMIT' else val}")
+                        label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                        self.nvda.speak(f"{label} {param} {int(val) if param == 'LIMIT' else val}")
                 case [
                     ["STRIP", index],
                     [
@@ -893,22 +889,26 @@ class NVDAVMWindow(psg.Window):
 
                     match param:
                         case "GAIN":
-                            self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-60, 12)))
+                            val = util.check_bounds(val, (-60, 12))
+                            self.vm.strip[int(index)].gain = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "COMP" | "GATE" | "DENOISER":
-                            setattr(target, "knob", util.check_bounds(val, (0, 10)))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                            val = util.check_bounds(val, (0, 10))
+                            setattr(target, "knob", val)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "AUDIBILITY":
-                            self.vm.strip[int(index)].audibility = util.check_bounds(val, (0, 10))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                            val = util.check_bounds(val, (0, 10))
+                            self.vm.strip[int(index)].audibility = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "BASS" | "MID" | "TREBLE":
-                            setattr(self.vm.strip[int(index)], param.lower(), util.check_bounds(val, (-12, 12)))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-12, 12)))
+                            val = util.check_bounds(val, (-12, 12))
+                            setattr(self.vm.strip[int(index)], param.lower(), val)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "LIMIT":
-                            self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    self.nvda.speak(f"{label} {param} {val}")
+                            val = util.check_bounds(val, (-40, 12))
+                            self.vm.strip[int(index)].limit = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                    self.nvda.speak(str(val))
                 case [
                     ["STRIP", index],
                     [
@@ -952,22 +952,26 @@ class NVDAVMWindow(psg.Window):
 
                     match param:
                         case "GAIN":
-                            self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-60, 12)))
+                            val = util.check_bounds(val, (-60, 12))
+                            self.vm.strip[int(index)].gain = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "COMP" | "GATE" | "DENOISER":
-                            setattr(target, "knob", util.check_bounds(val, (0, 10)))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                            val = util.check_bounds(val, (0, 10))
+                            setattr(target, "knob", val)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "AUDIBILITY":
-                            self.vm.strip[int(index)].audibility = util.check_bounds(val, (0, 10))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                            val = util.check_bounds(val, (0, 10))
+                            self.vm.strip[int(index)].audibility = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "BASS" | "MID" | "TREBLE":
-                            setattr(self.vm.strip[int(index)], param.lower(), util.check_bounds(val, (-12, 12)))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-12, 12)))
+                            val = util.check_bounds(val, (-12, 12))
+                            setattr(self.vm.strip[int(index)], param.lower(), val)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "LIMIT":
-                            self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    self.nvda.speak(f"{label} {param} {val}")
+                            val = util.check_bounds(val, (-40, 12))
+                            self.vm.strip[int(index)].limit = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                    self.nvda.speak(f"{param} {val}")
                 case [
                     ["STRIP", index],
                     [
@@ -1011,22 +1015,26 @@ class NVDAVMWindow(psg.Window):
 
                     match param:
                         case "GAIN":
-                            self.vm.strip[int(index)].gain = util.check_bounds(val, (-60, 12))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-60, 12)))
+                            val = util.check_bounds(val, (-60, 12))
+                            self.vm.strip[int(index)].gain = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "COMP" | "GATE" | "DENOISER":
-                            setattr(target, "knob", util.check_bounds(val, (0, 10)))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                            val = util.check_bounds(val, (0, 10))
+                            setattr(target, "knob", val)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "AUDIBILITY":
-                            self.vm.strip[int(index)].audibility = util.check_bounds(val, (0, 10))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (0, 10)))
+                            val = util.check_bounds(val, (0, 10))
+                            self.vm.strip[int(index)].audibility = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "BASS" | "MID" | "TREBLE":
-                            setattr(self.vm.strip[int(index)], param.lower(), util.check_bounds(val, (-12, 12)))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-12, 12)))
+                            val = util.check_bounds(val, (-12, 12))
+                            setattr(self.vm.strip[int(index)], param.lower(), val)
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
                         case "LIMIT":
-                            self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    self.nvda.speak(f"{label} {param} {val}")
+                            val = util.check_bounds(val, (-40, 12))
+                            self.vm.strip[int(index)].limit = val
+                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                    self.nvda.speak(f"{param} {val}")
                 case [["STRIP", index], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
                     match param:
                         case "GAIN":
@@ -1044,8 +1052,7 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = 12
                             self[f"STRIP {index}||SLIDER {param}"].update(value=12)
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                    self.nvda.speak(f"{label} {param} {12 if param == 'LABEL' else 0}")
+                    self.nvda.speak(f"{param} {12 if param == 'LABEL' else 0}")
 
                 # Bus Params
                 case [["BUS", index], [param]]:
@@ -1059,7 +1066,7 @@ class NVDAVMWindow(psg.Window):
                             self.TKroot.after(
                                 200,
                                 self.nvda.speak,
-                                f"{label} bus {param} {'on' if val else 'off'}",
+                                "on" if val else "off",
                             )
                         case "MONO" | "MUTE":
                             val = not val
@@ -1068,7 +1075,7 @@ class NVDAVMWindow(psg.Window):
                             self.TKroot.after(
                                 200,
                                 self.nvda.speak,
-                                f"{label} bus {param} {'on' if val else 'off'}",
+                                "on" if val else "off",
                             )
                         case "MODE":
                             bus_modes = util.get_bus_modes(self.vm)
@@ -1093,7 +1100,7 @@ class NVDAVMWindow(psg.Window):
                             self.TKroot.after(
                                 200,
                                 self.nvda.speak,
-                                f"{label} bus mode {phonetic.get(next_bus, next_bus)}",
+                                phonetic.get(next_bus, next_bus),
                             )
                 case [["BUS", index], [param], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
@@ -1111,13 +1118,12 @@ class NVDAVMWindow(psg.Window):
                     label = self.cache["labels"][f"BUS {index}||LABEL"]
                     val = values[event]
                     self.vm.bus[int(index)].gain = val
-                    self.nvda.speak(f"{label} gain slider {val}")
                 case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         self.vm.event.pdirty = False
                         label = self.cache["labels"][f"BUS {index}||LABEL"]
                         val = values[f"BUS {index}||SLIDER GAIN"]
-                        self.nvda.speak(f"{label} gain slider {val}")
+                        self.nvda.speak(f"{label} gain {val}")
                 case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
                     self.vm.event.pdirty = True
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction]]:
@@ -1140,8 +1146,10 @@ class NVDAVMWindow(psg.Window):
                             val += 3
                         case "LEFT" | "DOWN":
                             val -= 3
-                    self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
+                    val = util.check_bounds(val, (-60, 12))
+                    self.vm.bus[int(index)].gain = val
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                    self.nvda.speak(str(val))
                 case [
                     ["BUS", index],
                     ["SLIDER", "GAIN"],
@@ -1155,13 +1163,11 @@ class NVDAVMWindow(psg.Window):
                             val -= 0.1
                     self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                    label = self.cache["labels"][f"BUS {index}||LABEL"]
-                    self.nvda.speak(f"{label} GAIN {val}")
+                    self.nvda.speak(str(val))
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:
                     self.vm.bus[int(index)].gain = 0
                     self[f"BUS {index}||SLIDER GAIN"].update(value=0)
-                    label = self.cache["labels"][f"BUS {index}||LABEL"]
-                    self.nvda.speak(f"{label} GAIN {val}")
+                    self.nvda.speak(str(val))
 
                 # Unknown
                 case _:
