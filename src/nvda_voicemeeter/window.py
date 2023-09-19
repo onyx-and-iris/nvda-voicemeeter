@@ -139,6 +139,28 @@ class NVDAVMWindow(psg.Window):
         self.bind("<Control-a>", "CTRL-A")
         for i in range(1, 10):
             self.bind(f"<Control-Key-{i}>", f"CTRL-{i}")
+        for i in range(1, 10):
+            self.bind(f"<Alt-Key-{i}>", f"ALT-{i}")
+        self.bind("<Control-o>", "CTRL-O")
+        self.bind("<Control-s>", "CTRL-S")
+        self.bind("<Control-m>", "CTRL-M")
+        self.bind("<Control-Alt-Right>", "CTRL-ALT-RIGHT")
+        self.bind("<Control-Alt-Left>", "CTRL-ALT-LEFT")
+
+        if self.kind.name == "basic":
+            self.bind("<Control-u>", "AUDIBILITY MODE")
+            self.bind("<Control-g>", "GAIN MODE")
+        elif self.kind.name == "banana":
+            self.bind("<Control-g>", "GAIN MODE")
+            self.bind("<Control-c>", "COMP MODE")
+            self.bind("<Control-t>", "GATE MODE")
+            self.bind("<Control-l>", "LIMIT MODE")
+        else:
+            self.bind("<Control-g>", "GAIN MODE")
+            self.bind("<Control-c>", "COMP MODE")
+            self.bind("<Control-t>", "GATE MODE")
+            self.bind("<Control-d>", "DENOISER MODE")
+            self.bind("<Control-l>", "LIMIT MODE")
 
         # Hardware In
         for i in range(self.vm.kind.phys_in):
@@ -401,6 +423,7 @@ class NVDAVMWindow(psg.Window):
 
         Main thread will shutdown once a close or exit event occurs
         """
+        mode = None
 
         while True:
             event, values = self.read()
@@ -408,6 +431,20 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
+            if event in ("GAIN MODE", "COMP MODE", "GATE MODE", "DENOISER MODE", "LIMIT MODE"):
+                mode = event
+                if mode:
+                    self.nvda.speak(f"{mode} enabled")
+            elif event == "Escape:27":
+                if mode:
+                    self.nvda.speak(f"{mode.split()[0]} mode disabled")
+                    mode = None
+
+            if mode:
+                if event == "Left:37":
+                    self.write_event_value("SLIDER-MODE-LEFT", mode.split()[0])
+                elif event == "Right:39":
+                    self.write_event_value("SLIDER-MODE-RIGHT", mode.split()[0])
 
             match parsed_cmd := self.parser.match.parseString(event):
                 # Focus tabgroup
@@ -447,6 +484,52 @@ class NVDAVMWindow(psg.Window):
                                 or self.find_element_with_focus().Key != f"BUS {int(index) - 1}||MONO"
                             ):
                                 self[f"BUS {int(index) - 1}||SLIDER GAIN"].set_focus()
+                case ["ALT-1" | "ALT-2" | "ALT-3" | "ALT-4" | "ALT-5" | "ALT-6" | "ALT-7" | "ALT-8" as bind]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    key, index = bind.split("-")
+                    if int(index) > self.kind.phys_out + self.kind.virt_out:
+                        continue
+                    if focus := self.find_element_with_focus():
+                        identifier, param = focus.Key.split("||")
+                        if int(index) <= self.kind.phys_out:
+                            self.write_event_value(f"{identifier}||A{int(index)}", None)
+                        else:
+                            self.write_event_value(f"{identifier}||B{int(index) - self.kind.phys_out}", None)
+                case ["CTRL-O"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    if focus := self.find_element_with_focus():
+                        identifier, param = focus.Key.split("||")
+                        self.write_event_value(f"{identifier}||MONO", None)
+                case ["CTRL-S"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip"):
+                        continue
+                    if focus := self.find_element_with_focus():
+                        identifier, param = focus.Key.split("||")
+                        self.write_event_value(f"{identifier}||SOLO", None)
+                case ["CTRL-M"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    if focus := self.find_element_with_focus():
+                        identifier, param = focus.Key.split("||")
+                        self.write_event_value(f"{identifier}||MUTE", None)
+                case ["SLIDER-MODE-LEFT"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        if "SLIDER" not in partial:
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY LEFT", None)
+                case ["SLIDER-MODE-RIGHT"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        if "SLIDER" not in partial:
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY RIGHT", None)
 
                 # Rename popups
                 case ["F2:113"]:
@@ -729,7 +812,6 @@ class NVDAVMWindow(psg.Window):
                         | "TREBLE" as param,
                     ],
                 ]:
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
                     val = values[event]
                     match param:
                         case "GAIN":
@@ -744,7 +826,6 @@ class NVDAVMWindow(psg.Window):
                             self.vm.strip[int(index)].limit = val
                         case "BASS" | "MID" | "TREBLE":
                             setattr(self.vm.strip[int(index)], param.lower(), val)
-                    self.nvda.speak(f"{label} {param} slider {val}")
                 case [
                     ["STRIP", index],
                     [
@@ -826,6 +907,8 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
                             self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                    self.nvda.speak(f"{label} {param} {val}")
                 case [
                     ["STRIP", index],
                     [
@@ -883,6 +966,8 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
                             self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                    self.nvda.speak(f"{label} {param} {val}")
                 case [
                     ["STRIP", index],
                     [
@@ -940,6 +1025,8 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = util.check_bounds(val, (-40, 12))
                             self[f"STRIP {index}||SLIDER {param}"].update(value=util.check_bounds(val, (-40, 12)))
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                    self.nvda.speak(f"{label} {param} {val}")
                 case [["STRIP", index], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
                     match param:
                         case "GAIN":
@@ -957,6 +1044,8 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = 12
                             self[f"STRIP {index}||SLIDER {param}"].update(value=12)
+                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
+                    self.nvda.speak(f"{label} {param} {12 if param == 'LABEL' else 0}")
 
                 # Bus Params
                 case [["BUS", index], [param]]:
@@ -1066,9 +1155,13 @@ class NVDAVMWindow(psg.Window):
                             val -= 0.1
                     self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
+                    self.nvda.speak(f"{label} GAIN {val}")
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:
                     self.vm.bus[int(index)].gain = 0
                     self[f"BUS {index}||SLIDER GAIN"].update(value=0)
+                    label = self.cache["labels"][f"BUS {index}||LABEL"]
+                    self.nvda.speak(f"{label} GAIN {val}")
 
                 # Unknown
                 case _:
