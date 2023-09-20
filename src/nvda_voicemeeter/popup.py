@@ -135,7 +135,7 @@ class Popup:
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            match parsed_cmd := self.parser.match.parseString(event):
+            match parsed_cmd := self.window.parser.match.parseString(event):
                 case ["BUFFER MME" | "BUFFER WDM" | "BUFFER KS" | "BUFFER ASIO"]:
                     if values[event] == "Default":
                         if "MME" in event:
@@ -147,10 +147,12 @@ class Popup:
                     else:
                         val = int(values[event])
                     driver = event.split()[1]
-                    self.vm.set(f"option.buffer.{driver.lower()}", val)
-                    self.TKroot.after(200, self.window.nvda.speak, f"{driver} BUFFER {val if val else 'default'}")
+                    self.window.vm.set(f"option.buffer.{driver.lower()}", val)
+                    self.window.TKroot.after(
+                        200, self.window.nvda.speak, f"{driver} BUFFER {val if val else 'default'}"
+                    )
                 case [["BUFFER", driver], ["FOCUS", "IN"]]:
-                    val = int(self.vm.get(f"option.buffer.{driver.lower()}"))
+                    val = int(self.window.vm.get(f"option.buffer.{driver.lower()}"))
                     self.window.nvda.speak(f"{driver} BUFFER {val if val else 'default'}")
                 case [["BUFFER", driver], ["KEY", "SPACE" | "ENTER"]]:
                     util.open_context_menu_for_buttonmenu(popup, f"BUFFER {driver}")
