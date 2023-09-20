@@ -372,54 +372,22 @@ class NVDAVMWindow(psg.Window):
                     if focus := self.find_element_with_focus():
                         identifier, param = focus.Key.split("||")
                         self.write_event_value(f"{identifier}||MUTE", None)
-                case ["SLIDER-MODE-LEFT"]:
+                case [
+                    "SLIDER-MODE-LEFT"
+                    | "SLIDER-MODE-RIGHT"
+                    | "SLIDER-MODE-SHIFT-LEFT"
+                    | "SLIDER-MODE-SHIFT-RIGHT"
+                    | "SLIDER-MODE-CTRL-LEFT"
+                    | "SLIDER-MODE-CTRL-RIGHT" as op
+                ]:
+                    op = op.removeprefix("SLIDER-MODE-").split("-")
                     if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
                         continue
                     param = values[event]
                     if focus := self.find_element_with_focus():
                         identifier, partial = focus.Key.split("||")
                         if "SLIDER" not in partial:
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY LEFT", None)
-                case ["SLIDER-MODE-RIGHT"]:
-                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
-                        continue
-                    param = values[event]
-                    if focus := self.find_element_with_focus():
-                        identifier, partial = focus.Key.split("||")
-                        if "SLIDER" not in partial:
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY RIGHT", None)
-                case ["SLIDER-MODE-SHIFT-LEFT"]:
-                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
-                        continue
-                    param = values[event]
-                    if focus := self.find_element_with_focus():
-                        identifier, partial = focus.Key.split("||")
-                        if "SLIDER" not in partial:
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY SHIFT LEFT", None)
-                case ["SLIDER-MODE-SHIFT-RIGHT"]:
-                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
-                        continue
-                    param = values[event]
-                    if focus := self.find_element_with_focus():
-                        identifier, partial = focus.Key.split("||")
-                        if "SLIDER" not in partial:
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY SHIFT RIGHT", None)
-                case ["SLIDER-MODE-CTRL-LEFT"]:
-                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
-                        continue
-                    param = values[event]
-                    if focus := self.find_element_with_focus():
-                        identifier, partial = focus.Key.split("||")
-                        if "SLIDER" not in partial:
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY CTRL LEFT", None)
-                case ["SLIDER-MODE-CTRL-RIGHT"]:
-                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
-                        continue
-                    param = values[event]
-                    if focus := self.find_element_with_focus():
-                        identifier, partial = focus.Key.split("||")
-                        if "SLIDER" not in partial:
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY CTRL RIGHT", None)
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY {' '.join(op)}", None)
 
                 # Rename popups
                 case ["F2:113"]:
@@ -1023,8 +991,10 @@ class NVDAVMWindow(psg.Window):
                             val += 1
                         case "LEFT" | "DOWN":
                             val -= 1
-                    self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
+                    val = util.check_bounds(val, (-60, 12))
+                    self.vm.bus[int(index)].gain = val
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                    self.nvda.speak(str(val))
                 case [
                     ["BUS", index],
                     ["SLIDER", "GAIN"],
@@ -1051,7 +1021,8 @@ class NVDAVMWindow(psg.Window):
                             val += 0.1
                         case "LEFT" | "DOWN":
                             val -= 0.1
-                    self.vm.bus[int(index)].gain = util.check_bounds(val, (-60, 12))
+                    val = util.check_bounds(val, (-60, 12))
+                    self.vm.bus[int(index)].gain = val
                     self[f"BUS {index}||SLIDER GAIN"].update(value=val)
                     self.nvda.speak(str(val))
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:
