@@ -8,6 +8,7 @@ from . import models, util
 from .builder import Builder
 from .nvda import Nvda
 from .parser import Parser
+from .popup import Popup
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class NVDAVMWindow(psg.Window):
         }
         self.nvda = Nvda()
         self.parser = Parser()
+        self.popup = Popup(self)
         self.builder = Builder(self)
         layout = self.builder.run()
         super().__init__(title, layout, return_keyboard_events=True, finalize=True)
@@ -136,6 +138,8 @@ class NVDAVMWindow(psg.Window):
             self[f"tabgroup||{tabname}"].bind("<Shift-KeyPress-Tab>", "||KEY SHIFT TAB")
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
         self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
+
+        # NAV
         self.bind("<Control-a>", "CTRL-A")
         for i in range(1, 10):
             self.bind(f"<Control-Key-{i}>", f"CTRL-{i}")
@@ -144,9 +148,6 @@ class NVDAVMWindow(psg.Window):
         self.bind("<Control-o>", "CTRL-O")
         self.bind("<Control-s>", "CTRL-S")
         self.bind("<Control-m>", "CTRL-M")
-        self.bind("<Control-Alt-Right>", "CTRL-ALT-RIGHT")
-        self.bind("<Control-Alt-Left>", "CTRL-ALT-LEFT")
-
         if self.kind.name == "basic":
             self.bind("<Control-u>", "AUDIBILITY MODE")
             self.bind("<Control-g>", "GAIN MODE")
@@ -269,154 +270,6 @@ class NVDAVMWindow(psg.Window):
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
 
-    def popup_save_as(self, message, title=None, initial_folder=None):
-        layout = [
-            [psg.Text(message)],
-            [
-                psg.FileSaveAs("Browse", initial_folder=str(initial_folder), file_types=(("XML", ".xml"),)),
-                psg.Button("Cancel"),
-            ],
-        ]
-        window = psg.Window(title, layout, finalize=True)
-        window["Browse"].bind("<FocusIn>", "||FOCUS IN")
-        window["Browse"].bind("<Return>", "||KEY ENTER")
-        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
-        window["Cancel"].bind("<Return>", "||KEY ENTER")
-        filepath = None
-        while True:
-            event, values = window.read()
-            self.logger.debug(f"event::{event}")
-            self.logger.debug(f"values::{values}")
-            if event in (psg.WIN_CLOSED, "Cancel"):
-                break
-            match parsed_cmd := self.parser.match.parseString(event):
-                case [[button], ["FOCUS", "IN"]]:
-                    if values["Browse"]:
-                        filepath = values["Browse"]
-                        break
-                    self.nvda.speak(button)
-                case [[button], ["KEY", "ENTER"]]:
-                    window.find_element_with_focus().click()
-            self.logger.debug(f"parsed::{parsed_cmd}")
-        window.close()
-        if filepath:
-            return Path(filepath)
-
-    def popup_rename(self, message, title=None, tab=None):
-        if tab == "Physical Strip":
-            upper = self.kind.phys_in + 1
-        elif tab == "Virtual Strip":
-            upper = self.kind.virt_in + 1
-        elif tab == "Buses":
-            upper = self.kind.num_bus + 1
-
-        layout = [
-            [psg.Text(message)],
-            [
-                [
-                    psg.Spin(
-                        list(range(1, upper)), initial_value=1, size=2, enable_events=True, key=f"Index", readonly=True
-                    ),
-                    psg.Input(key="Edit"),
-                ],
-                [psg.Button("Ok"), psg.Button("Cancel")],
-            ],
-        ]
-        window = psg.Window(title, layout, finalize=True)
-        window["Index"].bind("<FocusIn>", "||FOCUS IN")
-        window["Edit"].bind("<FocusIn>", "||FOCUS IN")
-        window["Ok"].bind("<FocusIn>", "||FOCUS IN")
-        window["Ok"].bind("<Return>", "||KEY ENTER")
-        window["Cancel"].bind("<FocusIn>", "||FOCUS IN")
-        window["Cancel"].bind("<Return>", "||KEY ENTER")
-        data = {}
-        while True:
-            event, values = window.read()
-            self.logger.debug(f"event::{event}")
-            self.logger.debug(f"values::{values}")
-            if event in (psg.WIN_CLOSED, "Cancel"):
-                break
-            match parsed_cmd := self.parser.match.parseString(event):
-                case ["Index"]:
-                    val = values["Index"]
-                    self.nvda.speak(f"Index {val}")
-                case [[button], ["FOCUS", "IN"]]:
-                    if button == "Index":
-                        val = values["Index"]
-                        self.nvda.speak(f"Index {val}")
-                    else:
-                        self.nvda.speak(button)
-                case [[button], ["KEY", "ENTER"]]:
-                    window.find_element_with_focus().click()
-                case ["Ok"]:
-                    data = values
-                    break
-            self.logger.debug(f"parsed::{parsed_cmd}")
-        window.close()
-        return data
-
-    def popup_advanced_settings(self, title):
-        def _make_buffering_frame() -> psg.Frame:
-            buffer = [
-                [
-                    psg.ButtonMenu(
-                        driver,
-                        size=(14, 2),
-                        menu_def=["", util.get_asio_samples_list(driver)],
-                        key=f"BUFFER {driver}",
-                    )
-                    for driver in ("MME", "WDM", "KS", "ASIO")
-                ],
-            ]
-            return psg.Frame("BUFFERING", buffer)
-
-        layout = []
-        steps = (_make_buffering_frame,)
-        for step in steps:
-            layout.append([step()])
-        layout.append([psg.Button("Exit", size=(8, 2))])
-
-        window = psg.Window(title, layout, finalize=True)
-        buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
-        for driver in ("MME", "WDM", "KS", "ASIO"):
-            window[f"BUFFER {driver}"].Widget.config(**buttonmenu_opts)
-            window[f"BUFFER {driver}"].bind("<FocusIn>", "||FOCUS IN")
-            window[f"BUFFER {driver}"].bind("<space>", "||KEY SPACE", propagate=False)
-            window[f"BUFFER {driver}"].bind("<Return>", "||KEY ENTER", propagate=False)
-        window["Exit"].bind("<FocusIn>", "||FOCUS IN")
-        window["Exit"].bind("<Return>", "||KEY ENTER")
-        while True:
-            event, values = window.read()
-            self.logger.debug(f"event::{event}")
-            self.logger.debug(f"values::{values}")
-            if event in (psg.WIN_CLOSED, "Exit"):
-                break
-            match parsed_cmd := self.parser.match.parseString(event):
-                case ["BUFFER MME" | "BUFFER WDM" | "BUFFER KS" | "BUFFER ASIO"]:
-                    if values[event] == "Default":
-                        if "MME" in event:
-                            val = 1024
-                        elif "WDM" in event or "KS" in event:
-                            val = 512
-                        else:
-                            val = 0
-                    else:
-                        val = int(values[event])
-                    driver = event.split()[1]
-                    self.vm.set(f"option.buffer.{driver.lower()}", val)
-                    self.TKroot.after(200, self.nvda.speak, f"{driver} BUFFER {val if val else 'default'}")
-                case [["BUFFER", driver], ["FOCUS", "IN"]]:
-                    val = int(self.vm.get(f"option.buffer.{driver.lower()}"))
-                    self.nvda.speak(f"{driver} BUFFER {val if val else 'default'}")
-                case [["BUFFER", driver], ["KEY", "SPACE" | "ENTER"]]:
-                    util.open_context_menu_for_buttonmenu(window, f"BUFFER {driver}")
-                case [[button], ["FOCUS", "IN"]]:
-                    self.nvda.speak(button)
-                case [[button], ["KEY", "ENTER"]]:
-                    window.find_element_with_focus().click()
-            self.logger.debug(f"parsed::{parsed_cmd}")
-        window.close()
-
     def run(self):
         """
         Parses the event string and matches it to events
@@ -431,14 +284,13 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            if event in ("GAIN MODE", "COMP MODE", "GATE MODE", "DENOISER MODE", "LIMIT MODE"):
+            elif event in ("GAIN MODE", "COMP MODE", "GATE MODE", "DENOISER MODE", "LIMIT MODE"):
                 mode = event
-                if mode:
-                    self.nvda.speak(f"{mode} enabled")
+                self.nvda.speak(f"{mode} enabled")
             elif event == "Escape:27":
                 if mode:
-                    self.nvda.speak(f"{mode.split()[0]} mode disabled")
                     mode = None
+                    self.nvda.speak(f"{mode.split()[0]} mode disabled")
 
             if mode:
                 if event == "Left:37":
@@ -533,9 +385,9 @@ class NVDAVMWindow(psg.Window):
 
                 # Rename popups
                 case ["F2:113"]:
-                    tab = values["tabgroup"]
+                    tab = values["tabgroup"].split("||")[1]
                     if tab in ("Physical Strip", "Virtual Strip", "Buses"):
-                        data = self.popup_rename("Label", title=f"Rename {tab}", tab=tab)
+                        data = self.popup.rename("Label", title=f"Rename {tab}", tab=tab)
                         if not data:  # cancel was pressed
                             continue
                         index = int(data["Index"]) - 1
@@ -571,7 +423,7 @@ class NVDAVMWindow(psg.Window):
                     )
                 case [["Save", "Settings"], ["MENU"]]:
                     initial_folder = Path.home() / "Documents" / "Voicemeeter"
-                    if filepath := self.popup_save_as(
+                    if filepath := self.popup.save_as(
                         "Open the file browser", title="Save As", initial_folder=initial_folder
                     ):
                         self.vm.set("command.save", str(filepath))
@@ -733,7 +585,7 @@ class NVDAVMWindow(psg.Window):
                 # Advanced Settings
                 case ["ADVANCED SETTINGS"] | ["CTRL-A"]:
                     if values["tabgroup"] == "tab||Settings":
-                        self.popup_advanced_settings(title="Advanced Settings")
+                        self.popup.advanced_settings(title="Advanced Settings")
                 case [["ADVANCED", "SETTINGS"], ["FOCUS", "IN"]]:
                     self.nvda.speak("ADVANCED SETTINGS")
                 case [["ADVANCED", "SETTINGS"], ["KEY", "ENTER"]]:
