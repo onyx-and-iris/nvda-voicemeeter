@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 class Popup:
     def __init__(self, window):
         self.window = window
+        self.kind = self.window.kind
         self.logger = logger.getChild(type(self).__name__)
 
     def save_as(self, message, title=None, initial_folder=None):
@@ -46,28 +47,27 @@ class Popup:
         if filepath:
             return Path(filepath)
 
-    def rename(self, message, title=None, tab=None):
-        if tab == "Physical Strip":
-            upper = self.window.kind.phys_in + 1
-        elif tab == "Virtual Strip":
-            upper = self.window.kind.virt_in + 1
-        elif tab == "Buses":
-            upper = self.window.kind.num_bus + 1
-
+    def rename(self, message, index, title=None, tab=None):
+        if "Strip" in tab:
+            if index < self.kind.phys_in:
+                title += f" Physical Strip {index + 1}"
+            else:
+                title += f" Virtual Strip {index - self.kind.phys_in + 1}"
+        else:
+            if index < self.kind.phys_out:
+                title += f" Physical Bus {index + 1}"
+            else:
+                title += f" Virtual Bus {index - self.kind.phys_out + 1}"
         layout = [
             [psg.Text(message)],
             [
                 [
-                    psg.Spin(
-                        list(range(1, upper)), initial_value=1, size=2, enable_events=True, key=f"Index", readonly=True
-                    ),
                     psg.Input(key="Edit"),
                 ],
                 [psg.Button("Ok"), psg.Button("Cancel")],
             ],
         ]
         popup = psg.Window(title, layout, finalize=True)
-        popup["Index"].bind("<FocusIn>", "||FOCUS IN")
         popup["Edit"].bind("<FocusIn>", "||FOCUS IN")
         popup["Ok"].bind("<FocusIn>", "||FOCUS IN")
         popup["Ok"].bind("<Return>", "||KEY ENTER")
@@ -81,15 +81,8 @@ class Popup:
             if event in (psg.WIN_CLOSED, "Cancel"):
                 break
             match parsed_cmd := self.window.parser.match.parseString(event):
-                case ["Index"]:
-                    val = values["Index"]
-                    self.window.nvda.speak(f"Index {val}")
                 case [[button], ["FOCUS", "IN"]]:
-                    if button == "Index":
-                        val = values["Index"]
-                        self.window.nvda.speak(f"Index {val}")
-                    else:
-                        self.window.nvda.speak(button)
+                    self.window.nvda.speak(button)
                 case [[button], ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
                 case ["Ok"]:

@@ -106,7 +106,7 @@ All sliders may be controlled in three different ways:
 - `Shift + Left|Right arrow` to move a slider by 0.1 steps.
 - `Control + Left|Right arrow` to move a slider by 3 steps.
 
-To rename a strip/bus channel navigate to the relevant tab, then press `F2`. This will open a popup window where you can set the channel index (with a spinbox) and set the new label using a text input box.
+To rename a strip/bus channel focus on the channel in question and press `F2`. Then enter the new channel name into the text input widget and press the `Ok` button.
 
 Pressing the `OK` button with an empty text input will clear the label. In this case the label will be read as a default value for that channel. For example, if the leftmost Strip label were cleared, the screen reader will now read `Hardware Input 1`.
 

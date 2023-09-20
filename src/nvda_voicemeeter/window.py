@@ -393,30 +393,32 @@ class NVDAVMWindow(psg.Window):
                 case ["F2:113"]:
                     tab = values["tabgroup"].split("||")[1]
                     if tab in ("Physical Strip", "Virtual Strip", "Buses"):
-                        data = self.popup.rename("Label", title=f"Rename {tab}", tab=tab)
-                        if not data:  # cancel was pressed
-                            continue
-                        index = int(data["Index"]) - 1
-                        match tab:
-                            case "Physical Strip":
-                                label = data.get("Edit", f"Hardware Input {index + 1}")
-                                self.vm.strip[index].label = label
-                                self[f"STRIP {index}||LABEL"].update(value=label)
-                                self.cache["labels"][f"STRIP {index}||LABEL"] = label
-                            case "Virtual Strip":
-                                index += self.kind.phys_in
-                                label = data.get("Edit", f"Virtual Input {index - self.kind.phys_in + 1}")
-                                self.vm.strip[index].label = label
-                                self[f"STRIP {index}||LABEL"].update(value=label)
-                                self.cache["labels"][f"STRIP {index}||LABEL"] = label
-                            case "Buses":
-                                if index < self.kind.phys_out:
-                                    label = data.get("Edit", f"Physical Bus {index + 1}")
-                                else:
-                                    label = data.get("Edit", f"Virtual Bus {index - self.kind.phys_out + 1}")
-                                self.vm.bus[index].label = label
-                                self[f"BUS {index}||LABEL"].update(value=label)
-                                self.cache["labels"][f"BUS {index}||LABEL"] = label
+                        if focus := self.find_element_with_focus():
+                            identifier, partial = focus.Key.split("||")
+                            _, index = identifier.split()
+                            index = int(index)
+                            data = self.popup.rename("Label", index, title=f"Rename", tab=tab)
+                            if not data:  # cancel was pressed
+                                continue
+                            match tab:
+                                case "Physical Strip":
+                                    label = data.get("Edit", f"Hardware Input {int(index) + 1}")
+                                    self.vm.strip[int(index)].label = label
+                                    self[f"STRIP {index}||LABEL"].update(value=label)
+                                    self.cache["labels"][f"STRIP {index}||LABEL"] = label
+                                case "Virtual Strip":
+                                    label = data.get("Edit", f"Virtual Input {int(index) + 1}")
+                                    self.vm.strip[int(index)].label = label
+                                    self[f"STRIP {index}||LABEL"].update(value=label)
+                                    self.cache["labels"][f"STRIP {index}||LABEL"] = label
+                                case "Buses":
+                                    if index < self.kind.phys_out:
+                                        label = data.get("Edit", f"Physical Bus {int(index) + 1}")
+                                    else:
+                                        label = data.get("Edit", f"Virtual Bus {int(index) - self.kind.phys_out + 1}")
+                                    self.vm.bus[int(index)].label = label
+                                    self[f"BUS {index}||LABEL"].update(value=label)
+                                    self.cache["labels"][f"BUS {index}||LABEL"] = label
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:
