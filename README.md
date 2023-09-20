@@ -126,12 +126,13 @@ The `Save Settings` option opens a popup window with two buttons, `Browse` and `
 
 ### `Quick access binds`
 
-There are a number of quick binds available to assist with faster navigation and general usage.
+There are a number of quick binds available to assist with faster navigation and general use.
 
-When focused on any one of "Physical Strip", "Virtual Strip" or "Buses" you may use `Control + Number` to skip to the corresponding channel number.
+When focused on any one of "Physical Strip", "Virtual Strip" or "Buses" you may use `Control + Number` to skip to the corresponding channel.
 
 When focused on any single channel (Strip or Bus), the following binds exist:
 
+- `Alt + Number` will trigger the Bus output button corresponding to the number. For example `Alt + 3` will trigger the `A3` button
 - `Control + O` will trigger the Mono button
 - `Control + S` will trigger the Solo button
 - `Control + M` will trigger the Mute button
@@ -145,7 +146,7 @@ You may also enter slider modes which allow for control of the channels sliders 
 
 To exit any of the slider modes press `Escape`.
 
-Once you are in a slider mode you may now control the slider that matches the slider mode. Slider mode binds match the normal slider binds with the addition of the Alt keypress. For example, where you would normally use `Right Arrow` to shift a slider rightwards by 1 step, in slider mode you would now use `Alt + Right Arrow`.
+Once you are in a slider mode you may now control the slider that matches the slider mode. Slider mode binds are the same as the normal slider binds with the addition of the Alt keypress. For example, where you would normally use `Right Arrow` to shift a slider rightwards by 1 step, in slider mode you would now use `Alt + Right Arrow`.
 
 ### Issues
 
