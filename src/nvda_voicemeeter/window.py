@@ -163,6 +163,13 @@ class NVDAVMWindow(psg.Window):
             self.bind("<Control-d>", "DENOISER MODE")
             self.bind("<Control-l>", "LIMIT MODE")
 
+        self.bind("<Alt-Left>", "LEFT")
+        self.bind("<Alt-Right>", "RIGHT")
+        self.bind("<Alt-Shift-KeyPress-Left>", "SHIFT-LEFT")
+        self.bind("<Alt-Shift-KeyPress-Right>", "SHIFT-RIGHT")
+        self.bind("<Alt-Control-KeyPress-Left>", "CTRL-LEFT")
+        self.bind("<Alt-Control-KeyPress-Right>", "CTRL-RIGHT")
+
         # Hardware In
         for i in range(self.vm.kind.phys_in):
             self[f"HARDWARE IN||{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
@@ -289,14 +296,13 @@ class NVDAVMWindow(psg.Window):
                 self.nvda.speak(f"{mode} enabled")
             elif event == "Escape:27":
                 if mode:
-                    mode = None
                     self.nvda.speak(f"{mode.split()[0]} mode disabled")
+                    mode = None
 
             if mode:
-                if event == "Left:37":
-                    self.write_event_value("SLIDER-MODE-LEFT", mode.split()[0])
-                elif event == "Right:39":
-                    self.write_event_value("SLIDER-MODE-RIGHT", mode.split()[0])
+                if event in ("LEFT", "RIGHT", "SHIFT-LEFT", "SHIFT-RIGHT", "CTRL-LEFT", "CTRL-RIGHT"):
+                    self.write_event_value(f"SLIDER-MODE-{event}", mode.split()[0])
+                    continue
 
             match parsed_cmd := self.parser.match.parseString(event):
                 # Focus tabgroup
@@ -382,6 +388,38 @@ class NVDAVMWindow(psg.Window):
                         identifier, partial = focus.Key.split("||")
                         if "SLIDER" not in partial:
                             self.write_event_value(f"{identifier}||SLIDER {param}||KEY RIGHT", None)
+                case ["SLIDER-MODE-SHIFT-LEFT"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        if "SLIDER" not in partial:
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY SHIFT LEFT", None)
+                case ["SLIDER-MODE-SHIFT-RIGHT"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        if "SLIDER" not in partial:
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY SHIFT RIGHT", None)
+                case ["SLIDER-MODE-CTRL-LEFT"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        if "SLIDER" not in partial:
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY CTRL LEFT", None)
+                case ["SLIDER-MODE-CTRL-RIGHT"]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        if "SLIDER" not in partial:
+                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY CTRL RIGHT", None)
 
                 # Rename popups
                 case ["F2:113"]:
