@@ -332,7 +332,7 @@ class Builder:
                     psg.Slider(
                         range=(-40, 12),
                         default_value=self.vm.strip[i].limit,
-                        resolution=0.1,
+                        resolution=1,
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
@@ -433,7 +433,7 @@ class Builder:
                     psg.Slider(
                         range=(-40, 12),
                         default_value=self.vm.strip[i].limit,
-                        resolution=0.1,
+                        resolution=1,
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
