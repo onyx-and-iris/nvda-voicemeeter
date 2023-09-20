@@ -8,7 +8,7 @@ A remote control app for [Voicemeeter][voicemeeter], designed to be used with th
 
 For an outline of this projects goals see the [SPECIFICATION][spec].
 
-<img src="./img/settings.png" width=350 alt="Image of Voicemeeter NVDA app settings tab">
+<img src="./img/nvda-voicemeeter.png" width=960 alt="Image of Voicemeeter NVDA app settings tab">
 
 ## Requirements
 
@@ -94,7 +94,17 @@ To adjust Patch Asio Inputs to Strips and Patch Insert values use `UP` and `DOWN
 
 To access Advanced Settings you may press the Advanced Settings button or use `Control + A` when in the `Settings` tab.
 
-#### `Strip/Bus`
+#### `Physical Strip|Virtual Strip|Buses`
+
+You will find in each of these tabs two nested tabs,`Buttons` and `Sliders`. For each nested tab you will find the controls appropriate for the Voicemeeter kind and channel type.
+
+All buttons may be triggered by pressing `SPACE` or `ENTER`.
+
+All sliders may be controlled in three different ways:
+
+- `Left|Right arrow` to move a slider by 1 step.
+- `Shift + Left|Right arrow` to move a slider by 0.1 steps.
+- `Control + Left|Right arrow` to move a slider by 3 steps.
 
 To rename a strip/bus channel navigate to the relevant tab, then press `F2`. This will open a popup window where you can set the channel index (with a spinbox) and set the new label using a text input box.
 
@@ -113,6 +123,29 @@ A single menu item `Voicemeeter` can be opened using `Alt` and then `v`. The men
 The `Save Settings` option opens a popup window with two buttons, `Browse` and `Cancel`. Browse opens a Save As dialog, Cancel returns to the main app window.
 
 `Load Settings` and `Load on Startup` both open an Open dialog box immediately.
+
+### `Quick access binds`
+
+There are a number of quick binds available to assist with faster navigation and general usage.
+
+When focused on any one of "Physical Strip", "Virtual Strip" or "Buses" you may use `Control + Number` to skip to the corresponding channel number.
+
+When focused on any single channel (Strip or Bus), the following binds exist:
+
+- `Control + O` will trigger the Mono button
+- `Control + S` will trigger the Solo button
+- `Control + M` will trigger the Mute button
+
+You may also enter slider modes which allow for control of the channels sliders until the slider mode is exited. You may access the slider modes with the following binds:
+
+- `Control + U` will enter Audibility mode
+- `Control + G` will enter Gain mode
+- `Control + T` will enter Gate mode
+- `Control + L` will enter Limit mode
+
+To exit any of the slider modes press `Escape`.
+
+Once you are in a slider mode you may now control the slider that matches the slider mode. Slider mode binds match the normal slider binds with the addition of the Alt keypress. For example, where you would normally use `Right Arrow` to shift a slider rightwards by 1 step, in slider mode you would now use `Alt + Right Arrow`.
 
 ### Issues
 
