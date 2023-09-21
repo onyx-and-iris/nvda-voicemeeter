@@ -220,7 +220,9 @@ class Builder:
                         [
                             psg.Checkbox(
                                 text=channel,
-                                default=self.vm.patch.insert[util.get_insert_checkbox_index(self.kind, j, i)].on,
+                                default=self.window.cache["insert"][
+                                    f"INSERT CHECKBOX||{util.get_insert_checkbox_index(self.kind, j, i)}"
+                                ],
                                 enable_events=True,
                                 key=f"INSERT CHECKBOX||IN{i} {j}",
                             )
@@ -233,7 +235,9 @@ class Builder:
                     [
                         psg.Checkbox(
                             text=channel,
-                            default=self.vm.patch.insert[util.get_insert_checkbox_index(self.kind, j, i)].on,
+                            default=self.window.cache["insert"][
+                                f"INSERT CHECKBOX||{util.get_insert_checkbox_index(self.kind, j, i)}"
+                            ],
                             enable_events=True,
                             key=f"INSERT CHECKBOX||IN{i} {j}",
                         )

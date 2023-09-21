@@ -57,6 +57,10 @@ class NVDAVMWindow(psg.Window):
                 self[f"STRIP {i}||SLIDER LIMIT"].Widget.config(**slider_opts)
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||SLIDER GAIN"].Widget.config(**slider_opts)
+        if self.kind.name != "basic":
+            for i in range(self.kind.phys_out):
+                self[f"ASIO CHECKBOX||IN{i + 1} 0"].Widget.config(state="readonly")
+                self[f"ASIO CHECKBOX||IN{i + 1} 1"].Widget.config(state="readonly")
 
         self.register_events()
         self["tabgroup"].set_focus()
@@ -207,8 +211,11 @@ class NVDAVMWindow(psg.Window):
                 if i < self.kind.phys_in:
                     self[f"INSERT CHECKBOX||IN{i + 1} 0"].bind("<FocusIn>", "||FOCUS IN")
                     self[f"INSERT CHECKBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
+                    self[f"INSERT CHECKBOX||IN{i + 1} 0"].bind("<Return>", "||KEY ENTER")
+                    self[f"INSERT CHECKBOX||IN{i + 1} 1"].bind("<Return>", "||KEY ENTER")
                 else:
                     [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<FocusIn>", "||FOCUS IN") for j in range(8)]
+                    [self[f"INSERT CHECKBOX||IN{i + 1} {j}"].bind("<Return>", "||KEY ENTER") for j in range(8)]
 
         # Advanced Settings
         self["ADVANCED SETTINGS"].bind("<FocusIn>", "||FOCUS IN")
@@ -579,7 +586,7 @@ class NVDAVMWindow(psg.Window):
                     )
                     val = values[f"INSERT CHECKBOX||{in_num} {channel}"]
                     self.vm.patch.insert[index].on = val
-                    self.nvda.speak(f"{'on' if val else 'off'}")
+                    self.nvda.speak("on" if val else "off")
                 case [["INSERT", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         index = util.get_insert_checkbox_index(
@@ -591,6 +598,9 @@ class NVDAVMWindow(psg.Window):
                         channel = util._patch_insert_channels[int(channel)]
                         num = int(in_num[-1])
                         self.nvda.speak(f"Patch INSERT IN#{num} {channel} {'on' if val else 'off'}")
+                case [["INSERT", "CHECKBOX"], [in_num, channel], ["KEY", "ENTER"]]:
+                    val = not values[f"INSERT CHECKBOX||{in_num} {channel}"]
+                    self.write_event_value(f"INSERT CHECKBOX||{in_num} {channel}", val)
 
                 # Advanced Settings
                 case ["ADVANCED SETTINGS"] | ["CTRL-A"]:
