@@ -323,7 +323,7 @@ class Builder:
             )
 
         def add_param_sliders(layout):
-            layout.append([LabelSlider(self.window, i, param) for param in util.get_slider_params(i, self.vm)])
+            layout.append([LabelSlider(self.window, i, param) for param in util.get_slider_params(i, self.kind)])
 
         def add_limit_slider(layout):
             layout.append(
@@ -416,13 +416,13 @@ class Builder:
 
         def add_param_sliders(layout):
             if self.kind.name in ("basic", "banana"):
-                for param in util.get_slider_params(i, self.vm):
+                for param in util.get_slider_params(i, self.kind):
                     layout.append([LabelSlider(self.window, i, param, range_=(-12, 12))])
             else:
                 layout.append(
                     [
                         LabelSlider(self.window, i, param, range_=(-12, 12))
-                        for param in util.get_slider_params(i, self.vm)
+                        for param in util.get_slider_params(i, self.kind)
                     ]
                 )
 

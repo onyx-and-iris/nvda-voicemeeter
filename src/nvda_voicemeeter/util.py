@@ -141,12 +141,19 @@ def check_bounds(val, bounds: tuple) -> int | float:
     return val
 
 
-def get_slider_params(i, vm) -> Iterable:
-    if i < vm.kind.phys_in:
-        if vm.kind.name == "basic":
+def get_slider_params(i, kind) -> Iterable:
+    if i < kind.phys_in:
+        if kind.name == "basic":
             return ("AUDIBILITY",)
-        if vm.kind.name == "banana":
+        if kind.name == "banana":
             return ("COMP", "GATE")
-        if vm.kind.name == "potato":
+        if kind.name == "potato":
             return ("COMP", "GATE", "DENOISER")
     return ("BASS", "MID", "TREBLE")
+
+
+def get_full_slider_params(i, kind) -> Iterable:
+    params = list(get_slider_params(i, kind) + ("GAIN", "LIMIT"))
+    if kind.name == "basic":
+        params.remove("LIMIT")
+    return params

@@ -50,7 +50,7 @@ class NVDAVMWindow(psg.Window):
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
         slider_opts = {"takefocus": 1, "highlightthickness": 1}
         for i in range(self.kind.num_strip):
-            for param in util.get_slider_params(i, self.vm):
+            for param in util.get_slider_params(i, self.kind):
                 self[f"STRIP {i}||SLIDER {param}"].Widget.config(**slider_opts)
             self[f"STRIP {i}||SLIDER GAIN"].Widget.config(**slider_opts)
             if self.kind.name != "basic":
@@ -109,7 +109,7 @@ class NVDAVMWindow(psg.Window):
             self[f"STRIP {i}||SLIDER GAIN"].update(value=self.vm.strip[i].gain)
             if self.kind.name != "basic":
                 self[f"STRIP {i}||SLIDER LIMIT"].update(value=self.vm.strip[i].limit)
-            for param in util.get_slider_params(i, self.vm):
+            for param in util.get_slider_params(i, self.kind):
                 if param in ("AUDIBILITY", "BASS", "MID", "TREBLE"):
                     val = getattr(self.vm.strip[i], param.lower())
                 else:
@@ -148,16 +148,18 @@ class NVDAVMWindow(psg.Window):
         self.bind("<Control-o>", "CTRL-O")
         self.bind("<Control-s>", "CTRL-S")
         self.bind("<Control-m>", "CTRL-M")
+
+        self.bind("<Control-g>", "GAIN MODE")
+        self.bind("<Control-b>", "BASS MODE")
+        self.bind("<Control-i>", "MID MODE")
+        self.bind("<Control-r>", "TREBLE MODE")
         if self.kind.name == "basic":
             self.bind("<Control-u>", "AUDIBILITY MODE")
-            self.bind("<Control-g>", "GAIN MODE")
         elif self.kind.name == "banana":
-            self.bind("<Control-g>", "GAIN MODE")
             self.bind("<Control-c>", "COMP MODE")
             self.bind("<Control-t>", "GATE MODE")
             self.bind("<Control-l>", "LIMIT MODE")
         else:
-            self.bind("<Control-g>", "GAIN MODE")
             self.bind("<Control-c>", "COMP MODE")
             self.bind("<Control-t>", "GATE MODE")
             self.bind("<Control-d>", "DENOISER MODE")
@@ -231,9 +233,7 @@ class NVDAVMWindow(psg.Window):
 
         # Strip Sliders
         for i in range(self.kind.num_strip):
-            for param in util.get_slider_params(i, self.vm) + ("GAIN", "LIMIT"):
-                if self.kind.name == "basic" and param == "LIMIT":
-                    continue
+            for param in util.get_full_slider_params(i, self.kind):
                 self[f"STRIP {i}||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Left>", "||KEY LEFT")
@@ -291,7 +291,7 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            elif event in ("GAIN MODE", "COMP MODE", "GATE MODE", "DENOISER MODE", "LIMIT MODE"):
+            elif event.endswith("MODE"):
                 mode = event
                 self.nvda.speak(f"{mode} enabled")
             elif event == "Escape:27":
@@ -385,9 +385,11 @@ class NVDAVMWindow(psg.Window):
                     param = values[event]
                     if focus := self.find_element_with_focus():
                         identifier, partial = focus.Key.split("||")
-                        if "SLIDER" not in partial:
-                            op = op.removeprefix("SLIDER-MODE-").split("-")
-                            self.write_event_value(f"{identifier}||SLIDER {param}||KEY {' '.join(op)}", None)
+                        _, index = identifier.split()
+                        if param in util.get_full_slider_params(int(index), self.kind):
+                            if "SLIDER" not in partial:
+                                op = op.removeprefix("SLIDER-MODE-").split("-")
+                                self.write_event_value(f"{identifier}||SLIDER {param}||KEY {' '.join(op)}", None)
 
                 # Rename popups
                 case ["F2:113"]:

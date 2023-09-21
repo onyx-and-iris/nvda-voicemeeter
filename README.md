@@ -143,6 +143,9 @@ You may also enter slider modes which allow for control of the channels sliders 
 - `Control + G` will enter Gain mode
 - `Control + T` will enter Gate mode
 - `Control + L` will enter Limit mode
+- `Control + B` will enter Bass mode
+- `Control + I` will enter Mid mode
+- `Control + R` will enter Treble mode
 
 To exit any of the slider modes press `Escape`.
 
