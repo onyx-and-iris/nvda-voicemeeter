@@ -296,7 +296,7 @@ class NVDAVMWindow(psg.Window):
                 self.nvda.speak(f"{mode} enabled")
             elif event == "Escape:27":
                 if mode:
-                    self.nvda.speak(f"{mode.split()[0]} mode disabled")
+                    self.nvda.speak(f"{mode} disabled")
                     mode = None
 
             if mode:
@@ -380,13 +380,13 @@ class NVDAVMWindow(psg.Window):
                     | "SLIDER-MODE-CTRL-LEFT"
                     | "SLIDER-MODE-CTRL-RIGHT" as op
                 ]:
-                    op = op.removeprefix("SLIDER-MODE-").split("-")
                     if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
                         continue
                     param = values[event]
                     if focus := self.find_element_with_focus():
                         identifier, partial = focus.Key.split("||")
                         if "SLIDER" not in partial:
+                            op = op.removeprefix("SLIDER-MODE-").split("-")
                             self.write_event_value(f"{identifier}||SLIDER {param}||KEY {' '.join(op)}", None)
 
                 # Rename popups
