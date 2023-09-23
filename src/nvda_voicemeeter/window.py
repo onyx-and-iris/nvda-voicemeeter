@@ -38,7 +38,7 @@ class NVDAVMWindow(psg.Window):
         self.popup = Popup(self)
         self.builder = Builder(self)
         layout = self.builder.run()
-        super().__init__(title, layout, return_keyboard_events=True, finalize=True)
+        super().__init__(title, layout, return_keyboard_events=False, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
         for i in range(self.kind.phys_in):
             self[f"HARDWARE IN||{i + 1}"].Widget.config(**buttonmenu_opts)
@@ -142,6 +142,7 @@ class NVDAVMWindow(psg.Window):
             self[f"tabgroup||{tabname}"].bind("<Shift-KeyPress-Tab>", "||KEY SHIFT TAB")
         self.bind("<Control-KeyPress-Tab>", "CTRL-TAB")
         self.bind("<Control-Shift-KeyPress-Tab>", "CTRL-SHIFT-TAB")
+        self.bind("<F2>", "F2")
 
         # NAV
         self.bind("<Control-a>", "CTRL-A")
@@ -168,13 +169,14 @@ class NVDAVMWindow(psg.Window):
             self.bind("<Control-t>", "GATE MODE")
             self.bind("<Control-d>", "DENOISER MODE")
             self.bind("<Control-l>", "LIMIT MODE")
+        self.bind("<Escape>", "ESCAPE")
 
-        self.bind("<Alt-Left>", "LEFT")
-        self.bind("<Alt-Right>", "RIGHT")
-        self.bind("<Alt-Shift-KeyPress-Left>", "SHIFT-LEFT")
-        self.bind("<Alt-Shift-KeyPress-Right>", "SHIFT-RIGHT")
-        self.bind("<Alt-Control-KeyPress-Left>", "CTRL-LEFT")
-        self.bind("<Alt-Control-KeyPress-Right>", "CTRL-RIGHT")
+        for event in ("KeyPress", "KeyRelease"):
+            event_id = event.removeprefix("Key").upper()
+            for direction in ("Left", "Right", "Up", "Down"):
+                self.bind(f"<Alt-{event}-{direction}>", f"ALT {direction.upper()}||{event_id}")
+                self.bind(f"<Alt-Shift-{event}-{direction}>", f"ALT SHIFT {direction.upper()}||{event_id}")
+                self.bind(f"<Alt-Control-{event}-{direction}>", f"ALT CTRL {direction.upper()}||{event_id}")
 
         # Hardware In
         for i in range(self.vm.kind.phys_in):
@@ -243,18 +245,18 @@ class NVDAVMWindow(psg.Window):
             for param in util.get_full_slider_params(i, self.kind):
                 self[f"STRIP {i}||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"STRIP {i}||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Left>", "||KEY LEFT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Right>", "||KEY RIGHT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Left>", "||KEY SHIFT LEFT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Right>", "||KEY SHIFT RIGHT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Left>", "||KEY CTRL LEFT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Right>", "||KEY CTRL RIGHT")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Up>", "||KEY UP")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Down>", "||KEY DOWN")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Up>", "||KEY SHIFT UP")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
-                self[f"STRIP {i}||SLIDER {param}"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
+                for event in ("KeyPress", "KeyRelease"):
+                    event_id = event.removeprefix("Key").upper()
+                    for direction in ("Left", "Right", "Up", "Down"):
+                        self[f"STRIP {i}||SLIDER {param}"].bind(
+                            f"<{event}-{direction}>", f"||KEY {direction.upper()} {event_id}"
+                        )
+                        self[f"STRIP {i}||SLIDER {param}"].bind(
+                            f"<Shift-{event}-{direction}>", f"||KEY SHIFT {direction.upper()} {event_id}"
+                        )
+                        self[f"STRIP {i}||SLIDER {param}"].bind(
+                            f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
+                        )
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
 
         # Bus Params
@@ -268,20 +270,18 @@ class NVDAVMWindow(psg.Window):
 
         # Bus Sliders
         for i in range(self.kind.num_bus):
-            self[f"BUS {i}||SLIDER GAIN"].bind("<FocusIn>", "||FOCUS IN")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<FocusOut>", "||FOCUS OUT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Left>", "||KEY LEFT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Right>", "||KEY RIGHT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Left>", "||KEY SHIFT LEFT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Right>", "||KEY SHIFT RIGHT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Left>", "||KEY CTRL LEFT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Right>", "||KEY CTRL RIGHT")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Up>", "||KEY UP")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Down>", "||KEY DOWN")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Up>", "||KEY SHIFT UP")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Shift-KeyPress-Down>", "||KEY SHIFT DOWN")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Up>", "||KEY CTRL UP")
-            self[f"BUS {i}||SLIDER GAIN"].bind("<Control-KeyPress-Down>", "||KEY CTRL DOWN")
+            for event in ("KeyPress", "KeyRelease"):
+                event_id = event.removeprefix("Key").upper()
+                for direction in ("Left", "Right", "Up", "Down"):
+                    self[f"BUS {i}||SLIDER GAIN"].bind(
+                        f"<{event}-{direction}>", f"||KEY {direction.upper()} {event_id}"
+                    )
+                    self[f"BUS {i}||SLIDER GAIN"].bind(
+                        f"<Shift-{event}-{direction}>", f"||KEY SHIFT {direction.upper()} {event_id}"
+                    )
+                    self[f"BUS {i}||SLIDER GAIN"].bind(
+                        f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
+                    )
             self[f"BUS {i}||SLIDER GAIN"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
 
     def run(self):
@@ -301,17 +301,25 @@ class NVDAVMWindow(psg.Window):
             elif event.endswith("MODE"):
                 mode = event
                 self.nvda.speak(f"{mode} enabled")
-            elif event == "Escape:27":
+                continue
+            elif event == "ESCAPE":
                 if mode:
                     self.nvda.speak(f"{mode} disabled")
                     mode = None
-
-            if mode:
-                if event in ("LEFT", "RIGHT", "SHIFT-LEFT", "SHIFT-RIGHT", "CTRL-LEFT", "CTRL-RIGHT"):
-                    self.write_event_value(f"SLIDER-MODE-{event}", mode.split()[0])
-                    continue
+                continue
 
             match parsed_cmd := self.parser.match.parseString(event):
+                # Slide mode
+                case [["ALT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction], ["PRESS" | "RELEASE" as e]]:
+                    if mode:
+                        self.write_event_value(f"SLIDER MODE {direction}||{e}", mode.split()[0])
+                case [
+                    ["ALT", "SHIFT" | "CTRL" as modifier, "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                    ["PRESS" | "RELEASE" as e],
+                ]:
+                    if mode:
+                        self.write_event_value(f"SLIDER MODE {modifier} {direction}||{e}", mode.split()[0])
+
                 # Focus tabgroup
                 case ["CTRL-TAB"] | ["CTRL-SHIFT-TAB"]:
                     self["tabgroup"].set_focus()
@@ -379,13 +387,19 @@ class NVDAVMWindow(psg.Window):
                     if focus := self.find_element_with_focus():
                         identifier, param = focus.Key.split("||")
                         self.write_event_value(f"{identifier}||MUTE", None)
+                case [["SLIDER", "MODE", direction], ["PRESS" | "RELEASE" as e]]:
+                    if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
+                        continue
+                    param = values[event]
+                    if focus := self.find_element_with_focus():
+                        identifier, partial = focus.Key.split("||")
+                        _, index = identifier.split()
+                        if param in util.get_full_slider_params(int(index), self.kind):
+                            if "SLIDER" not in partial:
+                                self.write_event_value(f"{identifier}||SLIDER {param}||KEY {direction} {e}", None)
                 case [
-                    "SLIDER-MODE-LEFT"
-                    | "SLIDER-MODE-RIGHT"
-                    | "SLIDER-MODE-SHIFT-LEFT"
-                    | "SLIDER-MODE-SHIFT-RIGHT"
-                    | "SLIDER-MODE-CTRL-LEFT"
-                    | "SLIDER-MODE-CTRL-RIGHT" as op
+                    ["SLIDER", "MODE", "SHIFT" | "CTRL" as modifier, direction],
+                    ["PRESS" | "RELEASE" as e],
                 ]:
                     if values["tabgroup"] not in ("tab||Physical Strip", "tab||Virtual Strip", "tab||Buses"):
                         continue
@@ -395,11 +409,12 @@ class NVDAVMWindow(psg.Window):
                         _, index = identifier.split()
                         if param in util.get_full_slider_params(int(index), self.kind):
                             if "SLIDER" not in partial:
-                                op = op.removeprefix("SLIDER-MODE-").split("-")
-                                self.write_event_value(f"{identifier}||SLIDER {param}||KEY {' '.join(op)}", None)
+                                self.write_event_value(
+                                    f"{identifier}||SLIDER {param}||KEY {modifier} {direction} {e}", None
+                                )
 
                 # Rename popups
-                case ["F2:113"]:
+                case ["F2"]:
                     tab = values["tabgroup"].split("||")[1]
                     if tab in ("Physical Strip", "Virtual Strip", "Buses"):
                         if focus := self.find_element_with_focus():
@@ -711,7 +726,6 @@ class NVDAVMWindow(psg.Window):
                     ["FOCUS", "IN"],
                 ]:
                     if self.find_element_with_focus() is not None:
-                        self.vm.event.pdirty = False
                         val = values[f"STRIP {index}||SLIDER {param}"]
                         label = self.cache["labels"][f"STRIP {index}||LABEL"]
                         self.nvda.speak(f"{label} {param} {int(val) if param == 'LIMIT' else val}")
@@ -723,7 +737,7 @@ class NVDAVMWindow(psg.Window):
                     ],
                     ["FOCUS", "OUT"],
                 ]:
-                    self.vm.event.pdirty = True
+                    pass
                 case [
                     ["STRIP", index],
                     [
@@ -738,112 +752,53 @@ class NVDAVMWindow(psg.Window):
                         | "MID"
                         | "TREBLE" as param,
                     ],
-                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction, "PRESS" | "RELEASE" as e],
                 ]:
-                    match param:
-                        case "GAIN":
-                            val = self.vm.strip[int(index)].gain
-                        case "COMP" | "GATE" | "DENOISER":
-                            target = getattr(self.vm.strip[int(index)], param.lower())
-                            val = target.knob
-                        case "AUDIBILITY":
-                            val = self.vm.strip[int(index)].audibility
-                        case "BASS" | "MID" | "TREBLE":
-                            val = getattr(self.vm.strip[int(index)], param.lower())
-                        case "LIMIT":
-                            val = self.vm.strip[int(index)].limit
+                    if e == "PRESS":
+                        self.vm.event.pdirty = False
+                        match param:
+                            case "GAIN":
+                                val = self.vm.strip[int(index)].gain
+                            case "COMP" | "GATE" | "DENOISER":
+                                target = getattr(self.vm.strip[int(index)], param.lower())
+                                val = target.knob
+                            case "AUDIBILITY":
+                                val = self.vm.strip[int(index)].audibility
+                            case "BASS" | "MID" | "TREBLE":
+                                val = getattr(self.vm.strip[int(index)], param.lower())
+                            case "LIMIT":
+                                val = self.vm.strip[int(index)].limit
 
-                    match direction:
-                        case "RIGHT" | "UP":
-                            val += 1
-                        case "LEFT" | "DOWN":
-                            val -= 1
-
-                    match param:
-                        case "GAIN":
-                            val = util.check_bounds(val, (-60, 12))
-                            self.vm.strip[int(index)].gain = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "COMP" | "GATE" | "DENOISER":
-                            val = util.check_bounds(val, (0, 10))
-                            setattr(target, "knob", val)
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "AUDIBILITY":
-                            val = util.check_bounds(val, (0, 10))
-                            self.vm.strip[int(index)].audibility = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "BASS" | "MID" | "TREBLE":
-                            val = util.check_bounds(val, (-12, 12))
-                            setattr(self.vm.strip[int(index)], param.lower(), val)
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "LIMIT":
-                            val = util.check_bounds(val, (-40, 12))
-                            self.vm.strip[int(index)].limit = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                    self.nvda.speak(str(val))
-                case [
-                    ["STRIP", index],
-                    [
-                        "SLIDER",
-                        "GAIN"
-                        | "COMP"
-                        | "GATE"
-                        | "DENOISER"
-                        | "AUDIBILITY"
-                        | "LIMIT"
-                        | "BASS"
-                        | "MID"
-                        | "TREBLE" as param,
-                    ],
-                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
-                ]:
-                    match param:
-                        case "GAIN":
-                            val = self.vm.strip[int(index)].gain
-                        case "COMP" | "GATE" | "DENOISER":
-                            target = getattr(self.vm.strip[int(index)], param.lower())
-                            val = target.knob
-                        case "AUDIBILITY":
-                            val = self.vm.strip[int(index)].audibility
-                        case "BASS" | "MID" | "TREBLE":
-                            val = getattr(self.vm.strip[int(index)], param.lower())
-                        case "LIMIT":
-                            val = self.vm.strip[int(index)].limit
-
-                    match direction:
-                        case "RIGHT" | "UP":
-                            if param in ("COMP", "GATE", "DENOISER", "AUDIBILITY", "BASS", "MID", "TREBLE"):
+                        match direction:
+                            case "RIGHT" | "UP":
                                 val += 1
-                            else:
-                                val += 3
-                        case "LEFT" | "DOWN":
-                            if param in ("COMP", "GATE", "DENOISER", "AUDIBILITY", "BASS", "MID", "TREBLE"):
+                            case "LEFT" | "DOWN":
                                 val -= 1
-                            else:
-                                val -= 3
 
-                    match param:
-                        case "GAIN":
-                            val = util.check_bounds(val, (-60, 12))
-                            self.vm.strip[int(index)].gain = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "COMP" | "GATE" | "DENOISER":
-                            val = util.check_bounds(val, (0, 10))
-                            setattr(target, "knob", val)
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "AUDIBILITY":
-                            val = util.check_bounds(val, (0, 10))
-                            self.vm.strip[int(index)].audibility = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "BASS" | "MID" | "TREBLE":
-                            val = util.check_bounds(val, (-12, 12))
-                            setattr(self.vm.strip[int(index)], param.lower(), val)
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "LIMIT":
-                            val = util.check_bounds(val, (-40, 12))
-                            self.vm.strip[int(index)].limit = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                    self.nvda.speak(f"{param} {val}")
+                        match param:
+                            case "GAIN":
+                                val = util.check_bounds(val, (-60, 12))
+                                self.vm.strip[int(index)].gain = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "COMP" | "GATE" | "DENOISER":
+                                val = util.check_bounds(val, (0, 10))
+                                setattr(target, "knob", val)
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "AUDIBILITY":
+                                val = util.check_bounds(val, (0, 10))
+                                self.vm.strip[int(index)].audibility = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "BASS" | "MID" | "TREBLE":
+                                val = util.check_bounds(val, (-12, 12))
+                                setattr(self.vm.strip[int(index)], param.lower(), val)
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "LIMIT":
+                                val = util.check_bounds(val, (-40, 12))
+                                self.vm.strip[int(index)].limit = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                        self.nvda.speak(str(val))
+                    else:
+                        self.vm.event.pdirty = True
                 case [
                     ["STRIP", index],
                     [
@@ -858,55 +813,126 @@ class NVDAVMWindow(psg.Window):
                         | "MID"
                         | "TREBLE" as param,
                     ],
-                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction, "PRESS" | "RELEASE" as e],
                 ]:
-                    match param:
-                        case "GAIN":
-                            val = self.vm.strip[int(index)].gain
-                        case "COMP" | "GATE" | "DENOISER":
-                            target = getattr(self.vm.strip[int(index)], param.lower())
-                            val = target.knob
-                        case "AUDIBILITY":
-                            val = self.vm.strip[int(index)].audibility
-                        case "BASS" | "MID" | "TREBLE":
-                            val = getattr(self.vm.strip[int(index)], param.lower())
-                        case "LIMIT":
-                            val = self.vm.strip[int(index)].limit
+                    if e == "PRESS":
+                        self.vm.event.pdirty = False
+                        match param:
+                            case "GAIN":
+                                val = self.vm.strip[int(index)].gain
+                            case "COMP" | "GATE" | "DENOISER":
+                                target = getattr(self.vm.strip[int(index)], param.lower())
+                                val = target.knob
+                            case "AUDIBILITY":
+                                val = self.vm.strip[int(index)].audibility
+                            case "BASS" | "MID" | "TREBLE":
+                                val = getattr(self.vm.strip[int(index)], param.lower())
+                            case "LIMIT":
+                                val = self.vm.strip[int(index)].limit
 
-                    match direction:
-                        case "RIGHT" | "UP":
-                            if param == "LIMIT":
-                                val += 1
-                            else:
-                                val += 0.1
-                        case "LEFT" | "DOWN":
-                            if param == "LIMIT":
-                                val -= 1
-                            else:
-                                val -= 0.1
+                        match direction:
+                            case "RIGHT" | "UP":
+                                if param in ("COMP", "GATE", "DENOISER", "AUDIBILITY", "BASS", "MID", "TREBLE"):
+                                    val += 1
+                                else:
+                                    val += 3
+                            case "LEFT" | "DOWN":
+                                if param in ("COMP", "GATE", "DENOISER", "AUDIBILITY", "BASS", "MID", "TREBLE"):
+                                    val -= 1
+                                else:
+                                    val -= 3
 
-                    match param:
-                        case "GAIN":
-                            val = util.check_bounds(val, (-60, 12))
-                            self.vm.strip[int(index)].gain = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "COMP" | "GATE" | "DENOISER":
-                            val = util.check_bounds(val, (0, 10))
-                            setattr(target, "knob", val)
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "AUDIBILITY":
-                            val = util.check_bounds(val, (0, 10))
-                            self.vm.strip[int(index)].audibility = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "BASS" | "MID" | "TREBLE":
-                            val = util.check_bounds(val, (-12, 12))
-                            setattr(self.vm.strip[int(index)], param.lower(), val)
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        case "LIMIT":
-                            val = util.check_bounds(val, (-40, 12))
-                            self.vm.strip[int(index)].limit = val
-                            self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                    self.nvda.speak(f"{param} {val}")
+                        match param:
+                            case "GAIN":
+                                val = util.check_bounds(val, (-60, 12))
+                                self.vm.strip[int(index)].gain = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "COMP" | "GATE" | "DENOISER":
+                                val = util.check_bounds(val, (0, 10))
+                                setattr(target, "knob", val)
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "AUDIBILITY":
+                                val = util.check_bounds(val, (0, 10))
+                                self.vm.strip[int(index)].audibility = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "BASS" | "MID" | "TREBLE":
+                                val = util.check_bounds(val, (-12, 12))
+                                setattr(self.vm.strip[int(index)], param.lower(), val)
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "LIMIT":
+                                val = util.check_bounds(val, (-40, 12))
+                                self.vm.strip[int(index)].limit = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                        self.nvda.speak(f"{param} {val}")
+                    else:
+                        self.vm.event.pdirty = True
+                case [
+                    ["STRIP", index],
+                    [
+                        "SLIDER",
+                        "GAIN"
+                        | "COMP"
+                        | "GATE"
+                        | "DENOISER"
+                        | "AUDIBILITY"
+                        | "LIMIT"
+                        | "BASS"
+                        | "MID"
+                        | "TREBLE" as param,
+                    ],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.vm.event.pdirty = False
+                        match param:
+                            case "GAIN":
+                                val = self.vm.strip[int(index)].gain
+                            case "COMP" | "GATE" | "DENOISER":
+                                target = getattr(self.vm.strip[int(index)], param.lower())
+                                val = target.knob
+                            case "AUDIBILITY":
+                                val = self.vm.strip[int(index)].audibility
+                            case "BASS" | "MID" | "TREBLE":
+                                val = getattr(self.vm.strip[int(index)], param.lower())
+                            case "LIMIT":
+                                val = self.vm.strip[int(index)].limit
+
+                        match direction:
+                            case "RIGHT" | "UP":
+                                if param == "LIMIT":
+                                    val += 1
+                                else:
+                                    val += 0.1
+                            case "LEFT" | "DOWN":
+                                if param == "LIMIT":
+                                    val -= 1
+                                else:
+                                    val -= 0.1
+
+                        match param:
+                            case "GAIN":
+                                val = util.check_bounds(val, (-60, 12))
+                                self.vm.strip[int(index)].gain = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "COMP" | "GATE" | "DENOISER":
+                                val = util.check_bounds(val, (0, 10))
+                                setattr(target, "knob", val)
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "AUDIBILITY":
+                                val = util.check_bounds(val, (0, 10))
+                                self.vm.strip[int(index)].audibility = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "BASS" | "MID" | "TREBLE":
+                                val = util.check_bounds(val, (-12, 12))
+                                setattr(self.vm.strip[int(index)], param.lower(), val)
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                            case "LIMIT":
+                                val = util.check_bounds(val, (-40, 12))
+                                self.vm.strip[int(index)].limit = val
+                                self[f"STRIP {index}||SLIDER {param}"].update(value=val)
+                        self.nvda.speak(f"{param} {val}")
+                    else:
+                        self.vm.event.pdirty = True
                 case [["STRIP", index], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
                     match param:
                         case "GAIN":
@@ -992,53 +1018,68 @@ class NVDAVMWindow(psg.Window):
                     self.vm.bus[int(index)].gain = val
                 case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
-                        self.vm.event.pdirty = False
                         label = self.cache["labels"][f"BUS {index}||LABEL"]
                         val = values[f"BUS {index}||SLIDER GAIN"]
                         self.nvda.speak(f"{label} gain {val}")
                 case [["BUS", index], ["SLIDER", "GAIN"], ["FOCUS", "OUT"]]:
-                    self.vm.event.pdirty = True
-                case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction]]:
-                    val = self.vm.bus[int(index)].gain
-                    match direction:
-                        case "RIGHT" | "UP":
-                            val += 1
-                        case "LEFT" | "DOWN":
-                            val -= 1
-                    val = util.check_bounds(val, (-60, 12))
-                    self.vm.bus[int(index)].gain = val
-                    self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                    self.nvda.speak(str(val))
+                    pass
                 case [
                     ["BUS", index],
                     ["SLIDER", "GAIN"],
-                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction, "PRESS" | "RELEASE" as e],
                 ]:
-                    val = self.vm.bus[int(index)].gain
-                    match direction:
-                        case "RIGHT" | "UP":
-                            val += 3
-                        case "LEFT" | "DOWN":
-                            val -= 3
-                    val = util.check_bounds(val, (-60, 12))
-                    self.vm.bus[int(index)].gain = val
-                    self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                    self.nvda.speak(str(val))
+                    if e == "PRESS":
+                        self.vm.event.pdirty = False
+                        val = self.vm.bus[int(index)].gain
+                        match direction:
+                            case "RIGHT" | "UP":
+                                val += 1
+                            case "LEFT" | "DOWN":
+                                val -= 1
+                        val = util.check_bounds(val, (-60, 12))
+                        self.vm.bus[int(index)].gain = val
+                        self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                        self.nvda.speak(str(val))
+                    else:
+                        self.vm.event.pdirty = True
                 case [
                     ["BUS", index],
                     ["SLIDER", "GAIN"],
-                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction, "PRESS" | "RELEASE" as e],
                 ]:
-                    val = self.vm.bus[int(index)].gain
-                    match direction:
-                        case "RIGHT" | "UP":
-                            val += 0.1
-                        case "LEFT" | "DOWN":
-                            val -= 0.1
-                    val = util.check_bounds(val, (-60, 12))
-                    self.vm.bus[int(index)].gain = val
-                    self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                    self.nvda.speak(str(val))
+                    if e == "PRESS":
+                        self.vm.event.pdirty = False
+                        val = self.vm.bus[int(index)].gain
+                        match direction:
+                            case "RIGHT" | "UP":
+                                val += 3
+                            case "LEFT" | "DOWN":
+                                val -= 3
+                        val = util.check_bounds(val, (-60, 12))
+                        self.vm.bus[int(index)].gain = val
+                        self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                        self.nvda.speak(str(val))
+                    else:
+                        self.vm.event.pdirty = True
+                case [
+                    ["BUS", index],
+                    ["SLIDER", "GAIN"],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.vm.event.pdirty = False
+                        val = self.vm.bus[int(index)].gain
+                        match direction:
+                            case "RIGHT" | "UP":
+                                val += 0.1
+                            case "LEFT" | "DOWN":
+                                val -= 0.1
+                        val = util.check_bounds(val, (-60, 12))
+                        self.vm.bus[int(index)].gain = val
+                        self[f"BUS {index}||SLIDER GAIN"].update(value=val)
+                        self.nvda.speak(str(val))
+                    else:
+                        self.vm.event.pdirty = True
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:
                     self.vm.bus[int(index)].gain = 0
                     self[f"BUS {index}||SLIDER GAIN"].update(value=0)
