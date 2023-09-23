@@ -270,6 +270,8 @@ class NVDAVMWindow(psg.Window):
 
         # Bus Sliders
         for i in range(self.kind.num_bus):
+            self[f"BUS {i}||SLIDER GAIN"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"BUS {i}||SLIDER GAIN"].bind("<FocusOut>", "||FOCUS OUT")
             for event in ("KeyPress", "KeyRelease"):
                 event_id = event.removeprefix("Key").upper()
                 for direction in ("Left", "Right", "Up", "Down"):
