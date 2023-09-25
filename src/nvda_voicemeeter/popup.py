@@ -193,7 +193,6 @@ class Popup:
                         popup[f"COMPRESSOR||SLIDER {param}"].bind(
                             f"<Alt-{event}-{direction}>", f"||KEY ALT {direction.upper()} {event_id}"
                         )
-                    if param == "RELEASE":
                         popup[f"COMPRESSOR||SLIDER {param}"].bind(
                             f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
                         )
