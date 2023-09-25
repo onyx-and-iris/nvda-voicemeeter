@@ -41,7 +41,7 @@ class Popup:
                         filepath = values["Browse"]
                         break
                     self.window.nvda.speak(button)
-                case [[button], ["KEY", "ENTER"]]:
+                case [_, ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
             self.logger.debug(f"parsed::{parsed_cmd}")
         popup.close()
@@ -84,7 +84,7 @@ class Popup:
             match parsed_cmd := self.window.parser.match.parseString(event):
                 case [[button], ["FOCUS", "IN"]]:
                     self.window.nvda.speak(button)
-                case [[button], ["KEY", "ENTER"]]:
+                case [_, ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
                 case ["Ok"]:
                     data = values
@@ -152,7 +152,7 @@ class Popup:
                     util.open_context_menu_for_buttonmenu(popup, f"BUFFER {driver}")
                 case [[button], ["FOCUS", "IN"]]:
                     self.window.nvda.speak(button)
-                case [[button], ["KEY", "ENTER"]]:
+                case [_, ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
             self.logger.debug(f"parsed::{parsed_cmd}")
         popup.close()
@@ -169,20 +169,319 @@ class Popup:
         steps = (_make_comp_frame,)
         for step in steps:
             layout.append([step()])
-        layout.append([psg.Button("Auto Makeup", size=(12, 1)), psg.Button("Exit", size=(8, 1))])
+        layout.append([psg.Button("MAKEUP", size=(12, 1)), psg.Button("Exit", size=(8, 1))])
 
-        popup = psg.Window(title, layout, finalize=True)
+        popup = psg.Window(title, layout, return_keyboard_events=False, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
         for param in ("INPUT GAIN", "RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE", "OUTPUT GAIN"):
             popup[f"COMPRESSOR||SLIDER {param}"].Widget.config(**buttonmenu_opts)
+            popup[f"COMPRESSOR||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
+            popup[f"COMPRESSOR||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
+            for event in ("KeyPress", "KeyRelease"):
+                event_id = event.removeprefix("Key").upper()
+                for direction in ("Left", "Right", "Up", "Down"):
+                    popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                        f"<{event}-{direction}>", f"||KEY {direction.upper()} {event_id}"
+                    )
+                    popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                        f"<Shift-{event}-{direction}>", f"||KEY SHIFT {direction.upper()} {event_id}"
+                    )
+                    popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                        f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
+                    )
+                    if param == "RELEASE":
+                        popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                            f"<Alt-{event}-{direction}>", f"||KEY ALT {direction.upper()} {event_id}"
+                        )
+                    if param == "RELEASE":
+                        popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                            f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
+                        )
+        popup["MAKEUP"].bind("<FocusIn>", "||FOCUS IN")
+        popup["MAKEUP"].bind("<Return>", "||KEY ENTER")
         popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
         popup["Exit"].bind("<Return>", "||KEY ENTER")
         while True:
             event, values = popup.read()
+            self.logger.debug(f"event::{event}")
+            self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
             match parsed_cmd := self.window.parser.match.parseString(event):
-                case [[button], ["KEY", "ENTER"]]:
+                case [["COMPRESSOR"], ["SLIDER", param]]:
+                    setattr(self.window.vm.strip[index].comp, param.lower(), values[event])
+                case [["COMPRESSOR"], ["SLIDER", param], ["FOCUS", "IN"]]:
+                    self.window.nvda.speak(f"{param} {values[f'COMPRESSOR||SLIDER {param}']}")
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", param],
+                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].comp, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                if param == "KNEE":
+                                    val += 0.1
+                                else:
+                                    val += 1
+                            case "LEFT" | "DOWN":
+                                if param == "KNEE":
+                                    val -= 0.1
+                                else:
+                                    val -= 1
+
+                        match param:
+                            case "RATIO":
+                                val = util.check_bounds(val, (1, 8))
+                            case "THRESHOLD":
+                                val = util.check_bounds(val, (-40, -3))
+                            case "ATTACK":
+                                val = util.check_bounds(val, (0, 200))
+                            case "RELEASE":
+                                val = util.check_bounds(val, (0, 5000))
+                            case "KNEE":
+                                val = util.check_bounds(val, (0, 1))
+
+                        setattr(self.window.vm.strip[index].comp, param.lower(), val)
+                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        if param == "KNEE":
+                            self.window.nvda.speak(str(round(val, 2)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", param],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].comp, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                if param == "KNEE":
+                                    val += 0.3
+                                elif param == "RELEASE":
+                                    val += 5
+                                else:
+                                    val += 3
+                            case "LEFT" | "DOWN":
+                                if param == "KNEE":
+                                    val -= 0.3
+                                elif param == "RELEASE":
+                                    val -= 5
+                                else:
+                                    val -= 3
+
+                        match param:
+                            case "RATIO":
+                                val = util.check_bounds(val, (1, 8))
+                            case "THRESHOLD":
+                                val = util.check_bounds(val, (-40, -3))
+                            case "ATTACK":
+                                val = util.check_bounds(val, (0, 200))
+                            case "RELEASE":
+                                val = util.check_bounds(val, (0, 5000))
+                            case "KNEE":
+                                val = util.check_bounds(val, (0, 1))
+
+                        setattr(self.window.vm.strip[index].comp, param.lower(), val)
+                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        if param == "KNEE":
+                            self.window.nvda.speak(str(round(val, 2)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", param],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].comp, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                if param == "KNEE":
+                                    val += 0.01
+                                else:
+                                    val += 0.1
+                            case "LEFT" | "DOWN":
+                                if param == "KNEE":
+                                    val -= 0.01
+                                else:
+                                    val -= 0.1
+
+                        match param:
+                            case "RATIO":
+                                val = util.check_bounds(val, (1, 8))
+                            case "THRESHOLD":
+                                val = util.check_bounds(val, (-40, -3))
+                            case "ATTACK":
+                                val = util.check_bounds(val, (0, 200))
+                            case "RELEASE":
+                                val = util.check_bounds(val, (0, 5000))
+                            case "KNEE":
+                                val = util.check_bounds(val, (0, 1))
+
+                        setattr(self.window.vm.strip[index].comp, param.lower(), val)
+                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        if param == "KNEE":
+                            self.window.nvda.speak(str(round(val, 2)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", "RELEASE"],
+                    ["KEY", "ALT", "LEFT" | "RIGHT" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = self.window.vm.strip[index].comp.release
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 10
+                            case "LEFT" | "DOWN":
+                                val -= 10
+
+                        val = util.check_bounds(val, (0, 5000))
+                        self.window.vm.strip[index].comp.release = val
+                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", "RELEASE"],
+                    ["KEY", "CTRL", "ALT", "LEFT" | "RIGHT" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = self.window.vm.strip[index].comp.release
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 50
+                            case "LEFT" | "DOWN":
+                                val -= 50
+
+                        val = util.check_bounds(val, (0, 5000))
+                        self.window.vm.strip[index].comp.release = val
+                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+
+                case [["COMPRESSOR"], ["SLIDER", "INPUT" | "OUTPUT" as direction, "GAIN"]]:
+                    if direction == "INPUT":
+                        self.window.vm.strip[index].comp.gainin = values[event]
+                    else:
+                        self.window.vm.strip[index].comp.gainout = values[event]
+                case [["COMPRESSOR"], ["SLIDER", "INPUT" | "OUTPUT" as direction, "GAIN"], ["FOCUS", "IN"]]:
+                    label = f"{direction} GAIN"
+                    self.window.nvda.speak(f"{label} {values[f'COMPRESSOR||SLIDER {label}']}")
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", "INPUT" | "OUTPUT" as direction, "GAIN"],
+                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        if direction == "INPUT":
+                            val = self.window.vm.strip[index].comp.gainin
+                        else:
+                            val = self.window.vm.strip[index].comp.gainout
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 1
+                            case "LEFT" | "DOWN":
+                                val -= 1
+
+                        val = util.check_bounds(val, (-24, 24))
+                        if direction == "INPUT":
+                            self.window.vm.strip[index].comp.gainin = val
+                        else:
+                            self.window.vm.strip[index].comp.gainout = val
+                        popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
+                        self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", "INPUT" | "OUTPUT" as direction, "GAIN"],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        if direction == "INPUT":
+                            val = self.window.vm.strip[index].comp.gainin
+                        else:
+                            val = self.window.vm.strip[index].comp.gainout
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 3
+                            case "LEFT" | "DOWN":
+                                val -= 3
+
+                        val = util.check_bounds(val, (-24, 24))
+                        if direction == "INPUT":
+                            self.window.vm.strip[index].comp.gainin = val
+                        else:
+                            self.window.vm.strip[index].comp.gainout = val
+                        popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
+                        self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", "INPUT" | "OUTPUT" as direction, "GAIN"],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        if direction == "INPUT":
+                            val = self.window.vm.strip[index].comp.gainin
+                        else:
+                            val = self.window.vm.strip[index].comp.gainout
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 0.1
+                            case "LEFT" | "DOWN":
+                                val -= 0.1
+
+                        val = util.check_bounds(val, (-24, 24))
+                        if direction == "INPUT":
+                            self.window.vm.strip[index].comp.gainin = val
+                        else:
+                            self.window.vm.strip[index].comp.gainout = val
+                        popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
+                        self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+
+                case ["MAKEUP"]:
+                    val = not self.window.vm.strip[index].comp.makeup
+                    self.window.vm.strip[index].comp.makeup = val
+                    self.window.nvda.speak("on" if val else "off")
+                case [[button], ["FOCUS", "IN"]]:
+                    if button == "MAKEUP":
+                        self.window.nvda.speak(f"{button} {'on' if self.window.vm.strip[index].comp.makeup else 'off'}")
+                    else:
+                        self.window.nvda.speak(button)
+                case [_, ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
             self.logger.debug(f"parsed::{parsed_cmd}")
         popup.close()

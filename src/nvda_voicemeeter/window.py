@@ -311,7 +311,7 @@ class NVDAVMWindow(psg.Window):
                 continue
 
             match parsed_cmd := self.parser.match.parseString(event):
-                # Slide mode
+                # Slider mode
                 case [["ALT", "LEFT" | "RIGHT" | "UP" | "DOWN" as direction], ["PRESS" | "RELEASE" as e]]:
                     if mode:
                         self.write_event_value(f"SLIDER MODE {direction}||{e}", mode.split()[0])
@@ -445,6 +445,19 @@ class NVDAVMWindow(psg.Window):
                                     self.vm.bus[int(index)].label = label
                                     self[f"BUS {index}||LABEL"].update(value=label)
                                     self.cache["labels"][f"BUS {index}||LABEL"] = label
+
+                # Advanced popups (settings, comp, gate)
+                case ["CTRL-A"]:
+                    match values["tabgroup"]:
+                        case "tab||Settings":
+                            self.write_event_value("ADVANCED SETTINGS", None)
+                        case "tab||Physical Strip":
+                            if values["tabgroup||Physical Strip"] == "tab||Physical Strip||sliders":
+                                if focus := self.find_element_with_focus():
+                                    identifier, partial = focus.key.split("||")
+                                    _, index = identifier.split()
+                                    if "SLIDER COMP" in partial:
+                                        self.popup.compressor(int(index), title="Advanced Compressor")
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:
@@ -620,18 +633,6 @@ class NVDAVMWindow(psg.Window):
                     self.write_event_value(f"INSERT CHECKBOX||{in_num} {channel}", val)
 
                 # Advanced Settings
-                case ["CTRL-A"]:
-                    match values["tabgroup"]:
-                        case "tab||Settings":
-                            self.write_event_value("ADVANCED SETTINGS", None)
-                        case "tab||Physical Strip":
-                            if values["tabgroup||Physical Strip"] == "tab||Physical Strip||sliders":
-                                if focus := self.find_element_with_focus():
-                                    identifier, partial = focus.key.split("||")
-                                    _, index = identifier.split()
-                                    if "SLIDER COMP" in partial:
-                                        self.popup.compressor(int(index), title="Advanced Compressor")
-
                 case ["ADVANCED SETTINGS"]:
                     if values["tabgroup"] == "tab||Settings":
                         self.popup.advanced_settings(title="Advanced Settings")
@@ -810,7 +811,7 @@ class NVDAVMWindow(psg.Window):
                                 val = util.check_bounds(val, (-40, 12))
                                 self.vm.strip[int(index)].limit = val
                                 self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        self.nvda.speak(str(val))
+                        self.nvda.speak(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -877,7 +878,10 @@ class NVDAVMWindow(psg.Window):
                                 val = util.check_bounds(val, (-40, 12))
                                 self.vm.strip[int(index)].limit = val
                                 self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        self.nvda.speak(f"{param} {val}")
+                        if param == "LIMIT":
+                            self.nvda.speak(str(int(val)))
+                        else:
+                            self.nvda.speak(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -944,7 +948,10 @@ class NVDAVMWindow(psg.Window):
                                 val = util.check_bounds(val, (-40, 12))
                                 self.vm.strip[int(index)].limit = val
                                 self[f"STRIP {index}||SLIDER {param}"].update(value=val)
-                        self.nvda.speak(f"{param} {val}")
+                        if param == "LIMIT":
+                            self.nvda.speak(str(int(val)))
+                        else:
+                            self.nvda.speak(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [["STRIP", index], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
@@ -1053,7 +1060,7 @@ class NVDAVMWindow(psg.Window):
                         val = util.check_bounds(val, (-60, 12))
                         self.vm.bus[int(index)].gain = val
                         self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                        self.nvda.speak(str(val))
+                        self.nvda.speak(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -1072,7 +1079,7 @@ class NVDAVMWindow(psg.Window):
                         val = util.check_bounds(val, (-60, 12))
                         self.vm.bus[int(index)].gain = val
                         self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                        self.nvda.speak(str(val))
+                        self.nvda.speak(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -1091,7 +1098,7 @@ class NVDAVMWindow(psg.Window):
                         val = util.check_bounds(val, (-60, 12))
                         self.vm.bus[int(index)].gain = val
                         self[f"BUS {index}||SLIDER GAIN"].update(value=val)
-                        self.nvda.speak(str(val))
+                        self.nvda.speak(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:

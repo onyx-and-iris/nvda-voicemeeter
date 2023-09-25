@@ -41,7 +41,13 @@ class CompSlider(psg.Slider):
     def __init__(self, vm, index, param):
         self.vm = vm
         self.index = index
-        super().__init__(**self.default_params(param))
+        super().__init__(
+            disable_number_display=True,
+            expand_x=True,
+            enable_events=True,
+            orientation="horizontal",
+            **self.default_params(param),
+        )
 
     def default_params(self, param):
         match param:
@@ -50,10 +56,6 @@ class CompSlider(psg.Slider):
                     "range": (-24, 24),
                     "default_value": self.vm.strip[self.index].comp.gainin,
                     "resolution": 0.1,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "RATIO":
@@ -61,10 +63,6 @@ class CompSlider(psg.Slider):
                     "range": (1, 8),
                     "default_value": self.vm.strip[self.index].comp.ratio,
                     "resolution": 0.1,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "THRESHOLD":
@@ -72,10 +70,6 @@ class CompSlider(psg.Slider):
                     "range": (-40, -3),
                     "default_value": self.vm.strip[self.index].comp.threshold,
                     "resolution": 0.1,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "ATTACK":
@@ -83,10 +77,6 @@ class CompSlider(psg.Slider):
                     "range": (0, 200),
                     "default_value": self.vm.strip[self.index].comp.attack,
                     "resolution": 0.1,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "RELEASE":
@@ -94,10 +84,6 @@ class CompSlider(psg.Slider):
                     "range": (0, 5000),
                     "default_value": self.vm.strip[self.index].comp.release,
                     "resolution": 0.1,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "KNEE":
@@ -105,10 +91,6 @@ class CompSlider(psg.Slider):
                     "range": (0, 1),
                     "default_value": self.vm.strip[self.index].comp.knee,
                     "resolution": 0.01,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "OUTPUT GAIN":
@@ -116,10 +98,6 @@ class CompSlider(psg.Slider):
                     "range": (-24, 24),
                     "default_value": self.vm.strip[self.index].comp.gainout,
                     "resolution": 0.01,
-                    "disable_number_display": True,
-                    "expand_x": True,
-                    "enable_events": True,
-                    "orientation": "horizontal",
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
 

@@ -8,7 +8,7 @@ authors = [
 dependencies = [
     "pysimplegui>=4.60.5",
     "pyparsing>=3.1.1",
-    "voicemeeter-api>=2.4.9",
+    "voicemeeter-api>=2.4.10",
 ]
 requires-python = ">=3.10,<3.12"
 readme = "README.md"
