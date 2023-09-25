@@ -620,7 +620,19 @@ class NVDAVMWindow(psg.Window):
                     self.write_event_value(f"INSERT CHECKBOX||{in_num} {channel}", val)
 
                 # Advanced Settings
-                case ["ADVANCED SETTINGS"] | ["CTRL-A"]:
+                case ["CTRL-A"]:
+                    match values["tabgroup"]:
+                        case "tab||Settings":
+                            self.write_event_value("ADVANCED SETTINGS", None)
+                        case "tab||Physical Strip":
+                            if values["tabgroup||Physical Strip"] == "tab||Physical Strip||sliders":
+                                if focus := self.find_element_with_focus():
+                                    identifier, partial = focus.key.split("||")
+                                    _, index = identifier.split()
+                                    if "SLIDER COMP" in partial:
+                                        self.popup.compressor(int(index), title="Advanced Compressor")
+
+                case ["ADVANCED SETTINGS"]:
                     if values["tabgroup"] == "tab||Settings":
                         self.popup.advanced_settings(title="Advanced Settings")
                 case [["ADVANCED", "SETTINGS"], ["FOCUS", "IN"]]:

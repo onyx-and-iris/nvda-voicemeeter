@@ -4,6 +4,7 @@ from pathlib import Path
 import PySimpleGUI as psg
 
 from . import util
+from .compound import LabelSliderCompressor
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,36 @@ class Popup:
                     util.open_context_menu_for_buttonmenu(popup, f"BUFFER {driver}")
                 case [[button], ["FOCUS", "IN"]]:
                     self.window.nvda.speak(button)
+                case [[button], ["KEY", "ENTER"]]:
+                    popup.find_element_with_focus().click()
+            self.logger.debug(f"parsed::{parsed_cmd}")
+        popup.close()
+
+    def compressor(self, index, title=None):
+        def _make_comp_frame() -> psg.Frame:
+            comp_layout = [
+                [LabelSliderCompressor(self.window, index, param)]
+                for param in ("INPUT GAIN", "RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE", "OUTPUT GAIN")
+            ]
+            return psg.Frame("ADVANCED COMPRESSOR", comp_layout)
+
+        layout = []
+        steps = (_make_comp_frame,)
+        for step in steps:
+            layout.append([step()])
+        layout.append([psg.Button("Auto Makeup", size=(12, 1)), psg.Button("Exit", size=(8, 1))])
+
+        popup = psg.Window(title, layout, finalize=True)
+        buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
+        for param in ("INPUT GAIN", "RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE", "OUTPUT GAIN"):
+            popup[f"COMPRESSOR||SLIDER {param}"].Widget.config(**buttonmenu_opts)
+        popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
+        popup["Exit"].bind("<Return>", "||KEY ENTER")
+        while True:
+            event, values = popup.read()
+            if event in (psg.WIN_CLOSED, "Exit"):
+                break
+            match parsed_cmd := self.window.parser.match.parseString(event):
                 case [[button], ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
             self.logger.debug(f"parsed::{parsed_cmd}")
