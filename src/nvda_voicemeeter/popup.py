@@ -522,10 +522,7 @@ class Popup:
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         popup[f"GATE||SLIDER {param}"].update(value=val)
-                        if param == "KNEE":
-                            self.window.nvda.speak(str(round(val, 2)))
-                        else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -547,10 +544,7 @@ class Popup:
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         popup[f"GATE||SLIDER {param}"].update(value=val)
-                        if param == "KNEE":
-                            self.window.nvda.speak(str(round(val, 2)))
-                        else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -572,10 +566,7 @@ class Popup:
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         popup[f"GATE||SLIDER {param}"].update(value=val)
-                        if param == "KNEE":
-                            self.window.nvda.speak(str(round(val, 2)))
-                        else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
 
