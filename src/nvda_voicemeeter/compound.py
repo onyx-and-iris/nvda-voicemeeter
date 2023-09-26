@@ -191,9 +191,14 @@ class LabelSliderAdvanced(psg.Frame):
     """Compound Label Slider element for Advanced Comp|Gate"""
 
     def __init__(self, parent, index, param, slider_cls: Union[CompSlider, GateSlider], *args, **kwargs):
+        label_map = {
+            "DAMPING": "Damping Max",
+            "BPSIDECHAIN": "BP Sidechain",
+        }
+
         layout = [
             [
-                psg.Text(param.capitalize(), size=8),
+                psg.Text(label_map.get(param, param.title()), size=10),
                 slider_cls(parent.vm, index, param),
             ]
         ]

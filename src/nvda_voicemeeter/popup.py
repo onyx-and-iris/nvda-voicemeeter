@@ -489,6 +489,13 @@ class Popup:
                     popup[f"GATE||SLIDER {param}"].bind(
                         f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
                     )
+                    if param in ("BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
+                        popup[f"GATE||SLIDER {param}"].bind(
+                            f"<Alt-{event}-{direction}>", f"||KEY ALT {direction.upper()} {event_id}"
+                        )
+                        popup[f"GATE||SLIDER {param}"].bind(
+                            f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
+                        )
         popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
         popup["Exit"].bind("<Return>", "||KEY ENTER")
         while True:
@@ -501,7 +508,11 @@ class Popup:
                 case [["GATE"], ["SLIDER", param]]:
                     setattr(self.window.vm.strip[index].gate, param.lower(), values[event])
                 case [["GATE"], ["SLIDER", param], ["FOCUS", "IN"]]:
-                    self.window.nvda.speak(f"{param} {values[f'GATE||SLIDER {param}']}")
+                    label_map = {
+                        "DAMPING": "Damping Max",
+                        "BPSIDECHAIN": "BP Sidechain",
+                    }
+                    self.window.nvda.speak(f"{label_map.get(param, param)} {values[f'GATE||SLIDER {param}']}")
 
                 case [
                     ["GATE"],
@@ -522,7 +533,10 @@ class Popup:
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         popup[f"GATE||SLIDER {param}"].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        if param == "BPSIDECHAIN":
+                            self.window.nvda.speak(str(int(val)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -544,7 +558,10 @@ class Popup:
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         popup[f"GATE||SLIDER {param}"].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        if param == "BPSIDECHAIN":
+                            self.window.nvda.speak(str(int(val)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -566,10 +583,63 @@ class Popup:
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         popup[f"GATE||SLIDER {param}"].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        if param == "BPSIDECHAIN":
+                            self.window.nvda.speak(str(int(val)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["GATE"],
+                    ["SLIDER", "BPSIDECHAIN" | "ATTACK" | "HOLD" | "RELEASE" as param],
+                    ["KEY", "ALT", "LEFT" | "RIGHT" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].gate, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 10
+                            case "LEFT" | "DOWN":
+                                val -= 10
+
+                        val = GateSlider.check_bounds(param, val)
+                        setattr(self.window.vm.strip[index].gate, param.lower(), val)
+                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        if param == "BPSIDECHAIN":
+                            self.window.nvda.speak(str(int(val)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["GATE"],
+                    ["SLIDER", "BPSIDECHAIN" | "ATTACK" | "HOLD" | "RELEASE" as param],
+                    ["KEY", "CTRL", "ALT", "LEFT" | "RIGHT" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].gate, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 50
+                            case "LEFT" | "DOWN":
+                                val -= 50
+
+                        val = GateSlider.check_bounds(param, val)
+                        setattr(self.window.vm.strip[index].gate, param.lower(), val)
+                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        if param == "BPSIDECHAIN":
+                            self.window.nvda.speak(str(int(val)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
 
+                case [[button], ["FOCUS", "IN"]]:
+                    self.window.nvda.speak(button)
                 case [_, ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
 
