@@ -4,7 +4,7 @@ from pathlib import Path
 import PySimpleGUI as psg
 
 from . import util
-from .compound import LabelSliderCompressor
+from .compound import CompSlider, GateSlider, LabelSliderAdvanced
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,7 @@ class Popup:
     def compressor(self, index, title=None):
         def _make_comp_frame() -> psg.Frame:
             comp_layout = [
-                [LabelSliderCompressor(self.window, index, param)]
+                [LabelSliderAdvanced(self.window, index, param, CompSlider)]
                 for param in ("INPUT GAIN", "RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE", "OUTPUT GAIN")
             ]
             return psg.Frame("ADVANCED COMPRESSOR", comp_layout)
@@ -232,17 +232,7 @@ class Popup:
                                 else:
                                     val -= 1
 
-                        match param:
-                            case "RATIO":
-                                val = util.check_bounds(val, (1, 8))
-                            case "THRESHOLD":
-                                val = util.check_bounds(val, (-40, -3))
-                            case "ATTACK":
-                                val = util.check_bounds(val, (0, 200))
-                            case "RELEASE":
-                                val = util.check_bounds(val, (0, 5000))
-                            case "KNEE":
-                                val = util.check_bounds(val, (0, 1))
+                        val = CompSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
                         popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
@@ -277,17 +267,7 @@ class Popup:
                                 else:
                                     val -= 3
 
-                        match param:
-                            case "RATIO":
-                                val = util.check_bounds(val, (1, 8))
-                            case "THRESHOLD":
-                                val = util.check_bounds(val, (-40, -3))
-                            case "ATTACK":
-                                val = util.check_bounds(val, (0, 200))
-                            case "RELEASE":
-                                val = util.check_bounds(val, (0, 5000))
-                            case "KNEE":
-                                val = util.check_bounds(val, (0, 1))
+                        val = CompSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
                         popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
@@ -318,17 +298,7 @@ class Popup:
                                 else:
                                     val -= 0.1
 
-                        match param:
-                            case "RATIO":
-                                val = util.check_bounds(val, (1, 8))
-                            case "THRESHOLD":
-                                val = util.check_bounds(val, (-40, -3))
-                            case "ATTACK":
-                                val = util.check_bounds(val, (0, 200))
-                            case "RELEASE":
-                                val = util.check_bounds(val, (0, 5000))
-                            case "KNEE":
-                                val = util.check_bounds(val, (0, 1))
+                        val = CompSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
                         popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
@@ -477,10 +447,140 @@ class Popup:
                     self.window.nvda.speak("on" if val else "off")
                 case [[button], ["FOCUS", "IN"]]:
                     if button == "MAKEUP":
-                        self.window.nvda.speak(f"{button} {'on' if self.window.vm.strip[index].comp.makeup else 'off'}")
+                        self.window.nvda.speak(
+                            f"{button} {'on' if self.window.vm.strip[index].comp.makeup else 'off'}"
+                        )
                     else:
                         self.window.nvda.speak(button)
                 case [_, ["KEY", "ENTER"]]:
                     popup.find_element_with_focus().click()
+            self.logger.debug(f"parsed::{parsed_cmd}")
+        popup.close()
+
+    def gate(self, index, title=None):
+        def _make_gate_frame() -> psg.Frame:
+            gate_layout = [
+                [LabelSliderAdvanced(self.window, index, param, GateSlider)]
+                for param in ("THRESHOLD", "DAMPING", "BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE")
+            ]
+            return psg.Frame("ADVANCED GATE", gate_layout)
+
+        layout = []
+        steps = (_make_gate_frame,)
+        for step in steps:
+            layout.append([step()])
+        layout.append([psg.Button("Exit", size=(8, 1))])
+
+        popup = psg.Window(title, layout, return_keyboard_events=False, finalize=True)
+        buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
+        for param in ("THRESHOLD", "DAMPING", "BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
+            popup[f"GATE||SLIDER {param}"].Widget.config(**buttonmenu_opts)
+            popup[f"GATE||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
+            popup[f"GATE||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
+            for event in ("KeyPress", "KeyRelease"):
+                event_id = event.removeprefix("Key").upper()
+                for direction in ("Left", "Right", "Up", "Down"):
+                    popup[f"GATE||SLIDER {param}"].bind(
+                        f"<{event}-{direction}>", f"||KEY {direction.upper()} {event_id}"
+                    )
+                    popup[f"GATE||SLIDER {param}"].bind(
+                        f"<Shift-{event}-{direction}>", f"||KEY SHIFT {direction.upper()} {event_id}"
+                    )
+                    popup[f"GATE||SLIDER {param}"].bind(
+                        f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
+                    )
+        popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
+        popup["Exit"].bind("<Return>", "||KEY ENTER")
+        while True:
+            event, values = popup.read()
+            self.logger.debug(f"event::{event}")
+            self.logger.debug(f"values::{values}")
+            if event in (psg.WIN_CLOSED, "Exit"):
+                break
+            match parsed_cmd := self.window.parser.match.parseString(event):
+                case [["GATE"], ["SLIDER", param]]:
+                    setattr(self.window.vm.strip[index].gate, param.lower(), values[event])
+                case [["GATE"], ["SLIDER", param], ["FOCUS", "IN"]]:
+                    self.window.nvda.speak(f"{param} {values[f'GATE||SLIDER {param}']}")
+
+                case [
+                    ["GATE"],
+                    ["SLIDER", param],
+                    ["KEY", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].gate, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 1
+                            case "LEFT" | "DOWN":
+                                val -= 1
+
+                        val = GateSlider.check_bounds(param, val)
+
+                        setattr(self.window.vm.strip[index].gate, param.lower(), val)
+                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        if param == "KNEE":
+                            self.window.nvda.speak(str(round(val, 2)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["GATE"],
+                    ["SLIDER", param],
+                    ["KEY", "CTRL", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].gate, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 3
+                            case "LEFT" | "DOWN":
+                                val -= 3
+
+                        val = GateSlider.check_bounds(param, val)
+
+                        setattr(self.window.vm.strip[index].gate, param.lower(), val)
+                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        if param == "KNEE":
+                            self.window.nvda.speak(str(round(val, 2)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+                case [
+                    ["GATE"],
+                    ["SLIDER", param],
+                    ["KEY", "SHIFT", "LEFT" | "RIGHT" | "UP" | "DOWN" as input_direction, "PRESS" | "RELEASE" as e],
+                ]:
+                    if e == "PRESS":
+                        self.window.vm.event.pdirty = False
+                        val = getattr(self.window.vm.strip[index].gate, param.lower())
+
+                        match input_direction:
+                            case "RIGHT" | "UP":
+                                val += 0.1
+                            case "LEFT" | "DOWN":
+                                val -= 0.1
+
+                        val = GateSlider.check_bounds(param, val)
+
+                        setattr(self.window.vm.strip[index].gate, param.lower(), val)
+                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        if param == "KNEE":
+                            self.window.nvda.speak(str(round(val, 2)))
+                        else:
+                            self.window.nvda.speak(str(round(val, 1)))
+                    else:
+                        self.window.vm.event.pdirty = True
+
+                case [_, ["KEY", "ENTER"]]:
+                    popup.find_element_with_focus().click()
+
             self.logger.debug(f"parsed::{parsed_cmd}")
         popup.close()

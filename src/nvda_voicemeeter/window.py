@@ -458,6 +458,8 @@ class NVDAVMWindow(psg.Window):
                                     _, index = identifier.split()
                                     if "SLIDER COMP" in partial:
                                         self.popup.compressor(int(index), title="Advanced Compressor")
+                                    elif "SLIDER GATE" in partial:
+                                        self.popup.gate(int(index), title="Advanced Gate")
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:

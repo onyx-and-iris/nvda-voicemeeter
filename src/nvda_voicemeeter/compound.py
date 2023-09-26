@@ -1,4 +1,8 @@
+from typing import Union
+
 import PySimpleGUI as psg
+
+from . import util
 
 
 class LabelSlider(psg.Frame):
@@ -46,6 +50,7 @@ class CompSlider(psg.Slider):
             expand_x=True,
             enable_events=True,
             orientation="horizontal",
+            key=f"COMPRESSOR||SLIDER {param}",
             **self.default_params(param),
         )
 
@@ -57,42 +62,36 @@ class CompSlider(psg.Slider):
                     "default_value": self.vm.strip[self.index].comp.gainin,
                     "resolution": 0.1,
                     "disabled": True,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "RATIO":
                 return {
                     "range": (1, 8),
                     "default_value": self.vm.strip[self.index].comp.ratio,
                     "resolution": 0.1,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "THRESHOLD":
                 return {
                     "range": (-40, -3),
                     "default_value": self.vm.strip[self.index].comp.threshold,
                     "resolution": 0.1,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "ATTACK":
                 return {
                     "range": (0, 200),
                     "default_value": self.vm.strip[self.index].comp.attack,
                     "resolution": 0.1,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "RELEASE":
                 return {
                     "range": (0, 5000),
                     "default_value": self.vm.strip[self.index].comp.release,
                     "resolution": 0.1,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "KNEE":
                 return {
                     "range": (0, 1),
                     "default_value": self.vm.strip[self.index].comp.knee,
                     "resolution": 0.01,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "OUTPUT GAIN":
                 return {
@@ -100,18 +99,102 @@ class CompSlider(psg.Slider):
                     "default_value": self.vm.strip[self.index].comp.gainout,
                     "resolution": 0.01,
                     "disabled": True,
-                    "key": f"COMPRESSOR||SLIDER {param}",
                 }
 
+    @staticmethod
+    def check_bounds(param, val):
+        match param:
+            case "RATIO":
+                val = util.check_bounds(val, (1, 8))
+            case "THRESHOLD":
+                val = util.check_bounds(val, (-40, -3))
+            case "ATTACK":
+                val = util.check_bounds(val, (0, 200))
+            case "RELEASE":
+                val = util.check_bounds(val, (0, 5000))
+            case "KNEE":
+                val = util.check_bounds(val, (0, 1))
+        return val
 
-class LabelSliderCompressor(psg.Frame):
-    """Compound Label Slider Compressor element"""
 
-    def __init__(self, parent, index, param, *args, **kwargs):
+class GateSlider(psg.Slider):
+    def __init__(self, vm, index, param):
+        self.vm = vm
+        self.index = index
+        super().__init__(
+            disable_number_display=True,
+            expand_x=True,
+            enable_events=True,
+            orientation="horizontal",
+            key=f"GATE||SLIDER {param}",
+            **self.default_params(param),
+        )
+
+    def default_params(self, param):
+        match param:
+            case "THRESHOLD":
+                return {
+                    "range": (-60, -10),
+                    "default_value": self.vm.strip[self.index].gate.threshold,
+                    "resolution": 0.1,
+                }
+            case "DAMPING":
+                return {
+                    "range": (-60, -10),
+                    "default_value": self.vm.strip[self.index].gate.damping,
+                    "resolution": 0.1,
+                }
+            case "BPSIDECHAIN":
+                return {
+                    "range": (100, 4000),
+                    "default_value": self.vm.strip[self.index].gate.bpsidechain,
+                    "resolution": 1,
+                }
+            case "ATTACK":
+                return {
+                    "range": (0, 1000),
+                    "default_value": self.vm.strip[self.index].gate.attack,
+                    "resolution": 0.1,
+                }
+            case "HOLD":
+                return {
+                    "range": (0, 5000),
+                    "default_value": self.vm.strip[self.index].gate.hold,
+                    "resolution": 0.1,
+                }
+            case "RELEASE":
+                return {
+                    "range": (0, 5000),
+                    "default_value": self.vm.strip[self.index].gate.release,
+                    "resolution": 0.1,
+                }
+
+    @staticmethod
+    def check_bounds(param, val):
+        match param:
+            case "THRESHOLD":
+                val = util.check_bounds(val, (-60, -10))
+            case "DAMPING MAX":
+                val = util.check_bounds(val, (-60, -10))
+            case "BPSIDECHAIN":
+                val = util.check_bounds(val, (100, 4000))
+            case "ATTACK":
+                val = util.check_bounds(val, (0, 1000))
+            case "HOLD":
+                val = util.check_bounds(val, (0, 5000))
+            case "RELEASE":
+                val = util.check_bounds(val, (0, 5000))
+        return val
+
+
+class LabelSliderAdvanced(psg.Frame):
+    """Compound Label Slider element for Advanced Comp|Gate"""
+
+    def __init__(self, parent, index, param, slider_cls: Union[CompSlider, GateSlider], *args, **kwargs):
         layout = [
             [
                 psg.Text(param.capitalize(), size=8),
-                CompSlider(parent.vm, index, param),
+                slider_cls(parent.vm, index, param),
             ]
         ]
         super().__init__(None, layout=layout, border_width=0, pad=0, *args, **kwargs)
