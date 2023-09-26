@@ -56,6 +56,7 @@ class CompSlider(psg.Slider):
                     "range": (-24, 24),
                     "default_value": self.vm.strip[self.index].comp.gainin,
                     "resolution": 0.1,
+                    "disabled": True,
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
             case "RATIO":
@@ -98,6 +99,7 @@ class CompSlider(psg.Slider):
                     "range": (-24, 24),
                     "default_value": self.vm.strip[self.index].comp.gainout,
                     "resolution": 0.01,
+                    "disabled": True,
                     "key": f"COMPRESSOR||SLIDER {param}",
                 }
 

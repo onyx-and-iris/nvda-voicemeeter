@@ -320,6 +320,7 @@ class Builder:
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
+                        disabled=True,
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER GAIN",
                     ),
@@ -412,6 +413,7 @@ class Builder:
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
+                        disabled=True,
                         orientation="horizontal",
                         key=f"STRIP {i}||SLIDER GAIN",
                     ),
@@ -491,6 +493,7 @@ class Builder:
         def add_gain_slider(layout):
             layout.append(
                 [
+                    psg.Text("Gain"),
                     psg.Slider(
                         range=(-60, 12),
                         default_value=self.vm.bus[i].gain,
@@ -498,9 +501,10 @@ class Builder:
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
+                        disabled=True,
                         orientation="horizontal",
                         key=f"BUS {i}||SLIDER GAIN",
-                    )
+                    ),
                 ]
             )
 
