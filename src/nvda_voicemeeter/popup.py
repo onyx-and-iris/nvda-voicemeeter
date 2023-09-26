@@ -212,6 +212,7 @@ class Popup:
                         self.popup[f"COMPRESSOR||SLIDER {param}"].bind(
                             f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
                         )
+            self.popup[f"COMPRESSOR||SLIDER {param}"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
         self.popup["MAKEUP"].bind("<FocusIn>", "||FOCUS IN")
         self.popup["MAKEUP"].bind("<Return>", "||KEY ENTER")
         self.popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
@@ -458,6 +459,33 @@ class Popup:
                     else:
                         self.window.vm.event.pdirty = True
 
+                case [
+                    ["COMPRESSOR"],
+                    ["SLIDER", "INPUT" | "OUTPUT" as direction, "GAIN"],
+                    ["KEY", "CTRL", "SHIFT", "R"],
+                ]:
+                    if direction == "INPUT":
+                        self.window.vm.strip[index].comp.gainin = 0
+                    else:
+                        self.window.vm.strip[index].comp.gainout = 0
+                    self.popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=0)
+                    self.window.nvda.speak(str(0))
+                case [["COMPRESSOR"], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
+                    match param:
+                        case "RATIO":
+                            val = 1
+                        case "THRESHOLD":
+                            val = -20
+                        case "ATTACK":
+                            val = 10
+                        case "RELEASE":
+                            val = 50
+                        case "KNEE":
+                            val = 0.5
+                    setattr(self.window.vm.strip[index].comp, param.lower(), val)
+                    self.popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                    self.window.nvda.speak(str(round(val, 1)))
+
                 case ["MAKEUP"]:
                     val = not self.window.vm.strip[index].comp.makeup
                     self.window.vm.strip[index].comp.makeup = val
@@ -516,6 +544,7 @@ class Popup:
                         self.popup[f"GATE||SLIDER {param}"].bind(
                             f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
                         )
+            self.popup[f"GATE||SLIDER {param}"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
         self.popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
         self.popup["Exit"].bind("<Return>", "||KEY ENTER")
         self.window.vm.observer.add(self.on_pdirty)
@@ -658,6 +687,23 @@ class Popup:
                             self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
+                case [["GATE"], ["SLIDER", param], ["KEY", "CTRL", "SHIFT", "R"]]:
+                    match param:
+                        case "THRESHOLD":
+                            val = -60
+                        case "DAMPING":
+                            val = -60
+                        case "BPSIDECHAIN":
+                            val = 100
+                        case "ATTACK":
+                            val = 0
+                        case "HOLD":
+                            val = 500
+                        case "RELEASE":
+                            val = 1000
+                    setattr(self.window.vm.strip[index].gate, param.lower(), val)
+                    self.popup[f"GATE||SLIDER {param}"].update(value=val)
+                    self.window.nvda.speak(str(round(val, 1)))
 
                 case [[button], ["FOCUS", "IN"]]:
                     self.window.nvda.speak(button)

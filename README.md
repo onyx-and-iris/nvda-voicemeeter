@@ -107,11 +107,29 @@ All sliders may be controlled in three different ways:
 - `Shift + Left|Right arrow` to move a slider by 0.1 steps.
 - `Control + Left|Right arrow` to move a slider by 3 steps.
 
+To reset a slider back to its default value you may use `Control + Shift + R`.
+
 To rename a strip/bus channel focus on the channel in question and press `F2`. Then enter the new channel name into the text input widget and press the `Ok` button.
 
 Pressing the `OK` button with an empty text input will clear the label. In this case the label will be read as a default value for that channel. For example, if the leftmost Strip label were cleared, the screen reader will now read `Hardware Input 1`.
 
 Pressing `Cancel` will close the popup window with no affect on the label.
+
+#### `Advanced Compressor|Gate`
+
+For potato version only, you may access advanced Compressor and Gate sliders. Simply focus any Gate or Compressor slider and press `Control + A`. This will open a popup window where you can navigate between the different sliders with `TAB`. Move the sliders with the same binds you would for normal sliders. However, there are a couple of extra binds for certain controls.
+
+For Compressor Release you may use:
+
+- `Alt + Left|Right arrow` to move the slider by 10 steps.
+- `Alt + Control +  Left|Right arrow` to move the slider by 50 steps.
+
+For Gate BP Sidechain, Attack, Hold, Release you may use:
+
+- `Alt + Left|Right arrow` to move the slider by 10 steps.
+- `Alt + Control +  Left|Right arrow` to move the slider by 50 steps.
+
+To reset a slider back to its default value you may use `Control + Shift + R`.
 
 #### `Menu`
 

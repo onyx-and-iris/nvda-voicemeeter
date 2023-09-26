@@ -452,6 +452,8 @@ class NVDAVMWindow(psg.Window):
                         case "tab||Settings":
                             self.write_event_value("ADVANCED SETTINGS", None)
                         case "tab||Physical Strip":
+                            if self.kind.name != "potato":
+                                continue
                             if values["tabgroup||Physical Strip"] == "tab||Physical Strip||sliders":
                                 if focus := self.find_element_with_focus():
                                     identifier, partial = focus.key.split("||")
@@ -973,7 +975,7 @@ class NVDAVMWindow(psg.Window):
                         case "LIMIT":
                             self.vm.strip[int(index)].limit = 12
                             self[f"STRIP {index}||SLIDER {param}"].update(value=12)
-                    self.nvda.speak(f"{param} {12 if param == 'LABEL' else 0}")
+                    self.nvda.speak(f"{12 if param == 'LIMIT' else 0}")
 
                 # Bus Params
                 case [["BUS", index], [param]]:
@@ -1106,7 +1108,7 @@ class NVDAVMWindow(psg.Window):
                 case [["BUS", index], ["SLIDER", "GAIN"], ["KEY", "CTRL", "SHIFT", "R"]]:
                     self.vm.bus[int(index)].gain = 0
                     self[f"BUS {index}||SLIDER GAIN"].update(value=0)
-                    self.nvda.speak(str(val))
+                    self.nvda.speak(str(0))
 
                 # Unknown
                 case _:
