@@ -161,7 +161,9 @@ class Builder:
                 [
                     psg.Spin(
                         nums,
-                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{util.get_asio_checkbox_index(0, i)}"],
+                        initial_value=self.window.cache["asio"][
+                            f"ASIO CHECKBOX||{util.get_asio_checkbox_index(0, i)}"
+                        ],
                         size=2,
                         enable_events=True,
                         key=f"ASIO CHECKBOX||IN{i} 0",
@@ -172,7 +174,9 @@ class Builder:
                 [
                     psg.Spin(
                         nums,
-                        initial_value=self.window.cache["asio"][f"ASIO CHECKBOX||{util.get_asio_checkbox_index(1, i)}"],
+                        initial_value=self.window.cache["asio"][
+                            f"ASIO CHECKBOX||{util.get_asio_checkbox_index(1, i)}"
+                        ],
                         size=2,
                         enable_events=True,
                         key=f"ASIO CHECKBOX||IN{i} 1",
@@ -393,7 +397,11 @@ class Builder:
 
         outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
+        return psg.Frame(
+            self.window.cache["labels"][f"STRIP {i}||LABEL"],
+            outputs,
+            key=f"STRIP {i}||LABEL",
+        )
 
     def make_tab2_button_rows(self) -> psg.Frame:
         layout = [
@@ -454,7 +462,11 @@ class Builder:
         if self.kind.name in ("banana", "potato"):
             steps += (add_limit_slider,)
         [step(layout) for step in steps]
-        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], layout, key=f"STRIP {i}||LABEL||SLIDER")
+        return psg.Frame(
+            self.window.cache["labels"][f"STRIP {i}||LABEL"],
+            layout,
+            key=f"STRIP {i}||LABEL||SLIDER",
+        )
 
     def make_tab2_slider_rows(self) -> psg.Frame:
         layout = [
@@ -483,7 +495,11 @@ class Builder:
 
         outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.window.cache["labels"][f"BUS {i}||LABEL"], outputs, key=f"BUS {i}||LABEL")
+        return psg.Frame(
+            self.window.cache["labels"][f"BUS {i}||LABEL"],
+            outputs,
+            key=f"BUS {i}||LABEL",
+        )
 
     def make_tab3_button_rows(self) -> psg.Frame:
         layout = [[self.make_tab3_button_row(i)] for i in range(self.kind.num_bus)]
