@@ -157,7 +157,23 @@ class Popup:
             self.logger.debug(f"parsed::{parsed_cmd}")
         popup.close()
 
+    def on_pdirty(self):
+        if self.popup.Title == "Advanced Compressor":
+            for param in ("RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE"):
+                self.popup[f"COMPRESSOR||SLIDER {param}"].update(
+                    value=getattr(self.window.vm.strip[self.index].comp, param.lower())
+                )
+            self.popup["COMPRESSOR||SLIDER INPUT GAIN"].update(value=self.window.vm.strip[self.index].comp.gainin)
+            self.popup["COMPRESSOR||SLIDER OUTPUT GAIN"].update(value=self.window.vm.strip[self.index].comp.gainout)
+        elif self.popup.Title == "Advanced Gate":
+            for param in ("THRESHOLD", "DAMPING", "BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
+                self.popup[f"GATE||SLIDER {param}"].update(
+                    value=getattr(self.window.vm.strip[self.index].gate, param.lower())
+                )
+
     def compressor(self, index, title=None):
+        self.index = index
+
         def _make_comp_frame() -> psg.Frame:
             comp_layout = [
                 [LabelSliderAdvanced(self.window, index, param, CompSlider)]
@@ -171,37 +187,38 @@ class Popup:
             layout.append([step()])
         layout.append([psg.Button("MAKEUP", size=(12, 1)), psg.Button("Exit", size=(8, 1))])
 
-        popup = psg.Window(title, layout, return_keyboard_events=False, finalize=True)
+        self.popup = psg.Window(title, layout, return_keyboard_events=False, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
         for param in ("INPUT GAIN", "RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE", "OUTPUT GAIN"):
-            popup[f"COMPRESSOR||SLIDER {param}"].Widget.config(**buttonmenu_opts)
-            popup[f"COMPRESSOR||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
-            popup[f"COMPRESSOR||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
+            self.popup[f"COMPRESSOR||SLIDER {param}"].Widget.config(**buttonmenu_opts)
+            self.popup[f"COMPRESSOR||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
+            self.popup[f"COMPRESSOR||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
             for event in ("KeyPress", "KeyRelease"):
                 event_id = event.removeprefix("Key").upper()
                 for direction in ("Left", "Right", "Up", "Down"):
-                    popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                    self.popup[f"COMPRESSOR||SLIDER {param}"].bind(
                         f"<{event}-{direction}>", f"||KEY {direction.upper()} {event_id}"
                     )
-                    popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                    self.popup[f"COMPRESSOR||SLIDER {param}"].bind(
                         f"<Shift-{event}-{direction}>", f"||KEY SHIFT {direction.upper()} {event_id}"
                     )
-                    popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                    self.popup[f"COMPRESSOR||SLIDER {param}"].bind(
                         f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
                     )
                     if param == "RELEASE":
-                        popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].bind(
                             f"<Alt-{event}-{direction}>", f"||KEY ALT {direction.upper()} {event_id}"
                         )
-                        popup[f"COMPRESSOR||SLIDER {param}"].bind(
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].bind(
                             f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
                         )
-        popup["MAKEUP"].bind("<FocusIn>", "||FOCUS IN")
-        popup["MAKEUP"].bind("<Return>", "||KEY ENTER")
-        popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
-        popup["Exit"].bind("<Return>", "||KEY ENTER")
+        self.popup["MAKEUP"].bind("<FocusIn>", "||FOCUS IN")
+        self.popup["MAKEUP"].bind("<Return>", "||KEY ENTER")
+        self.popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
+        self.popup["Exit"].bind("<Return>", "||KEY ENTER")
+        self.window.vm.observer.add(self.on_pdirty)
         while True:
-            event, values = popup.read()
+            event, values = self.popup.read()
             self.logger.debug(f"event::{event}")
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
@@ -235,7 +252,7 @@ class Popup:
                         val = CompSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
-                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
                         if param == "KNEE":
                             self.window.nvda.speak(str(round(val, 2)))
                         else:
@@ -270,7 +287,7 @@ class Popup:
                         val = CompSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
-                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
                         if param == "KNEE":
                             self.window.nvda.speak(str(round(val, 2)))
                         else:
@@ -301,7 +318,7 @@ class Popup:
                         val = CompSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
-                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
                         if param == "KNEE":
                             self.window.nvda.speak(str(round(val, 2)))
                         else:
@@ -325,7 +342,7 @@ class Popup:
 
                         val = util.check_bounds(val, (0, 5000))
                         self.window.vm.strip[index].comp.release = val
-                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
                         self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
@@ -346,7 +363,7 @@ class Popup:
 
                         val = util.check_bounds(val, (0, 5000))
                         self.window.vm.strip[index].comp.release = val
-                        popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {param}"].update(value=val)
                         self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
@@ -382,7 +399,7 @@ class Popup:
                             self.window.vm.strip[index].comp.gainin = val
                         else:
                             self.window.vm.strip[index].comp.gainout = val
-                        popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
                         self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
@@ -409,7 +426,7 @@ class Popup:
                             self.window.vm.strip[index].comp.gainin = val
                         else:
                             self.window.vm.strip[index].comp.gainout = val
-                        popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
                         self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
@@ -436,7 +453,7 @@ class Popup:
                             self.window.vm.strip[index].comp.gainin = val
                         else:
                             self.window.vm.strip[index].comp.gainout = val
-                        popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
+                        self.popup[f"COMPRESSOR||SLIDER {direction} GAIN"].update(value=val)
                         self.window.nvda.speak(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
@@ -453,11 +470,14 @@ class Popup:
                     else:
                         self.window.nvda.speak(button)
                 case [_, ["KEY", "ENTER"]]:
-                    popup.find_element_with_focus().click()
+                    self.popup.find_element_with_focus().click()
             self.logger.debug(f"parsed::{parsed_cmd}")
-        popup.close()
+        self.window.vm.observer.remove(self.on_pdirty)
+        self.popup.close()
 
     def gate(self, index, title=None):
+        self.index = index
+
         def _make_gate_frame() -> psg.Frame:
             gate_layout = [
                 [LabelSliderAdvanced(self.window, index, param, GateSlider)]
@@ -471,35 +491,36 @@ class Popup:
             layout.append([step()])
         layout.append([psg.Button("Exit", size=(8, 1))])
 
-        popup = psg.Window(title, layout, return_keyboard_events=False, finalize=True)
+        self.popup = psg.Window(title, layout, return_keyboard_events=False, finalize=True)
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
         for param in ("THRESHOLD", "DAMPING", "BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
-            popup[f"GATE||SLIDER {param}"].Widget.config(**buttonmenu_opts)
-            popup[f"GATE||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
-            popup[f"GATE||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
+            self.popup[f"GATE||SLIDER {param}"].Widget.config(**buttonmenu_opts)
+            self.popup[f"GATE||SLIDER {param}"].bind("<FocusIn>", "||FOCUS IN")
+            self.popup[f"GATE||SLIDER {param}"].bind("<FocusOut>", "||FOCUS OUT")
             for event in ("KeyPress", "KeyRelease"):
                 event_id = event.removeprefix("Key").upper()
                 for direction in ("Left", "Right", "Up", "Down"):
-                    popup[f"GATE||SLIDER {param}"].bind(
+                    self.popup[f"GATE||SLIDER {param}"].bind(
                         f"<{event}-{direction}>", f"||KEY {direction.upper()} {event_id}"
                     )
-                    popup[f"GATE||SLIDER {param}"].bind(
+                    self.popup[f"GATE||SLIDER {param}"].bind(
                         f"<Shift-{event}-{direction}>", f"||KEY SHIFT {direction.upper()} {event_id}"
                     )
-                    popup[f"GATE||SLIDER {param}"].bind(
+                    self.popup[f"GATE||SLIDER {param}"].bind(
                         f"<Control-{event}-{direction}>", f"||KEY CTRL {direction.upper()} {event_id}"
                     )
                     if param in ("BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
-                        popup[f"GATE||SLIDER {param}"].bind(
+                        self.popup[f"GATE||SLIDER {param}"].bind(
                             f"<Alt-{event}-{direction}>", f"||KEY ALT {direction.upper()} {event_id}"
                         )
-                        popup[f"GATE||SLIDER {param}"].bind(
+                        self.popup[f"GATE||SLIDER {param}"].bind(
                             f"<Control-Alt-{event}-{direction}>", f"||KEY CTRL ALT {direction.upper()} {event_id}"
                         )
-        popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
-        popup["Exit"].bind("<Return>", "||KEY ENTER")
+        self.popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
+        self.popup["Exit"].bind("<Return>", "||KEY ENTER")
+        self.window.vm.observer.add(self.on_pdirty)
         while True:
-            event, values = popup.read()
+            event, values = self.popup.read()
             self.logger.debug(f"event::{event}")
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
@@ -532,7 +553,7 @@ class Popup:
                         val = GateSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
-                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        self.popup[f"GATE||SLIDER {param}"].update(value=val)
                         if param == "BPSIDECHAIN":
                             self.window.nvda.speak(str(int(val)))
                         else:
@@ -557,7 +578,7 @@ class Popup:
                         val = GateSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
-                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        self.popup[f"GATE||SLIDER {param}"].update(value=val)
                         if param == "BPSIDECHAIN":
                             self.window.nvda.speak(str(int(val)))
                         else:
@@ -582,7 +603,7 @@ class Popup:
                         val = GateSlider.check_bounds(param, val)
 
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
-                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        self.popup[f"GATE||SLIDER {param}"].update(value=val)
                         if param == "BPSIDECHAIN":
                             self.window.nvda.speak(str(int(val)))
                         else:
@@ -606,7 +627,7 @@ class Popup:
 
                         val = GateSlider.check_bounds(param, val)
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
-                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        self.popup[f"GATE||SLIDER {param}"].update(value=val)
                         if param == "BPSIDECHAIN":
                             self.window.nvda.speak(str(int(val)))
                         else:
@@ -630,7 +651,7 @@ class Popup:
 
                         val = GateSlider.check_bounds(param, val)
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
-                        popup[f"GATE||SLIDER {param}"].update(value=val)
+                        self.popup[f"GATE||SLIDER {param}"].update(value=val)
                         if param == "BPSIDECHAIN":
                             self.window.nvda.speak(str(int(val)))
                         else:
@@ -641,7 +662,8 @@ class Popup:
                 case [[button], ["FOCUS", "IN"]]:
                     self.window.nvda.speak(button)
                 case [_, ["KEY", "ENTER"]]:
-                    popup.find_element_with_focus().click()
+                    self.popup.find_element_with_focus().click()
 
             self.logger.debug(f"parsed::{parsed_cmd}")
-        popup.close()
+        self.window.vm.observer.remove(self.on_pdirty)
+        self.popup.close()
