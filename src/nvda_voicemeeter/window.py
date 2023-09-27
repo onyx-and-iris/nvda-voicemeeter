@@ -452,16 +452,16 @@ class NVDAVMWindow(psg.Window):
                         case "tab||Settings":
                             self.write_event_value("ADVANCED SETTINGS", None)
                         case "tab||Physical Strip":
-                            if self.kind.name != "potato":
-                                continue
                             if values["tabgroup||Physical Strip"] == "tab||Physical Strip||sliders":
                                 if focus := self.find_element_with_focus():
                                     identifier, partial = focus.key.split("||")
                                     _, index = identifier.split()
-                                    if "SLIDER COMP" in partial:
-                                        self.popup.compressor(int(index), title="Advanced Compressor")
-                                    elif "SLIDER GATE" in partial:
-                                        self.popup.gate(int(index), title="Advanced Gate")
+                                    match self.kind.name:
+                                        case "potato":
+                                            if "SLIDER COMP" in partial:
+                                                self.popup.compressor(int(index), title="Advanced Compressor")
+                                            elif "SLIDER GATE" in partial:
+                                                self.popup.gate(int(index), title="Advanced Gate")
 
                 # Menus
                 case [["Restart", "Audio", "Engine"], ["MENU"]]:
@@ -964,6 +964,7 @@ class NVDAVMWindow(psg.Window):
                             self.vm.strip[int(index)].gain = 0
                             self[f"STRIP {index}||SLIDER {param}"].update(value=0)
                         case "COMP" | "GATE" | "DENOISER":
+                            target = getattr(self.vm.strip[int(index)], param.lower())
                             setattr(target, "knob", 0)
                             self[f"STRIP {index}||SLIDER {param}"].update(value=0)
                         case "AUDIBILITY":
