@@ -178,3 +178,17 @@ def get_full_slider_params(i, kind) -> Iterable:
     if kind.name == "basic":
         params.remove("LIMIT")
     return params
+
+
+def get_slider_modes() -> Iterable:
+    return (
+        "GAIN MODE",
+        "BASS MODE",
+        "MID MODE",
+        "TREBLE MODE",
+        "AUDIBILITY MODE",
+        "COMP MODE",
+        "GATE MODE",
+        "DENOISER MODE",
+        "LIMIT MODE",
+    )

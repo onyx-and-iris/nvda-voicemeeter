@@ -304,13 +304,15 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            elif not event.startswith("BUS") and event.endswith("MODE"):
+            elif event in util.get_slider_modes():
                 mode = event
                 self.nvda.speak(f"{mode} enabled")
+                self.logger.debug(f"entered slider mode {mode}")
                 continue
             elif event == "ESCAPE":
                 if mode:
                     self.nvda.speak(f"{mode} disabled")
+                    self.logger.debug(f"exited from slider mode {mode}")
                     mode = None
                 continue
 
