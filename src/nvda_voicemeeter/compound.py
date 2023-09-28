@@ -97,7 +97,7 @@ class CompSlider(psg.Slider):
                 return {
                     "range": (-24, 24),
                     "default_value": self.vm.strip[self.index].comp.gainout,
-                    "resolution": 0.01,
+                    "resolution": 0.1,
                     "disabled": True,
                 }
 
