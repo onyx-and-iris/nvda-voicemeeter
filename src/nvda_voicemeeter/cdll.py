@@ -33,7 +33,7 @@ def get_nvdapath():
 
 try:
     NVDA_PATH = Path(get_nvdapath()) / "nvda.exe"
-except FileNotFoundError as e:
+except FileNotFoundError:
     NVDA_PATH = ""
 
 

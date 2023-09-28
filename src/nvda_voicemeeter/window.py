@@ -45,7 +45,7 @@ class NVDAVMWindow(psg.Window):
         for i in range(self.kind.phys_out):
             self[f"HARDWARE OUT||A{i + 1}"].Widget.config(**buttonmenu_opts)
         if self.kind.name == "basic":
-            self[f"HARDWARE OUT||A2"].Widget.config(**buttonmenu_opts)
+            self["HARDWARE OUT||A2"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
         slider_opts = {"takefocus": 1, "highlightthickness": 1}
@@ -190,9 +190,9 @@ class NVDAVMWindow(psg.Window):
             self[f"HARDWARE OUT||A{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
             self[f"HARDWARE OUT||A{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
         if self.vm.kind.name == "basic":
-            self[f"HARDWARE OUT||A2"].bind("<FocusIn>", "||FOCUS IN")
-            self[f"HARDWARE OUT||A2"].bind("<space>", "||KEY SPACE", propagate=False)
-            self[f"HARDWARE OUT||A2"].bind("<Return>", "||KEY ENTER", propagate=False)
+            self["HARDWARE OUT||A2"].bind("<FocusIn>", "||FOCUS IN")
+            self["HARDWARE OUT||A2"].bind("<space>", "||KEY SPACE", propagate=False)
+            self["HARDWARE OUT||A2"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Patch ASIO
         if self.kind.name != "basic":
@@ -423,7 +423,7 @@ class NVDAVMWindow(psg.Window):
                             identifier, partial = focus.Key.split("||")
                             _, index = identifier.split()
                             index = int(index)
-                            data = self.popup.rename("Label", index, title=f"Rename", tab=tab)
+                            data = self.popup.rename("Label", index, title="Rename", tab=tab)
                             if not data:  # cancel was pressed
                                 continue
                             match tab:

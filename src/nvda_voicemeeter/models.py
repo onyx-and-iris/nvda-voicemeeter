@@ -5,7 +5,7 @@ def _make_hardware_ins_cache(vm) -> dict:
 def _make_hardware_outs_cache(vm) -> dict:
     hw_outs = {**{f"HARDWARE OUT||A{i + 1}": vm.bus[i].device.name for i in range(vm.kind.phys_out)}}
     if vm.kind.name == "basic":
-        hw_outs |= {f"HARDWARE OUT||A2": vm.bus[1].device.name}
+        hw_outs |= {"HARDWARE OUT||A2": vm.bus[1].device.name}
     return hw_outs
 
 

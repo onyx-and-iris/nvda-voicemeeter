@@ -48,8 +48,11 @@ def get_patch_composite_list(kind) -> list:
     for i in range(kind.phys_out):
         [temp.append(f"IN#{i + 1} {channel}") for channel in ("Left", "Right")]
     for i in range(kind.phys_out, kind.phys_out + kind.virt_out):
-        [temp.append(f"IN#{i + 1} {channel}") for channel in ("Left", "Right", "Center", "LFE", "SL", "SR", "BL", "BR")]
-    temp.append(f"BUS Channel")
+        [
+            temp.append(f"IN#{i + 1} {channel}")
+            for channel in ("Left", "Right", "Center", "LFE", "SL", "SR", "BL", "BR")
+        ]
+    temp.append("BUS Channel")
     return temp
 
 
