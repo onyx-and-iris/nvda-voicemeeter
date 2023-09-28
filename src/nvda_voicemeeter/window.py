@@ -57,6 +57,7 @@ class NVDAVMWindow(psg.Window):
                 self[f"STRIP {i}||SLIDER LIMIT"].Widget.config(**slider_opts)
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||SLIDER GAIN"].Widget.config(**slider_opts)
+            self[f"BUS {i}||MODE"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
             for i in range(self.kind.phys_out):
                 self[f"ASIO CHECKBOX||IN{i + 1} 0"].Widget.config(state="readonly")
@@ -260,13 +261,16 @@ class NVDAVMWindow(psg.Window):
                 self[f"STRIP {i}||SLIDER {param}"].bind("<Control-Shift-KeyPress-R>", "||KEY CTRL SHIFT R")
 
         # Bus Params
-        params = ["MONO", "EQ", "MUTE", "MODE"]
+        params = ["MONO", "EQ", "MUTE"]
         if self.vm.kind.name == "basic":
             params.remove("EQ")
         for i in range(self.kind.num_bus):
             for param in params:
                 self[f"BUS {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"BUS {i}||{param}"].bind("<Return>", "||KEY ENTER")
+            self[f"BUS {i}||MODE"].bind("<FocusIn>", "||FOCUS IN")
+            self[f"BUS {i}||MODE"].bind("<space>", "||KEY SPACE", propagate=False)
+            self[f"BUS {i}||MODE"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Bus Sliders
         for i in range(self.kind.num_bus):
@@ -300,7 +304,7 @@ class NVDAVMWindow(psg.Window):
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
-            elif event.endswith("MODE"):
+            elif not event.startswith("BUS") and event.endswith("MODE"):
                 mode = event
                 self.nvda.speak(f"{mode} enabled")
                 continue
@@ -1002,40 +1006,27 @@ class NVDAVMWindow(psg.Window):
                                 "on" if val else "off",
                             )
                         case "MODE":
-                            bus_modes = util.get_bus_modes(self.vm)
-                            next_index = bus_modes.index(val) + 1
-                            if next_index == len(bus_modes):
-                                next_index = 0
-                            next_bus = bus_modes[next_index]
-                            phonetic = {
-                                "amix": "Mix Down A",
-                                "bmix": "Mix Down B",
-                                "repeat": "Stereo Repeat",
-                                "tvmix": "Up Mix TV",
-                                "upmix21": "Up Mix 2.1",
-                                "upmix41": "Up Mix 4.1",
-                                "upmix61": "Up Mix 6.1",
-                                "centeronly": "Center Only",
-                                "lfeonly": "Low Frequency Effect Only",
-                                "rearonly": "Rear Only",
-                            }
-                            setattr(self.vm.bus[int(index)].mode, next_bus, True)
-                            self.cache["bus"][event] = next_bus
+                            chosen = util._bus_mode_map_reversed[values[event]]
+                            setattr(self.vm.bus[int(index)].mode, chosen, True)
+                            self.cache["bus"][event] = chosen
                             self.TKroot.after(
                                 200,
                                 self.nvda.speak,
-                                phonetic.get(next_bus, next_bus),
+                                util._bus_mode_map[chosen],
                             )
                 case [["BUS", index], [param], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         label = self.cache["labels"][f"BUS {index}||LABEL"]
                         val = self.cache["bus"][f"BUS {index}||{param}"]
                         if param == "MODE":
-                            self.nvda.speak(f"{label} bus {param} {val}")
+                            self.nvda.speak(f"{label} bus{param} {util._bus_mode_map[val]}")
                         else:
-                            self.nvda.speak(f"{label} bus {param} {'on' if val else 'off'}")
+                            self.nvda.speak(f"{label} bus{param} {'on' if val else 'off'}")
                 case [["BUS", index], [param], ["KEY", "ENTER"]]:
-                    self.find_element_with_focus().click()
+                    if param == "MODE":
+                        util.open_context_menu_for_buttonmenu(self, f"BUS {index}||MODE")
+                    else:
+                        self.find_element_with_focus().click()
 
                 # Bus Sliders
                 case [["BUS", index], ["SLIDER", "GAIN"]]:

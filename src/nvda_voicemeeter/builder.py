@@ -478,18 +478,26 @@ class Builder:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
-            params = ["MONO", "EQ", "MUTE", "MODE"]
+            params = ["MONO", "EQ", "MUTE"]
             if self.vm.kind.name == "basic":
                 params.remove("EQ")
-            label = {"MODE": "BUSMODE"}
+            busmodes = [util._bus_mode_map[mode] for mode in util.get_bus_modes(self.vm)]
             layout.append(
                 [
-                    psg.Button(
-                        label.get(param, param.capitalize()),
-                        size=(12 if param == "MODE" else 6, 2),
-                        key=f"BUS {i}||{param}",
-                    )
-                    for param in params
+                    *[
+                        psg.Button(
+                            param.capitalize(),
+                            size=(6, 2),
+                            key=f"BUS {i}||{param}",
+                        )
+                        for param in params
+                    ],
+                    psg.ButtonMenu(
+                        "BUSMODE",
+                        size=(12, 2),
+                        menu_def=["", busmodes],
+                        key=f"BUS {i}||MODE",
+                    ),
                 ]
             )
 

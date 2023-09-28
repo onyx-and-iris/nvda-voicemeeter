@@ -111,6 +111,24 @@ def get_channel_identifier_list(vm) -> list:
     return identifiers
 
 
+_bus_mode_map = {
+    "normal": "Normal",
+    "amix": "Mix Down A",
+    "bmix": "Mix Down B",
+    "repeat": "Stereo Repeat",
+    "composite": "Composite",
+    "tvmix": "Up Mix TV",
+    "upmix21": "Up Mix 2.1",
+    "upmix41": "Up Mix 4.1",
+    "upmix61": "Up Mix 6.1",
+    "centeronly": "Center Only",
+    "lfeonly": "Low Frequency Effect Only",
+    "rearonly": "Rear Only",
+}
+
+_bus_mode_map_reversed = dict((reversed(item) for item in _bus_mode_map.items()))
+
+
 def get_bus_modes(vm) -> list:
     if vm.kind.name == "basic":
         return [
