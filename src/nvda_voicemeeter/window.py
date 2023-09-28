@@ -1019,10 +1019,10 @@ class NVDAVMWindow(psg.Window):
                         label = self.cache["labels"][f"BUS {index}||LABEL"]
                         val = self.cache["bus"][f"BUS {index}||{param}"]
                         if param == "MODE":
-                            self.nvda.speak(f"{label} bus{param} {util._bus_mode_map[val]}")
+                            self.nvda.speak(f"{label} bus {param} {util._bus_mode_map[val]}")
                         else:
-                            self.nvda.speak(f"{label} bus{param} {'on' if val else 'off'}")
-                case [["BUS", index], [param], ["KEY", "ENTER"]]:
+                            self.nvda.speak(f"{label} {param} {'on' if val else 'off'}")
+                case [["BUS", index], [param], ["KEY", "SPACE" | "ENTER"]]:
                     if param == "MODE":
                         util.open_context_menu_for_buttonmenu(self, f"BUS {index}||MODE")
                     else:
