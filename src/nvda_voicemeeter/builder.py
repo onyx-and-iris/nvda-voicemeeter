@@ -202,7 +202,7 @@ class Builder:
                 [
                     psg.ButtonMenu(
                         f"PC{i + 1}",
-                        size=(6, 2),
+                        size=(5, 2),
                         menu_def=["", outputs],
                         key=f"PATCH COMPOSITE||PC{i + 1}",
                     )

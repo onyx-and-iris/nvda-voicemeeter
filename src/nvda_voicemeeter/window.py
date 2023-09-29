@@ -613,10 +613,12 @@ class NVDAVMWindow(psg.Window):
                         else:
                             index = int(key[-1]) - 1
                             comp_index = self.vm.patch.composite[index].get()
-                            if self.kind.name == "banana":
-                                if comp_index == 64:  # bus channel
-                                    comp_index = 0
-                            val = util.get_patch_composite_list(self.kind)[comp_index - 1]
+                            comp_list = util.get_patch_composite_list(self.kind)
+                            try:
+                                val = comp_list[comp_index - 1]
+                            except IndexError as e:
+                                val = comp_list[-1]
+                                self.logger.error(f"{type(e).__name__}: {e}")
                         self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
                 case [["PATCH", "COMPOSITE"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     util.open_context_menu_for_buttonmenu(self, f"PATCH COMPOSITE||{key}")
