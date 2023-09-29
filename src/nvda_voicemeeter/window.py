@@ -668,14 +668,14 @@ class NVDAVMWindow(psg.Window):
                                 actual = "k"
                             else:
                                 actual = "mc"
-                            phonetic = {"k": "karaoke"}
                             if actual == "k":
+                                opts = ["off", "k m", "k 1", "k 2", "k v"]
                                 next_val = self.vm.strip[int(index)].k + 1
-                                if next_val == 4:
+                                if next_val == len(opts):
                                     next_val = 0
                                 setattr(self.vm.strip[int(index)], actual, next_val)
                                 self.cache["strip"][f"STRIP {index}||{param}"] = next_val
-                                self.nvda.speak(["off", "k m", "k 1", "k 2"][next_val])
+                                self.nvda.speak(opts[next_val])
                             else:
                                 val = not self.cache["strip"][f"STRIP {index}||{param}"]
                                 setattr(self.vm.strip[int(index)], actual, val)
