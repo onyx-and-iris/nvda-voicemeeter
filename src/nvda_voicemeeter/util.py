@@ -192,3 +192,7 @@ def get_slider_modes() -> Iterable:
         "DENOISER MODE",
         "LIMIT MODE",
     )
+
+
+def _get_bus_assignments(kind) -> list:
+    return [f"A{i}" for i in range(1, kind.phys_out + 1)] + [f"B{i}" for i in range(1, kind.virt_out + 1)]

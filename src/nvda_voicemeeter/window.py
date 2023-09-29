@@ -237,9 +237,14 @@ class NVDAVMWindow(psg.Window):
                     self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
                     self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
             else:
-                for param in ("MONO", "SOLO", "MUTE"):
-                    self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
-                    self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
+                if i == self.kind.phys_in + 1:
+                    for param in ("KARAOKE", "SOLO", "MUTE"):
+                        self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
+                        self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
+                else:
+                    for param in ("MC", "SOLO", "MUTE"):
+                        self[f"STRIP {i}||{param}"].bind("<FocusIn>", "||FOCUS IN")
+                        self[f"STRIP {i}||{param}"].bind("<Return>", "||KEY ENTER")
 
         # Strip Sliders
         for i in range(self.kind.num_strip):
@@ -659,54 +664,36 @@ class NVDAVMWindow(psg.Window):
 
                 # Strip Params
                 case [["STRIP", index], [param]]:
-                    label = self.cache["labels"][f"STRIP {index}||LABEL"]
                     match param:
-                        case "MONO":
-                            if int(index) < self.kind.phys_in:
-                                actual = param.lower()
-                            elif int(index) == self.kind.phys_in + 1:
-                                actual = "k"
-                            else:
-                                actual = "mc"
-                            if actual == "k":
-                                opts = ["off", "k m", "k 1", "k 2", "k v"]
-                                next_val = self.vm.strip[int(index)].k + 1
-                                if next_val == len(opts):
-                                    next_val = 0
-                                setattr(self.vm.strip[int(index)], actual, next_val)
-                                self.cache["strip"][f"STRIP {index}||{param}"] = next_val
-                                self.nvda.speak(opts[next_val])
-                            else:
-                                val = not self.cache["strip"][f"STRIP {index}||{param}"]
-                                setattr(self.vm.strip[int(index)], actual, val)
-                                self.cache["strip"][f"STRIP {index}||{param}"] = val
-                                self.nvda.speak("on" if val else "off")
+                        case "KARAOKE":
+                            opts = ["off", "k m", "k 1", "k 2", "k v"]
+                            next_val = self.vm.strip[int(index)].k + 1
+                            if next_val == len(opts):
+                                next_val = 0
+                            self.vm.strip[int(index)].k = next_val
+                            self.cache["strip"][f"STRIP {index}||{param}"] = next_val
+                            self.nvda.speak(opts[next_val])
+                        case output if param in util._get_bus_assignments(self.kind):
+                            val = not self.cache["strip"][f"STRIP {index}||{output}"]
+                            setattr(self.vm.strip[int(index)], output, val)
+                            self.cache["strip"][f"STRIP {index}||{output}"] = val
+                            self.nvda.speak("on" if val else "off")
                         case _:
                             val = not self.cache["strip"][f"STRIP {index}||{param}"]
-                            setattr(self.vm.strip[int(index)], param if param[0] in ("A", "B") else param.lower(), val)
+                            setattr(self.vm.strip[int(index)], param.lower(), val)
                             self.cache["strip"][f"STRIP {index}||{param}"] = val
                             self.nvda.speak("on" if val else "off")
                 case [["STRIP", index], [param], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         val = self.cache["strip"][f"STRIP {index}||{param}"]
-                        match param:
-                            case "MONO":
-                                if int(index) < self.kind.phys_in:
-                                    actual = param.lower()
-                                elif int(index) == self.kind.phys_in + 1:
-                                    actual = "k"
-                                else:
-                                    actual = "mc"
-                            case _:
-                                actual = param
-                        phonetic = {"k": "karaoke"}
+                        phonetic = {"KARAOKE": "karaoke"}
                         label = self.cache["labels"][f"STRIP {index}||LABEL"]
-                        if actual == "k":
+                        if param == "KARAOKE":
                             self.nvda.speak(
-                                f"{label} {phonetic.get(actual, actual)} {['off', 'k m', 'k 1', 'k 2'][self.cache['strip'][f'STRIP {int(index)}||{param}']]}"
+                                f"{label} {phonetic.get(param, param)} {['off', 'k m', 'k 1', 'k 2', 'k v'][self.cache['strip'][f'STRIP {int(index)}||{param}']]}"
                             )
                         else:
-                            self.nvda.speak(f"{label} {phonetic.get(actual, actual)} {'on' if val else 'off'}")
+                            self.nvda.speak(f"{label} {phonetic.get(param, param)} {'on' if val else 'off'}")
                 case [["STRIP", index], [param], ["KEY", "ENTER"]]:
                     self.find_element_with_focus().click()
 

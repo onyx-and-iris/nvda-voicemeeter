@@ -381,7 +381,7 @@ class Builder:
             if i == self.kind.phys_in + 1:
                 layout.append(
                     [
-                        psg.Button("K", size=(6, 2), key=f"STRIP {i}||MONO"),
+                        psg.Button("K", size=(6, 2), key=f"STRIP {i}||KARAOKE"),
                         psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
                         psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
                     ],
@@ -389,7 +389,7 @@ class Builder:
             else:
                 layout.append(
                     [
-                        psg.Button("MC", size=(6, 2), key=f"STRIP {i}||MONO"),
+                        psg.Button("MC", size=(6, 2), key=f"STRIP {i}||MC"),
                         psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
                         psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
                     ],

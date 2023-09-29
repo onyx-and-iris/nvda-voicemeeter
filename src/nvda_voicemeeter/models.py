@@ -38,10 +38,15 @@ def _make_param_cache(vm, channel_type) -> dict:
                     **{f"STRIP {i}||B3": vm.strip[i].B3 for i in range(vm.kind.num_strip)},
                 }
         params |= {
-            **{f"STRIP {i}||MONO": vm.strip[i].mono for i in range(vm.kind.num_strip)},
+            **{f"STRIP {i}||MONO": vm.strip[i].mono for i in range(vm.kind.phys_in)},
             **{f"STRIP {i}||SOLO": vm.strip[i].solo for i in range(vm.kind.num_strip)},
             **{f"STRIP {i}||MUTE": vm.strip[i].mute for i in range(vm.kind.num_strip)},
         }
+        for i in range(vm.kind.phys_in, vm.kind.phys_in + vm.kind.virt_in):
+            if i == vm.kind.phys_in + 1:
+                params[f"STRIP {i}||KARAOKE"] = vm.strip[i].k
+            else:
+                params[f"STRIP {i}||MC"] = vm.strip[i].mc
     else:
         params |= {
             **{f"BUS {i}||MONO": vm.bus[i].mono for i in range(vm.kind.num_bus)},
