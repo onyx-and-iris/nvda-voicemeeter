@@ -197,7 +197,7 @@ class Builder:
         """tab0 row3 represents patch composite"""
 
         def add_physical_device_opts(layout):
-            outputs = util.get_patch_composite_list(self.vm.kind)
+            outputs = util.get_patch_composite_list(self.kind)
             layout.append(
                 [
                     psg.ButtonMenu(
@@ -479,7 +479,7 @@ class Builder:
 
         def add_strip_outputs(layout):
             params = ["MONO", "EQ", "MUTE"]
-            if self.vm.kind.name == "basic":
+            if self.kind.name == "basic":
                 params.remove("EQ")
             busmodes = [util._bus_mode_map[mode] for mode in util.get_bus_modes(self.vm)]
             layout.append(

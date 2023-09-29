@@ -180,17 +180,17 @@ class NVDAVMWindow(psg.Window):
                 self.bind(f"<Alt-Control-{event}-{direction}>", f"ALT CTRL {direction.upper()}||{event_id}")
 
         # Hardware In
-        for i in range(self.vm.kind.phys_in):
+        for i in range(self.kind.phys_in):
             self[f"HARDWARE IN||{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
             self[f"HARDWARE IN||{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
             self[f"HARDWARE IN||{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
 
         # Hardware Out
-        for i in range(self.vm.kind.phys_out):
+        for i in range(self.kind.phys_out):
             self[f"HARDWARE OUT||A{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
             self[f"HARDWARE OUT||A{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
             self[f"HARDWARE OUT||A{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
-        if self.vm.kind.name == "basic":
+        if self.kind.name == "basic":
             self["HARDWARE OUT||A2"].bind("<FocusIn>", "||FOCUS IN")
             self["HARDWARE OUT||A2"].bind("<space>", "||KEY SPACE", propagate=False)
             self["HARDWARE OUT||A2"].bind("<Return>", "||KEY ENTER", propagate=False)
@@ -262,7 +262,7 @@ class NVDAVMWindow(psg.Window):
 
         # Bus Params
         params = ["MONO", "EQ", "MUTE"]
-        if self.vm.kind.name == "basic":
+        if self.kind.name == "basic":
             params.remove("EQ")
         for i in range(self.kind.num_bus):
             for param in params:
