@@ -47,7 +47,7 @@ class NVDAVMWindow(psg.Window):
         if self.kind.name == "basic":
             self["HARDWARE OUT||A2"].Widget.config(**buttonmenu_opts)
         if self.kind.name != "basic":
-            [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.phys_out)]
+            [self[f"PATCH COMPOSITE||PC{i + 1}"].Widget.config(**buttonmenu_opts) for i in range(self.kind.composite)]
         slider_opts = {"takefocus": 1, "highlightthickness": 1}
         for i in range(self.kind.num_strip):
             for param in util.get_slider_params(i, self.kind):
@@ -203,7 +203,7 @@ class NVDAVMWindow(psg.Window):
 
         # Patch Composite
         if self.kind.name != "basic":
-            for i in range(self.vm.kind.phys_out):
+            for i in range(self.kind.composite):
                 self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<FocusIn>", "||FOCUS IN")
                 self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<space>", "||KEY SPACE", propagate=False)
                 self[f"PATCH COMPOSITE||PC{i + 1}"].bind("<Return>", "||KEY ENTER", propagate=False)
@@ -605,14 +605,18 @@ class NVDAVMWindow(psg.Window):
                     val = values[f"PATCH COMPOSITE||{key}"]
                     index = int(key[-1]) - 1
                     self.vm.patch.composite[index].set(util.get_patch_composite_list(self.kind).index(val) + 1)
-                    self.TKroot.after(200, self.nvda.speak, f"PATCH COMPOSITE {key[-1]} set {val}")
+                    self.TKroot.after(200, self.nvda.speak, val)
                 case [["PATCH", "COMPOSITE"], [key], ["FOCUS", "IN"]]:
                     if self.find_element_with_focus() is not None:
                         if values[f"PATCH COMPOSITE||{key}"]:
                             val = values[f"PATCH COMPOSITE||{key}"]
                         else:
                             index = int(key[-1]) - 1
-                            val = util.get_patch_composite_list(self.kind)[self.vm.patch.composite[index].get() - 1]
+                            comp_index = self.vm.patch.composite[index].get()
+                            if self.kind.name == "banana":
+                                if comp_index == 64:  # bus channel
+                                    comp_index = 0
+                            val = util.get_patch_composite_list(self.kind)[comp_index - 1]
                         self.nvda.speak(f"Patch COMPOSITE {key[-1]} {val}")
                 case [["PATCH", "COMPOSITE"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     util.open_context_menu_for_buttonmenu(self, f"PATCH COMPOSITE||{key}")

@@ -206,7 +206,7 @@ class Builder:
                         menu_def=["", outputs],
                         key=f"PATCH COMPOSITE||PC{i + 1}",
                     )
-                    for i in range(self.kind.phys_out)
+                    for i in range(self.kind.composite)
                 ]
             )
 

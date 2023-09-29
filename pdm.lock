@@ -251,13 +251,13 @@ files = [
 
 [[package]]
 name = "voicemeeter-api"
-version = "2.4.10"
+version = "2.4.11"
 requires_python = ">=3.10,<4.0"
 summary = "A Python wrapper for the Voiceemeter API"
 dependencies = [
     "tomli<3.0.0,>=2.0.1; python_version < \"3.11\"",
 ]
 files = [
-    {file = "voicemeeter_api-2.4.10-py3-none-any.whl", hash = "sha256:2f75acb7b472e56b6bd8d4f1141f32d948c55ef9b30d5a08e085a1c8e76e2464"},
-    {file = "voicemeeter_api-2.4.10.tar.gz", hash = "sha256:1d8dfc1e8922179f8b97c90b90b9ed051082018c6af5feb1d48250140a02d40c"},
+    {file = "voicemeeter_api-2.4.11-py3-none-any.whl", hash = "sha256:7a1b290d90c851204438c18e2d343e568c242fcd1e664c5b88d4019a553d44e1"},
+    {file = "voicemeeter_api-2.4.11.tar.gz", hash = "sha256:875591ad326a7a13ef141536cca83953edcda81da256191bab3844bac46a0e70"},
 ]
