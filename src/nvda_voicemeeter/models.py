@@ -79,10 +79,17 @@ def _make_label_cache(vm) -> dict:
 
 
 def _make_patch_asio_cache(vm) -> dict:
+    params = {}
     if vm.kind.name != "basic":
-        return {**{f"ASIO CHECKBOX||{i}": vm.patch.asio[i].get() for i in range(vm.kind.phys_out * 2)}}
+        params |= {**{f"ASIO INPUT SPINBOX||{i}": vm.patch.asio[i].get() for i in range(vm.kind.phys_out * 2)}}
+        for i in range(vm.kind.phys_out - 1):
+            target = getattr(vm.patch, f"A{i + 2}")
+            params |= {**{f"ASIO OUTPUT A{i + 2} SPINBOX||{j}": target[j].get() for j in range(vm.kind.num_bus)}}
+    return params
 
 
 def _make_patch_insert_cache(vm) -> dict:
+    params = {}
     if vm.kind.name != "basic":
-        return {**{f"INSERT CHECKBOX||{i}": vm.patch.insert[i].on for i in range(vm.kind.num_strip_levels)}}
+        params |= {**{f"INSERT CHECKBOX||{i}": vm.patch.insert[i].on for i in range(vm.kind.num_strip_levels)}}
+    return params

@@ -58,10 +58,6 @@ class NVDAVMWindow(psg.Window):
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||SLIDER GAIN"].Widget.config(**slider_opts)
             self[f"BUS {i}||MODE"].Widget.config(**buttonmenu_opts)
-        if self.kind.name != "basic":
-            for i in range(self.kind.phys_out):
-                self[f"ASIO CHECKBOX||IN{i + 1} 0"].Widget.config(state="readonly")
-                self[f"ASIO CHECKBOX||IN{i + 1} 1"].Widget.config(state="readonly")
 
         self.register_events()
         self["tabgroup"].set_focus()
@@ -124,10 +120,6 @@ class NVDAVMWindow(psg.Window):
         for i in range(self.kind.num_bus):
             self[f"BUS {i}||SLIDER GAIN"].update(value=self.vm.bus[i].gain)
         if self.kind.name != "basic":
-            for key, value in self.cache["asio"].items():
-                identifier, i = key.split("||")
-                partial = util.get_channel_identifier_list(self.vm)[int(i)]
-                self[f"{identifier}||{partial}"].update(value=value)
             for key, value in self.cache["insert"].items():
                 identifier, i = key.split("||")
                 partial = util.get_channel_identifier_list(self.vm)[int(i)]
@@ -194,12 +186,6 @@ class NVDAVMWindow(psg.Window):
             self["HARDWARE OUT||A2"].bind("<FocusIn>", "||FOCUS IN")
             self["HARDWARE OUT||A2"].bind("<space>", "||KEY SPACE", propagate=False)
             self["HARDWARE OUT||A2"].bind("<Return>", "||KEY ENTER", propagate=False)
-
-        # Patch ASIO
-        if self.kind.name != "basic":
-            for i in range(self.kind.phys_out):
-                self[f"ASIO CHECKBOX||IN{i + 1} 0"].bind("<FocusIn>", "||FOCUS IN")
-                self[f"ASIO CHECKBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
 
         # Patch Composite
         if self.kind.name != "basic":
@@ -590,20 +576,6 @@ class NVDAVMWindow(psg.Window):
                         self.nvda.speak(f"HARDWARE OUT {key} {self.cache['hw_outs'][f'HARDWARE OUT||{key}']}")
                 case [["HARDWARE", "OUT"], [key], ["KEY", "SPACE" | "ENTER"]]:
                     util.open_context_menu_for_buttonmenu(self, f"HARDWARE OUT||{key}")
-
-                # Patch ASIO
-                case [["ASIO", "CHECKBOX"], [in_num, channel]]:
-                    index = util.get_asio_checkbox_index(int(channel), int(in_num[-1]))
-                    val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
-                    self.vm.patch.asio[index].set(val)
-                    channel = ("left", "right")[int(channel)]
-                    self.nvda.speak(str(val))
-                case [["ASIO", "CHECKBOX"], [in_num, channel], ["FOCUS", "IN"]]:
-                    if self.find_element_with_focus() is not None:
-                        val = values[f"ASIO CHECKBOX||{in_num} {channel}"]
-                        channel = ("left", "right")[int(channel)]
-                        num = int(in_num[-1])
-                        self.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {val}")
 
                 # Patch COMPOSITE
                 case [["PATCH", "COMPOSITE"], [key]]:

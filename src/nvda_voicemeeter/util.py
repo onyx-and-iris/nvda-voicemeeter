@@ -1,7 +1,7 @@
 from typing import Iterable
 
 
-def get_asio_checkbox_index(channel, num) -> int:
+def get_asio_input_spinbox_index(channel, num) -> int:
     if channel == 0:
         return 2 * num - 2
     return 2 * num - 1

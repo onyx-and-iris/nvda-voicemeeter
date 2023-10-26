@@ -48,6 +48,30 @@ class Popup:
         if filepath:
             return Path(filepath)
 
+    def on_pdirty(self):
+        if self.popup.Title == "Advanced Settings":
+            if self.kind.name != "basic":
+                for key, value in self.window.cache["asio"].items():
+                    if "INPUT" in key:
+                        identifier, i = key.split("||")
+                        partial = util.get_channel_identifier_list(self.window.vm)[int(i)]
+                        self.popup[f"{identifier}||{partial}"].update(value=value)
+                    elif "OUTPUT" in key:
+                        self.popup[key].update(value=value)
+
+        if self.popup.Title == "Advanced Compressor":
+            for param in ("RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE"):
+                self.popup[f"COMPRESSOR||SLIDER {param}"].update(
+                    value=getattr(self.window.vm.strip[self.index].comp, param.lower())
+                )
+            self.popup["COMPRESSOR||SLIDER INPUT GAIN"].update(value=self.window.vm.strip[self.index].comp.gainin)
+            self.popup["COMPRESSOR||SLIDER OUTPUT GAIN"].update(value=self.window.vm.strip[self.index].comp.gainout)
+        elif self.popup.Title == "Advanced Gate":
+            for param in ("THRESHOLD", "DAMPING", "BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
+                self.popup[f"GATE||SLIDER {param}"].update(
+                    value=getattr(self.window.vm.strip[self.index].gate, param.lower())
+                )
+
     def rename(self, message, index, title=None, tab=None):
         if "Strip" in tab:
             if index < self.kind.phys_in:
@@ -94,6 +118,50 @@ class Popup:
         return data
 
     def advanced_settings(self, title):
+        def add_patch_asio_input_to_strips(layout, i):
+            nums = list(range(99))
+            layout.append(
+                [
+                    psg.Spin(
+                        nums,
+                        initial_value=self.window.cache["asio"][
+                            f"ASIO INPUT SPINBOX||{util.get_asio_input_spinbox_index(0, i)}"
+                        ],
+                        size=2,
+                        enable_events=True,
+                        key=f"ASIO INPUT SPINBOX||IN{i} 0",
+                    )
+                ],
+            )
+            layout.append(
+                [
+                    psg.Spin(
+                        nums,
+                        initial_value=self.window.cache["asio"][
+                            f"ASIO INPUT SPINBOX||{util.get_asio_input_spinbox_index(1, i)}"
+                        ],
+                        size=2,
+                        enable_events=True,
+                        key=f"ASIO INPUT SPINBOX||IN{i} 1",
+                    )
+                ],
+            )
+
+        def add_patch_bus_to_asio_outputs(layout, i):
+            nums = list(range(99))
+            layout.append(
+                [
+                    psg.Spin(
+                        nums,
+                        initial_value=self.window.cache["asio"][f"ASIO OUTPUT A{i} SPINBOX||{j}"],
+                        size=2,
+                        enable_events=True,
+                        key=f"ASIO OUTPUT A{i} SPINBOX||{j}",
+                    )
+                    for j in range(self.kind.num_bus)
+                ],
+            )
+
         def _make_buffering_frame() -> psg.Frame:
             buffer = [
                 [
@@ -109,27 +177,79 @@ class Popup:
             return psg.Frame("BUFFERING", buffer)
 
         layout = []
+        if self.kind.name != "basic":
+            inner = []
+            patch_input_to_strips = ([] for _ in range(self.kind.phys_in))
+            for i, checkbox_list in enumerate(patch_input_to_strips):
+                [step(checkbox_list, i + 1) for step in (add_patch_asio_input_to_strips,)]
+                inner.append(psg.Frame(f"In#{i + 1}", checkbox_list))
+            layout.append([psg.Frame("PATCH ASIO Inputs to Strips", [inner])])
+
+            inner_2 = []
+            patch_output_to_bus = ([] for _ in range(self.kind.phys_out - 1))
+            for i, checkbox_list in enumerate(patch_output_to_bus):
+                [step(checkbox_list, i + 2) for step in (add_patch_bus_to_asio_outputs,)]
+                inner_2.append([psg.Frame(f"OutA{i + 2}", checkbox_list)])
+            layout.append([psg.Frame("PATCH BUS to A1 ASIO Outputs", [*inner_2])])
+
         steps = (_make_buffering_frame,)
         for step in steps:
             layout.append([step()])
         layout.append([psg.Button("Exit", size=(8, 2))])
 
-        popup = psg.Window(title, layout, finalize=True)
+        self.popup = psg.Window(title, layout, finalize=True)
+        if self.kind.name != "basic":
+            for i in range(self.kind.phys_out):
+                self.popup[f"ASIO INPUT SPINBOX||IN{i + 1} 0"].Widget.config(state="readonly")
+                self.popup[f"ASIO INPUT SPINBOX||IN{i + 1} 1"].Widget.config(state="readonly")
+            for i in range(self.kind.phys_out - 1):
+                for j in range(self.kind.num_bus):
+                    self.popup[f"ASIO OUTPUT A{i + 2} SPINBOX||{j}"].Widget.config(state="readonly")
+        if self.kind.name != "basic":
+            for i in range(self.kind.phys_out):
+                self.popup[f"ASIO INPUT SPINBOX||IN{i + 1} 0"].bind("<FocusIn>", "||FOCUS IN")
+                self.popup[f"ASIO INPUT SPINBOX||IN{i + 1} 1"].bind("<FocusIn>", "||FOCUS IN")
+            for i in range(self.kind.phys_out - 1):
+                for j in range(self.kind.num_bus):
+                    self.popup[f"ASIO OUTPUT A{i + 2} SPINBOX||{j}"].bind("<FocusIn>", "||FOCUS IN")
         buttonmenu_opts = {"takefocus": 1, "highlightthickness": 1}
         for driver in ("MME", "WDM", "KS", "ASIO"):
-            popup[f"BUFFER {driver}"].Widget.config(**buttonmenu_opts)
-            popup[f"BUFFER {driver}"].bind("<FocusIn>", "||FOCUS IN")
-            popup[f"BUFFER {driver}"].bind("<space>", "||KEY SPACE", propagate=False)
-            popup[f"BUFFER {driver}"].bind("<Return>", "||KEY ENTER", propagate=False)
-        popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
-        popup["Exit"].bind("<Return>", "||KEY ENTER")
+            self.popup[f"BUFFER {driver}"].Widget.config(**buttonmenu_opts)
+            self.popup[f"BUFFER {driver}"].bind("<FocusIn>", "||FOCUS IN")
+            self.popup[f"BUFFER {driver}"].bind("<space>", "||KEY SPACE", propagate=False)
+            self.popup[f"BUFFER {driver}"].bind("<Return>", "||KEY ENTER", propagate=False)
+        self.popup["Exit"].bind("<FocusIn>", "||FOCUS IN")
+        self.popup["Exit"].bind("<Return>", "||KEY ENTER")
+        self.window.vm.observer.add(self.on_pdirty)
         while True:
-            event, values = popup.read()
+            event, values = self.popup.read()
             self.logger.debug(f"event::{event}")
             self.logger.debug(f"values::{values}")
             if event in (psg.WIN_CLOSED, "Exit"):
                 break
             match parsed_cmd := self.window.parser.match.parseString(event):
+                case [["ASIO", "INPUT", "SPINBOX"], [in_num, channel]]:
+                    index = util.get_asio_input_spinbox_index(int(channel), int(in_num[-1]))
+                    val = values[f"ASIO INPUT SPINBOX||{in_num} {channel}"]
+                    self.window.vm.patch.asio[index].set(val)
+                    channel = ("left", "right")[int(channel)]
+                    self.window.nvda.speak(str(val))
+                case [["ASIO", "INPUT", "SPINBOX"], [in_num, channel], ["FOCUS", "IN"]]:
+                    if self.popup.find_element_with_focus() is not None:
+                        val = values[f"ASIO INPUT SPINBOX||{in_num} {channel}"]
+                        channel = ("left", "right")[int(channel)]
+                        num = int(in_num[-1])
+                        self.window.nvda.speak(f"Patch ASIO inputs to strips IN#{num} {channel} {val}")
+                case [["ASIO", "OUTPUT", param, "SPINBOX"], [index]]:
+                    target = getattr(self.window.vm.patch, param)[int(index)]
+                    target.set(values[event])
+                    self.window.nvda.speak(str(values[event]))
+                case [["ASIO", "OUTPUT", param, "SPINBOX"], [index], ["FOCUS", "IN"]]:
+                    if self.popup.find_element_with_focus() is not None:
+                        val = values[f"ASIO OUTPUT {param} SPINBOX||{index}"]
+                        self.window.nvda.speak(
+                            f"Patch BUS to A1 ASIO Outputs OUT {param} channel {int(index) + 1} {val}"
+                        )
                 case ["BUFFER MME" | "BUFFER WDM" | "BUFFER KS" | "BUFFER ASIO"]:
                     if values[event] == "Default":
                         if "MME" in event:
@@ -149,27 +269,14 @@ class Popup:
                     val = int(self.window.vm.get(f"option.buffer.{driver.lower()}"))
                     self.window.nvda.speak(f"{driver} BUFFER {val if val else 'default'}")
                 case [["BUFFER", driver], ["KEY", "SPACE" | "ENTER"]]:
-                    util.open_context_menu_for_buttonmenu(popup, f"BUFFER {driver}")
+                    util.open_context_menu_for_buttonmenu(self.popup, f"BUFFER {driver}")
                 case [[button], ["FOCUS", "IN"]]:
                     self.window.nvda.speak(button)
                 case [_, ["KEY", "ENTER"]]:
-                    popup.find_element_with_focus().click()
+                    self.popup.find_element_with_focus().click()
             self.logger.debug(f"parsed::{parsed_cmd}")
-        popup.close()
-
-    def on_pdirty(self):
-        if self.popup.Title == "Advanced Compressor":
-            for param in ("RATIO", "THRESHOLD", "ATTACK", "RELEASE", "KNEE"):
-                self.popup[f"COMPRESSOR||SLIDER {param}"].update(
-                    value=getattr(self.window.vm.strip[self.index].comp, param.lower())
-                )
-            self.popup["COMPRESSOR||SLIDER INPUT GAIN"].update(value=self.window.vm.strip[self.index].comp.gainin)
-            self.popup["COMPRESSOR||SLIDER OUTPUT GAIN"].update(value=self.window.vm.strip[self.index].comp.gainout)
-        elif self.popup.Title == "Advanced Gate":
-            for param in ("THRESHOLD", "DAMPING", "BPSIDECHAIN", "ATTACK", "HOLD", "RELEASE"):
-                self.popup[f"GATE||SLIDER {param}"].update(
-                    value=getattr(self.window.vm.strip[self.index].gate, param.lower())
-                )
+        self.window.vm.observer.remove(self.on_pdirty)
+        self.popup.close()
 
     def compressor(self, index, title=None):
         self.index = index

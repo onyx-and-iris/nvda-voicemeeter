@@ -26,7 +26,6 @@ class Builder:
             steps = (
                 self.make_tab0_row0,
                 self.make_tab0_row1,
-                self.make_tab0_row2,
                 self.make_tab0_row3,
                 self.make_tab0_row4,
                 self.make_tab0_row5,
@@ -151,47 +150,6 @@ class Builder:
         hardware_out = []
         [step(hardware_out) for step in (add_physical_device_opts,)]
         return psg.Frame("Hardware Out", hardware_out)
-
-    def make_tab0_row2(self) -> psg.Frame:
-        """tab0 row2 represents patch asio inputs to strips"""
-
-        def add_asio_checkboxes(layout, i):
-            nums = list(range(99))
-            layout.append(
-                [
-                    psg.Spin(
-                        nums,
-                        initial_value=self.window.cache["asio"][
-                            f"ASIO CHECKBOX||{util.get_asio_checkbox_index(0, i)}"
-                        ],
-                        size=2,
-                        enable_events=True,
-                        key=f"ASIO CHECKBOX||IN{i} 0",
-                    )
-                ],
-            )
-            layout.append(
-                [
-                    psg.Spin(
-                        nums,
-                        initial_value=self.window.cache["asio"][
-                            f"ASIO CHECKBOX||{util.get_asio_checkbox_index(1, i)}"
-                        ],
-                        size=2,
-                        enable_events=True,
-                        key=f"ASIO CHECKBOX||IN{i} 1",
-                    )
-                ],
-            )
-
-        inner = []
-        asio_checkboxlists = ([] for _ in range(self.kind.phys_out))
-        for i, checkbox_list in enumerate(asio_checkboxlists):
-            [step(checkbox_list, i + 1) for step in (add_asio_checkboxes,)]
-            inner.append(psg.Frame(f"In#{i + 1}", checkbox_list))
-
-        asio_checkboxes = [inner]
-        return psg.Frame("PATCH ASIO Inputs to Strips", asio_checkboxes)
 
     def make_tab0_row3(self) -> psg.Frame:
         """tab0 row3 represents patch composite"""
