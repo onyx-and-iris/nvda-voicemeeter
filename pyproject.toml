@@ -1,6 +1,6 @@
 [project]
 name = "nvda_voicemeeter"
-version = "0.5.6b1"
+version = "0.5.6"
 description = "A Voicemeeter app compatible with NVDA"
 authors = [
     { name = "onyx-and-iris", email = "code@onyxandiris.online" },
@@ -8,7 +8,7 @@ authors = [
 dependencies = [
     "pysimplegui>=4.60.5",
     "pyparsing>=3.1.1",
-    "voicemeeter-api>=2.4.11",
+    "voicemeeter-api>=2.5.2",
 ]
 requires-python = ">=3.10,<3.12"
 readme = "README.md"
