@@ -92,6 +92,8 @@ class Builder:
         return [[menu], [tab_group]]
 
     def make_menu(self) -> psg.Menu:
+        themes = [f"{theme}::MENU THEME" for theme in util.get_themes_list()]
+        themes.append("Default::MENU THEME")
         menu_def = [
             [
                 "&Voicemeeter",
@@ -102,6 +104,7 @@ class Builder:
                     "Load Settings on Startup ::MENU",
                 ],
             ],
+            ["&Theme", themes],
         ]
         return psg.Menu(menu_def, key="menus")
 

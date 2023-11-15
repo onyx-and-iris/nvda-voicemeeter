@@ -196,3 +196,20 @@ def get_slider_modes() -> Iterable:
 
 def _get_bus_assignments(kind) -> list:
     return [f"A{i}" for i in range(1, kind.phys_out + 1)] + [f"B{i}" for i in range(1, kind.virt_out + 1)]
+
+
+def get_themes_list() -> list:
+    return sorted(
+        [
+            "Black",
+            "Dark Blue",
+            "Dark Blue 3",
+            "Reddit",
+            "Light Gray 1",
+            "Bright Colors",
+            "Dark Amber",
+            "Light Grey 5",
+            "Reds",
+            "Dark Brown 5",
+        ]
+    )

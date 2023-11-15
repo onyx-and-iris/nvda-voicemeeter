@@ -4,7 +4,7 @@ from pathlib import Path
 
 import PySimpleGUI as psg
 
-from . import models, util
+from . import configuration, models, util
 from .builder import Builder
 from .nvda import Nvda
 from .parser import Parser
@@ -12,13 +12,11 @@ from .popup import Popup
 
 logger = logging.getLogger(__name__)
 
-psg.theme("Dark Blue 3")
+psg.theme(configuration.get("default_theme", "Dark Blue 3"))
 
 
 class NVDAVMWindow(psg.Window):
     """Represents the main window of the Voicemeeter NVDA application"""
-
-    SETTINGS = "settings.json"
 
     def __init__(self, title, vm):
         self.vm = vm
@@ -63,12 +61,10 @@ class NVDAVMWindow(psg.Window):
         self["tabgroup"].set_focus()
 
     def __enter__(self):
-        settings_path = Path.cwd() / self.SETTINGS
+        settings_path = configuration.SETTINGS
         if settings_path.exists():
             try:
-                with open(settings_path, "r") as f:
-                    data = json.load(f)
-                defaultconfig = Path(data["default_config"])
+                defaultconfig = Path(configuration.get("default_config", ""))  # coerce the type
                 if defaultconfig.exists():
                     self.vm.set("command.load", str(defaultconfig))
                     self.logger.debug(f"config {defaultconfig} loaded")
@@ -78,7 +74,7 @@ class NVDAVMWindow(psg.Window):
                         f"config {defaultconfig.stem} has been loaded",
                     )
             except json.JSONDecodeError:
-                self.logger.debug("no data in settings.json. silently continuing...")
+                self.logger.debug("no default_config in settings.json. silently continuing...")
 
         self.vm.init_thread()
         self.vm.observer.add(self.on_pdirty)
@@ -510,17 +506,27 @@ class NVDAVMWindow(psg.Window):
                         file_types=(("XML", ".xml"),),
                     ):
                         filepath = Path(filepath)
-                        with open(self.SETTINGS, "w") as f:
-                            json.dump({"default_config": str(filepath)}, f)
+                        configuration.set("default_settings", str(filepath))
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
                             f"config {filepath.stem} set as default on startup",
                         )
                     else:
-                        with open(self.SETTINGS, "wb") as f:
-                            f.truncate()
-                        self.logger.debug("settings.json was truncated")
+                        configuration.delete("default_settings")
+                        self.logger.debug("default_settings removed from settings.json")
+
+                case [theme, ["MENU", "THEME"]]:
+                    chosen = " ".join(theme)
+                    if chosen == "Default":
+                        chosen = "Dark Blue 3"
+                    configuration.set("default_theme", chosen)
+                    self.TKroot.after(
+                        200,
+                        self.nvda.speak,
+                        f"theme {chosen} selected.",
+                    )
+                    self.logger.debug(f"theme {chosen} selected")
 
                 # Tabs
                 case ["tabgroup"] | [["tabgroup"], ["FOCUS", "IN"]]:
