@@ -131,9 +131,11 @@ For Gate BP Sidechain, Attack, Hold, Release you may use:
 
 To reset a slider back to its default value you may use `Control + Shift + R`.
 
-#### `Menu`
+### Menu
 
-A single menu item `Voicemeeter` can be opened using `Alt` and then `v`. The menu allows you to:
+#### `Voicemeeter`
+
+The `Voicemeeter` menu can be opened using `Alt` and then `v`. It offers the following options:
 
 - Restart Voicemeeter audio engine
 - Save/Load current settings (as an xml file)
@@ -143,7 +145,11 @@ The `Save Settings` option opens a popup window with two buttons, `Browse` and `
 
 `Load Settings` and `Load on Startup` both open an Open dialog box immediately.
 
-### `Quick access binds`
+#### `Themes`
+
+The `Themes` menu can be opened using `Alt` and then `t`. Use this menu to select from a list of coloured themes. Some themes offer higher contrast colours. An application restart is required to load a new theme. Once a theme is selected it will become the default for future startups.
+
+### Quick access binds
 
 There are a number of quick binds available to assist with faster navigation and general use.
 

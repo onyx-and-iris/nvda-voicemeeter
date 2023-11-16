@@ -1,5 +1,7 @@
 from typing import Iterable
 
+import PySimpleGUI as psg
+
 
 def get_asio_input_spinbox_index(channel, num) -> int:
     if channel == 0:
@@ -199,17 +201,24 @@ def _get_bus_assignments(kind) -> list:
 
 
 def get_themes_list() -> list:
-    return sorted(
-        [
-            "Black",
-            "Dark Blue",
-            "Dark Blue 3",
-            "Reddit",
-            "Light Gray 1",
-            "Bright Colors",
-            "Dark Amber",
-            "Light Grey 5",
-            "Reds",
-            "Dark Brown 5",
-        ]
-    )
+    return [
+        "Bright Colors",
+        "Dark Blue 14",
+        "Dark Brown 2",
+        "Dark Brown 3",
+        "Dark Green 2",
+        "Dark Grey 2",
+        "Dark Teal1",
+        "Dark Teal6",
+        "Kayak",
+        "Light Blue 2",
+        "Light Brown 2",
+        "Light Brown 5",
+        "Light Green",
+        "Light Green 3",
+        "Light Grey 2",
+        "Light Purple",
+        "Neutral Blue",
+        "Reds",
+        "Sandy Beach",
+    ]
