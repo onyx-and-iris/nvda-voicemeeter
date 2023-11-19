@@ -145,9 +145,9 @@ The `Save Settings` option opens a popup window with two buttons, `Browse` and `
 
 `Load Settings` and `Load on Startup` both open an Open dialog box immediately.
 
-#### `Themes`
+#### `Theme`
 
-The `Themes` menu can be opened using `Alt` and then `t`. Use this menu to select from a list of coloured themes. Some themes offer higher contrast colours. An application restart is required to load a new theme. Once a theme is selected it will become the default for future startups.
+The `Theme` menu can be opened using `Alt` and then `t`. Use this menu to select from a list of coloured themes. Some themes offer higher contrast colours. An application restart is required to load a new theme. Once a theme is selected it will become the default for future startups.
 
 ### Quick access binds
 
