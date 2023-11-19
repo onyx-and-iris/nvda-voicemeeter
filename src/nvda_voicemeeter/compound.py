@@ -13,7 +13,10 @@ class LabelSlider(psg.Frame):
         if param in ("AUDIBILITY", "DENOISER"):
             size = 7
         else:
-            size = 4
+            if psg.theme() == "HighContrast":
+                size = 5
+            else:
+                size = 4
         layout = [
             [
                 psg.Text(param.capitalize(), size=size),

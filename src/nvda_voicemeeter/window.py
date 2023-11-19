@@ -13,6 +13,8 @@ from .popup import Popup
 logger = logging.getLogger(__name__)
 
 psg.theme(configuration.get("default_theme", "Dark Blue 3"))
+if psg.theme() == "HighContrast":
+    psg.set_options(font=("Arial", 14))
 
 
 class NVDAVMWindow(psg.Window):
@@ -22,6 +24,7 @@ class NVDAVMWindow(psg.Window):
         self.vm = vm
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
+        self.logger.debug(f"loaded with theme: {psg.theme()}")
         self.cache = {
             "hw_ins": models._make_hardware_ins_cache(self.vm),
             "hw_outs": models._make_hardware_outs_cache(self.vm),
@@ -65,7 +68,7 @@ class NVDAVMWindow(psg.Window):
         if settings_path.exists():
             try:
                 defaultconfig = Path(configuration.get("default_config", ""))  # coerce the type
-                if defaultconfig.exists():
+                if defaultconfig.is_file() and defaultconfig.exists():
                     self.vm.set("command.load", str(defaultconfig))
                     self.logger.debug(f"config {defaultconfig} loaded")
                     self.TKroot.after(

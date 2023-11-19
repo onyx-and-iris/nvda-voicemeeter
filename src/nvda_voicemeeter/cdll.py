@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .errors import NVDAVMError
 
-bits = 64 if ct.sizeof(ct.c_voidp) == 8 else 32
+bits = 64 if ct.sizeof(ct.c_void_p) == 8 else 32
 
 if platform.system() != "Windows":
     raise NVDAVMError("Only Windows OS supported")

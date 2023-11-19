@@ -200,6 +200,23 @@ def _get_bus_assignments(kind) -> list:
     return [f"A{i}" for i in range(1, kind.phys_out + 1)] + [f"B{i}" for i in range(1, kind.virt_out + 1)]
 
 
+psg.theme_add_new(
+    "HighContrast",
+    {
+        "BACKGROUND": "#FFFFFF",
+        "TEXT": "#000000",
+        "INPUT": "#FAF9F6",
+        "TEXT_INPUT": "#000000",
+        "SCROLL": "#FAF9F6",
+        "BUTTON": ("#000000", "#FFFFFF"),
+        "PROGRESS": ("#000000", "#FFFFFF"),
+        "BORDER": 2,
+        "SLIDER_DEPTH": 3,
+        "PROGRESS_DEPTH": 0,
+    },
+)
+
+
 def get_themes_list() -> list:
     return [
         "Bright Colors",
@@ -221,4 +238,5 @@ def get_themes_list() -> list:
         "Neutral Blue",
         "Reds",
         "Sandy Beach",
+        "High Contrast",
     ]

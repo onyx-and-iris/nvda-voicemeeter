@@ -1,6 +1,6 @@
 [project]
 name = "nvda_voicemeeter"
-version = "0.5.7b1"
+version = "0.5.7b2"
 description = "A Voicemeeter app compatible with NVDA"
 authors = [
     { name = "onyx-and-iris", email = "code@onyxandiris.online" },
@@ -23,6 +23,7 @@ build = [
 lint = [
     "black>=23.7.0",
     "ruff>=0.0.291",
+    "mypy>=1.7.0",
 ]
 test = [
     "psgdemos>=1.12.1",
