@@ -509,15 +509,15 @@ class NVDAVMWindow(psg.Window):
                         file_types=(("XML", ".xml"),),
                     ):
                         filepath = Path(filepath)
-                        configuration.set("default_settings", str(filepath))
+                        configuration.set("default_config", str(filepath))
                         self.TKroot.after(
                             200,
                             self.nvda.speak,
                             f"config {filepath.stem} set as default on startup",
                         )
                     else:
-                        configuration.delete("default_settings")
-                        self.logger.debug("default_settings removed from settings.json")
+                        configuration.delete("default_config")
+                        self.logger.debug("default_config removed from settings.json")
 
                 case [theme, ["MENU", "THEME"]]:
                     chosen = " ".join(theme)
