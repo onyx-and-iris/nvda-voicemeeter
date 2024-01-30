@@ -1,6 +1,6 @@
 [project]
 name = "nvda_voicemeeter"
-version = "0.6.2"
+version = "0.6.3"
 description = "A Voicemeeter app compatible with NVDA"
 authors = [
     { name = "onyx-and-iris", email = "code@onyxandiris.online" },
@@ -17,9 +17,6 @@ readme = "README.md"
 text = "MIT"
 
 [tool.pdm.dev-dependencies]
-build = [
-    "pyinstaller>=5.1",
-]
 lint = [
     "black>=23.7.0",
     "ruff>=0.0.291",
@@ -27,6 +24,9 @@ lint = [
 ]
 test = [
     "psgdemos>=1.12.1",
+]
+build = [
+    "pyinstaller>=6.3.0",
 ]
 
 [tool.pdm.scripts.build]

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .errors import NVDAVMError
 
-bits = 64 if ct.sizeof(ct.c_void_p) == 8 else 32
+BITS = 64 if ct.sizeof(ct.c_void_p) == 8 else 32
 
 if platform.system() != "Windows":
     raise NVDAVMError("Only Windows OS supported")
@@ -15,7 +15,7 @@ REG_KEY = "\\".join(
         None,
         (
             "SOFTWARE",
-            "WOW6432Node" if bits == 64 else "",
+            "WOW6432Node" if BITS == 64 else "",
             "Microsoft",
             "Windows",
             "CurrentVersion",
@@ -39,8 +39,8 @@ except FileNotFoundError:
 
 controller_path = Path(__file__).parents[2].resolve() / "controllerClient"
 if not controller_path.exists():
-    controller_path = Path("controllerClient")
+    controller_path = Path("_internal") / "controllerClient"
 
-DLL_PATH = controller_path / f"x{64 if bits == 64 else 86}" / f"nvdaControllerClient{bits}.dll"
+DLL_PATH = controller_path / f"x{64 if BITS == 64 else 86}" / f"nvdaControllerClient{BITS}.dll"
 
 libc = ct.CDLL(str(DLL_PATH))

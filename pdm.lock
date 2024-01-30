@@ -5,7 +5,7 @@
 groups = ["default", "build", "lint", "test"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:3fa263ac843989c1735416c5f86309c704b19653a99cfceb396e28e76dbc425f"
+content_hash = "sha256:6be74981983ee2ba3a99c9aa75b10f6c7433fec0854390f82029635cb34d3e0b"
 
 [[package]]
 name = "altgraph"
