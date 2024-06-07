@@ -2,11 +2,9 @@
 name = "nvda_voicemeeter"
 version = "0.6.3"
 description = "A Voicemeeter app compatible with NVDA"
-authors = [
-    { name = "onyx-and-iris", email = "code@onyxandiris.online" },
-]
+authors = [{ name = "onyx-and-iris", email = "code@onyxandiris.online" }]
 dependencies = [
-    "pysimplegui>=4.60.5",
+    "pysimplegui==4.60.5",
     "pyparsing>=3.1.1",
     "voicemeeter-api>=2.5.3",
 ]
@@ -17,17 +15,9 @@ readme = "README.md"
 text = "MIT"
 
 [tool.pdm.dev-dependencies]
-lint = [
-    "black>=23.7.0",
-    "ruff>=0.0.291",
-    "mypy>=1.7.0",
-]
-test = [
-    "psgdemos>=1.12.1",
-]
-build = [
-    "pyinstaller>=6.3.0",
-]
+lint = ["black>=23.7.0", "ruff>=0.0.291", "mypy>=1.7.0"]
+test = ["psgdemos>=1.12.1"]
+build = ["pyinstaller>=6.3.0"]
 
 [tool.pdm.scripts.build]
 shell = "build.ps1"
@@ -36,13 +26,8 @@ shell = "build.ps1"
 line-length = 119
 
 [tool.ruff]
-select = [
-    "E",
-    "F",
-]
-ignore = [
-    "E501",
-]
+select = ["E", "F"]
+ignore = ["E501"]
 fixable = [
     "A",
     "B",
@@ -121,7 +106,4 @@ target-version = "py310"
 max-complexity = 10
 
 [tool.ruff.per-file-ignores]
-"__init__.py" = [
-    "E402",
-    "F401",
-]
+"__init__.py" = ["E402", "F401"]
