@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-import PySimpleGUI as psg
+import FreeSimpleGUI as psg
 
 from . import configuration, models, util
 from .builder import Builder

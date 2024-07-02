@@ -1,4 +1,4 @@
-import PySimpleGUI as psg
+import FreeSimpleGUI as psg
 
 from . import util
 from .compound import LabelSlider

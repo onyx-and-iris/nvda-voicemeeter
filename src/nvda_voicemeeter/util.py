@@ -1,6 +1,6 @@
 from typing import Iterable
 
-import PySimpleGUI as psg
+import FreeSimpleGUI as psg
 
 
 def get_asio_input_spinbox_index(channel, num) -> int:

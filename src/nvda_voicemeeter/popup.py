@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-import PySimpleGUI as psg
+import FreeSimpleGUI as psg
 
 from . import util
 from .compound import CompSlider, GateSlider, LabelSliderAdvanced

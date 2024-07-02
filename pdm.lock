@@ -5,7 +5,7 @@
 groups = ["default", "build", "lint", "test"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:6bd288ca3e76b99966beba75e19bb50ff7f0787e1b1981269f7a850a22706b0f"
+content_hash = "sha256:d8f7b44e465a0e57f724712da8b6b57d7cfb492a5d18f7c09ee9948a36d46b95"
 
 [[package]]
 name = "altgraph"
@@ -64,6 +64,15 @@ summary = "Cross-platform colored terminal text."
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
+]
+
+[[package]]
+name = "freesimplegui"
+version = "5.1.0"
+summary = "The free-forever Python GUI framework."
+files = [
+    {file = "FreeSimpleGUI-5.1.0-py3-none-any.whl", hash = "sha256:9dee6408bc0df2d30327f775e5e61160085f63d0d1c2f41f83d00cb250e507c2"},
+    {file = "freesimplegui-5.1.0.tar.gz", hash = "sha256:2be084404bac9675a3082df8eb8cea4872121f166fc37298081203961618268f"},
 ]
 
 [[package]]
@@ -290,13 +299,13 @@ files = [
 
 [[package]]
 name = "voicemeeter-api"
-version = "2.5.3"
-requires_python = ">=3.10,<4.0"
+version = "2.6.0"
+requires_python = "<4.0,>=3.10"
 summary = "A Python wrapper for the Voiceemeter API"
 dependencies = [
     "tomli<3.0.0,>=2.0.1; python_version < \"3.11\"",
 ]
 files = [
-    {file = "voicemeeter_api-2.5.3-py3-none-any.whl", hash = "sha256:00c1f5b4027844d09ae19042f1662501dc28b1cee12a4238503790a50293c8f7"},
-    {file = "voicemeeter_api-2.5.3.tar.gz", hash = "sha256:b40f77e94446b4a5ab561c777109bdaf9c2478dfaa19e728c91ade3b44226704"},
+    {file = "voicemeeter_api-2.6.0-py3-none-any.whl", hash = "sha256:c2ef8eb063ce3aeac4827ad7883150c407a0effb0fde3778782cd3024a295255"},
+    {file = "voicemeeter_api-2.6.0.tar.gz", hash = "sha256:db93f27b58ce927c7d56084b224e1d0cdd6406ab7f26e4f99a9a873495a3d2e7"},
 ]

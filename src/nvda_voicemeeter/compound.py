@@ -1,6 +1,6 @@
 from typing import Union
 
-import PySimpleGUI as psg
+import FreeSimpleGUI as psg
 
 from . import util
 

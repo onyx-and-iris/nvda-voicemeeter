@@ -188,7 +188,7 @@ If you have any questions/suggestions feel free to raise an issue or open a new 
 
 [Vincent Burel](https://github.com/vburel2018) for creating Voicemeeter and its SDK.
 
-[PySimpleGUI](https://github.com/PySimpleGUI) team for creating an awesome GUI framework.
+[FreeSimpleGUI](https://github.com/spyoungtech/FreeSimpleGUI) a fork of the now closed source PySimpleGUI project.
 
 [spec]: ./SPECIFICATION.md
 [voicemeeter]: https://voicemeeter.com/
