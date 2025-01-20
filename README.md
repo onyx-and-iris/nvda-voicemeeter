@@ -1,6 +1,4 @@
 [![pdm-managed](https://img.shields.io/badge/pdm-managed-blueviolet)](https://pdm.fming.dev)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 # NVDA Voicemeeter
@@ -29,19 +27,17 @@ cd nvda-voicemeeter
 pip install .
 ```
 
-Then download the [Controller Client][controller_client] and place the dll files into the directory `controllerClient`.
-
-Your directory structure should look like this:
+The [Controller Client][controller_client] files are included with the source files. If you decide to download them yourself make sure you keep the directory structure as follows:
 
 ├── `controllerClient/`
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── `x64/`
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── nvdaControllerClient64.dll
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── nvdaControllerClient.dll
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── `x86/`
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── nvdaControllerClient32.dll
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── nvdaControllerClient.dll
 
 #### `From Releases`
 
@@ -56,7 +52,7 @@ import voicemeeterlib
 
 import nvda_voicemeeter
 
-KIND_ID = "potato"
+KIND_ID = 'potato'
 
 with voicemeeterlib.api(KIND_ID) as vm:
     with nvda_voicemeeter.draw(KIND_ID, vm) as window:
