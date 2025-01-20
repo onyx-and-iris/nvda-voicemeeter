@@ -16,7 +16,7 @@ class Builder:
         menu = [[self.make_menu()]]
 
         layout0 = []
-        if self.kind.name == "basic":
+        if self.kind.name == 'basic':
             steps = (
                 self.make_tab0_row0,
                 self.make_tab0_row1,
@@ -62,65 +62,65 @@ class Builder:
 
         def _make_inner_tabgroup(layouts, identifier) -> psg.TabGroup:
             inner_layout = []
-            for i, tabname in enumerate(("buttons", "sliders")):
-                inner_layout.append([psg.Tab(tabname.capitalize(), layouts[i], key=f"tab||{identifier}||{tabname}")])
+            for i, tabname in enumerate(('buttons', 'sliders')):
+                inner_layout.append([psg.Tab(tabname.capitalize(), layouts[i], key=f'tab||{identifier}||{tabname}')])
             return psg.TabGroup(
                 inner_layout,
                 change_submits=True,
                 enable_events=True,
-                key=f"tabgroup||{identifier}",
+                key=f'tabgroup||{identifier}',
             )
 
         def _make_tabs(identifier) -> psg.Tab:
             match identifier:
-                case "Settings":
-                    return psg.Tab("Settings", layout0, key="tab||Settings")
-                case "Physical Strip":
+                case 'Settings':
+                    return psg.Tab('Settings', layout0, key='tab||Settings')
+                case 'Physical Strip':
                     tabgroup = _make_inner_tabgroup((layout1_1, layout1_2), identifier)
-                case "Virtual Strip":
+                case 'Virtual Strip':
                     tabgroup = _make_inner_tabgroup((layout2_1, layout2_2), identifier)
-                case "Buses":
+                case 'Buses':
                     tabgroup = _make_inner_tabgroup((layout3_1, layout3_2), identifier)
-            return psg.Tab(identifier, [[tabgroup]], key=f"tab||{identifier}")
+            return psg.Tab(identifier, [[tabgroup]], key=f'tab||{identifier}')
 
         tabs = []
         for tab in util.get_tabs_labels():
             tabs.append(_make_tabs(tab))
 
-        tab_group = psg.TabGroup([tabs], change_submits=True, enable_events=True, key="tabgroup")
+        tab_group = psg.TabGroup([tabs], change_submits=True, enable_events=True, key='tabgroup')
 
         return [[menu], [tab_group]]
 
     def make_menu(self) -> psg.Menu:
-        themes = [f"{theme}::MENU THEME" for theme in util.get_themes_list()]
-        themes.append("Default::MENU THEME")
+        themes = [f'{theme}::MENU THEME' for theme in util.get_themes_list()]
+        themes.append('Default::MENU THEME')
         menu_def = [
             [
-                "&Voicemeeter",
+                '&Voicemeeter',
                 [
-                    "Restart Audio Engine::MENU",
-                    "Save Settings::MENU",
-                    "Load Settings::MENU",
-                    "Load Settings on Startup ::MENU",
+                    'Restart Audio Engine::MENU',
+                    'Save Settings::MENU',
+                    'Load Settings::MENU',
+                    'Load Settings on Startup ::MENU',
                 ],
             ],
-            ["&Theme", themes],
+            ['&Theme', themes],
         ]
-        return psg.Menu(menu_def, key="menus")
+        return psg.Menu(menu_def, key='menus')
 
     def make_tab0_row0(self) -> psg.Frame:
         """tab0 row0 represents hardware ins"""
 
         def add_physical_device_opts(layout):
             devices = util.get_input_device_list(self.vm)
-            devices.append("- remove device selection -")
+            devices.append('- remove device selection -')
             layout.append(
                 [
                     psg.ButtonMenu(
-                        f"IN {i + 1}",
+                        f'IN {i + 1}',
                         size=(6, 3),
-                        menu_def=["", devices],
-                        key=f"HARDWARE IN||{i + 1}",
+                        menu_def=['', devices],
+                        key=f'HARDWARE IN||{i + 1}',
                     )
                     for i in range(self.kind.phys_in)
                 ]
@@ -128,23 +128,23 @@ class Builder:
 
         hardware_in = []
         [step(hardware_in) for step in (add_physical_device_opts,)]
-        return psg.Frame("Hardware In", hardware_in)
+        return psg.Frame('Hardware In', hardware_in)
 
     def make_tab0_row1(self) -> psg.Frame:
         """tab0 row1 represents hardware outs"""
 
         def add_physical_device_opts(layout):
-            if self.kind.name == "basic":
+            if self.kind.name == 'basic':
                 num_outs = self.kind.phys_out + self.kind.virt_out
             else:
                 num_outs = self.kind.phys_out
             layout.append(
                 [
                     psg.ButtonMenu(
-                        f"A{i + 1}",
+                        f'A{i + 1}',
                         size=(6, 3),
-                        menu_def=["", util.get_output_device_list(i, self.vm)],
-                        key=f"HARDWARE OUT||A{i + 1}",
+                        menu_def=['', util.get_output_device_list(i, self.vm)],
+                        key=f'HARDWARE OUT||A{i + 1}',
                     )
                     for i in range(num_outs)
                 ]
@@ -152,7 +152,7 @@ class Builder:
 
         hardware_out = []
         [step(hardware_out) for step in (add_physical_device_opts,)]
-        return psg.Frame("Hardware Out", hardware_out)
+        return psg.Frame('Hardware Out', hardware_out)
 
     def make_tab0_row3(self) -> psg.Frame:
         """tab0 row3 represents patch composite"""
@@ -162,10 +162,10 @@ class Builder:
             layout.append(
                 [
                     psg.ButtonMenu(
-                        f"PC{i + 1}",
+                        f'PC{i + 1}',
                         size=(5, 2),
-                        menu_def=["", outputs],
-                        key=f"PATCH COMPOSITE||PC{i + 1}",
+                        menu_def=['', outputs],
+                        key=f'PATCH COMPOSITE||PC{i + 1}',
                     )
                     for i in range(self.kind.composite)
                 ]
@@ -173,7 +173,7 @@ class Builder:
 
         hardware_out = []
         [step(hardware_out) for step in (add_physical_device_opts,)]
-        return psg.Frame("PATCH COMPOSITE", hardware_out)
+        return psg.Frame('PATCH COMPOSITE', hardware_out)
 
     def make_tab0_row4(self) -> psg.Frame:
         """tab0 row4 represents patch insert"""
@@ -185,28 +185,28 @@ class Builder:
                         [
                             psg.Checkbox(
                                 text=channel,
-                                default=self.window.cache["insert"][
-                                    f"INSERT CHECKBOX||{util.get_insert_checkbox_index(self.kind, j, i)}"
+                                default=self.window.cache['insert'][
+                                    f'INSERT CHECKBOX||{util.get_insert_checkbox_index(self.kind, j, i)}'
                                 ],
                                 enable_events=True,
-                                key=f"INSERT CHECKBOX||IN{i} {j}",
+                                key=f'INSERT CHECKBOX||IN{i} {j}',
                             )
                         ],
                     )
-                    for j, channel in enumerate(("LEFT", "RIGHT"))
+                    for j, channel in enumerate(('LEFT', 'RIGHT'))
                 ]
             else:
                 layout.append(
                     [
                         psg.Checkbox(
                             text=channel,
-                            default=self.window.cache["insert"][
-                                f"INSERT CHECKBOX||{util.get_insert_checkbox_index(self.kind, j, i)}"
+                            default=self.window.cache['insert'][
+                                f'INSERT CHECKBOX||{util.get_insert_checkbox_index(self.kind, j, i)}'
                             ],
                             enable_events=True,
-                            key=f"INSERT CHECKBOX||IN{i} {j}",
+                            key=f'INSERT CHECKBOX||IN{i} {j}',
                         )
-                        for j, channel in enumerate(("LEFT", "RIGHT", "C", "LFE", "SL", "SR", "BL", "BR"))
+                        for j, channel in enumerate(('LEFT', 'RIGHT', 'C', 'LFE', 'SL', 'SR', 'BL', 'BR'))
                     ],
                 )
 
@@ -216,29 +216,29 @@ class Builder:
         for i, checkbox_list in enumerate(checkbox_lists):
             if i < self.kind.phys_in:
                 [step(checkbox_list, i + 1) for step in (add_insert_checkboxes,)]
-                inner.append(psg.Frame(f"In#{i + 1}", checkbox_list))
+                inner.append(psg.Frame(f'In#{i + 1}', checkbox_list))
             else:
                 [step(checkbox_list, i + 1) for step in (add_insert_checkboxes,)]
-                asio_checkboxes.append([psg.Frame(f"In#{i + 1}", checkbox_list)])
+                asio_checkboxes.append([psg.Frame(f'In#{i + 1}', checkbox_list)])
         asio_checkboxes.insert(0, inner)
 
-        return psg.Frame("PATCH INSERT", asio_checkboxes)
+        return psg.Frame('PATCH INSERT', asio_checkboxes)
 
     def make_tab0_row5(self) -> psg.Frame:
         """tab0 row5 represents advanced settings"""
 
         return psg.Frame(
-            "ADVANCED SETTINGS",
+            'ADVANCED SETTINGS',
             [
                 [
                     psg.Button(
-                        "ADVANCED SETTINGS",
+                        'ADVANCED SETTINGS',
                         size=(20, 2),
-                        key="ADVANCED SETTINGS",
+                        key='ADVANCED SETTINGS',
                     )
                 ],
             ],
-            key="ADVANCED SETTINGS FRAME",
+            key='ADVANCED SETTINGS FRAME',
         )
 
     def make_tab1_button_row(self, i) -> psg.Frame:
@@ -248,26 +248,26 @@ class Builder:
             layout.append(
                 [
                     psg.Button(
-                        f"A{j + 1}" if j < self.kind.phys_out else f"B{j - self.kind.phys_out + 1}",
+                        f'A{j + 1}' if j < self.kind.phys_out else f'B{j - self.kind.phys_out + 1}',
                         size=(4, 2),
-                        key=f"STRIP {i}||A{j + 1}"
+                        key=f'STRIP {i}||A{j + 1}'
                         if j < self.kind.phys_out
-                        else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
+                        else f'STRIP {i}||B{j - self.kind.phys_out + 1}',
                     )
                     for j in range(self.kind.phys_out + self.kind.virt_out)
                 ],
             )
             layout.append(
                 [
-                    psg.Button("Mono", size=(6, 2), key=f"STRIP {i}||MONO"),
-                    psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
-                    psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
+                    psg.Button('Mono', size=(6, 2), key=f'STRIP {i}||MONO'),
+                    psg.Button('Solo', size=(6, 2), key=f'STRIP {i}||SOLO'),
+                    psg.Button('Mute', size=(6, 2), key=f'STRIP {i}||MUTE'),
                 ],
             )
 
         outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
-        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], outputs, key=f"STRIP {i}||LABEL")
+        return psg.Frame(self.window.cache['labels'][f'STRIP {i}||LABEL'], outputs, key=f'STRIP {i}||LABEL')
 
     def make_tab1_button_rows(self) -> psg.Frame:
         layout = [[self.make_tab1_button_row(i)] for i in range(self.kind.phys_in)]
@@ -277,7 +277,7 @@ class Builder:
         def add_gain_slider(layout):
             layout.append(
                 [
-                    psg.Text("Gain"),
+                    psg.Text('Gain'),
                     psg.Slider(
                         range=(-60, 12),
                         default_value=self.vm.strip[i].gain,
@@ -286,8 +286,8 @@ class Builder:
                         expand_x=True,
                         enable_events=True,
                         disabled=True,
-                        orientation="horizontal",
-                        key=f"STRIP {i}||SLIDER GAIN",
+                        orientation='horizontal',
+                        key=f'STRIP {i}||SLIDER GAIN',
                     ),
                 ]
             )
@@ -298,7 +298,7 @@ class Builder:
         def add_limit_slider(layout):
             layout.append(
                 [
-                    psg.Text("Limit"),
+                    psg.Text('Limit'),
                     psg.Slider(
                         range=(-40, 12),
                         default_value=self.vm.strip[i].limit,
@@ -306,18 +306,18 @@ class Builder:
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
-                        orientation="horizontal",
-                        key=f"STRIP {i}||SLIDER LIMIT",
+                        orientation='horizontal',
+                        key=f'STRIP {i}||SLIDER LIMIT',
                     ),
                 ]
             )
 
         layout = []
         steps = (add_gain_slider, add_param_sliders)
-        if self.kind.name in ("banana", "potato"):
+        if self.kind.name in ('banana', 'potato'):
             steps += (add_limit_slider,)
         [step(layout) for step in steps]
-        return psg.Frame(self.window.cache["labels"][f"STRIP {i}||LABEL"], layout, key=f"STRIP {i}||LABEL||SLIDER")
+        return psg.Frame(self.window.cache['labels'][f'STRIP {i}||LABEL'], layout, key=f'STRIP {i}||LABEL||SLIDER')
 
     def make_tab1_slider_rows(self) -> psg.Frame:
         layout = [[self.make_tab1_slider_row(i)] for i in range(self.kind.phys_in)]
@@ -330,11 +330,11 @@ class Builder:
             layout.append(
                 [
                     psg.Button(
-                        f"A{j + 1}" if j < self.kind.phys_out else f"B{j - self.kind.phys_out + 1}",
+                        f'A{j + 1}' if j < self.kind.phys_out else f'B{j - self.kind.phys_out + 1}',
                         size=(4, 2),
-                        key=f"STRIP {i}||A{j + 1}"
+                        key=f'STRIP {i}||A{j + 1}'
                         if j < self.kind.phys_out
-                        else f"STRIP {i}||B{j - self.kind.phys_out + 1}",
+                        else f'STRIP {i}||B{j - self.kind.phys_out + 1}',
                     )
                     for j in range(self.kind.phys_out + self.kind.virt_out)
                 ]
@@ -342,26 +342,26 @@ class Builder:
             if i == self.kind.phys_in + 1:
                 layout.append(
                     [
-                        psg.Button("K", size=(6, 2), key=f"STRIP {i}||KARAOKE"),
-                        psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
-                        psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
+                        psg.Button('K', size=(6, 2), key=f'STRIP {i}||KARAOKE'),
+                        psg.Button('Solo', size=(6, 2), key=f'STRIP {i}||SOLO'),
+                        psg.Button('Mute', size=(6, 2), key=f'STRIP {i}||MUTE'),
                     ],
                 )
             else:
                 layout.append(
                     [
-                        psg.Button("MC", size=(6, 2), key=f"STRIP {i}||MC"),
-                        psg.Button("Solo", size=(6, 2), key=f"STRIP {i}||SOLO"),
-                        psg.Button("Mute", size=(6, 2), key=f"STRIP {i}||MUTE"),
+                        psg.Button('MC', size=(6, 2), key=f'STRIP {i}||MC'),
+                        psg.Button('Solo', size=(6, 2), key=f'STRIP {i}||SOLO'),
+                        psg.Button('Mute', size=(6, 2), key=f'STRIP {i}||MUTE'),
                     ],
                 )
 
         outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(
-            self.window.cache["labels"][f"STRIP {i}||LABEL"],
+            self.window.cache['labels'][f'STRIP {i}||LABEL'],
             outputs,
-            key=f"STRIP {i}||LABEL",
+            key=f'STRIP {i}||LABEL',
         )
 
     def make_tab2_button_rows(self) -> psg.Frame:
@@ -374,7 +374,7 @@ class Builder:
         def add_gain_slider(layout):
             layout.append(
                 [
-                    psg.Text("Gain"),
+                    psg.Text('Gain'),
                     psg.Slider(
                         range=(-60, 12),
                         default_value=self.vm.strip[i].gain,
@@ -383,14 +383,14 @@ class Builder:
                         expand_x=True,
                         enable_events=True,
                         disabled=True,
-                        orientation="horizontal",
-                        key=f"STRIP {i}||SLIDER GAIN",
+                        orientation='horizontal',
+                        key=f'STRIP {i}||SLIDER GAIN',
                     ),
                 ]
             )
 
         def add_param_sliders(layout):
-            if self.kind.name in ("basic", "banana"):
+            if self.kind.name in ('basic', 'banana'):
                 for param in util.get_slider_params(i, self.kind):
                     layout.append([LabelSlider(self.window, i, param, range_=(-12, 12))])
             else:
@@ -404,7 +404,7 @@ class Builder:
         def add_limit_slider(layout):
             layout.append(
                 [
-                    psg.Text("Limit"),
+                    psg.Text('Limit'),
                     psg.Slider(
                         range=(-40, 12),
                         default_value=self.vm.strip[i].limit,
@@ -412,21 +412,21 @@ class Builder:
                         disable_number_display=True,
                         expand_x=True,
                         enable_events=True,
-                        orientation="horizontal",
-                        key=f"STRIP {i}||SLIDER LIMIT",
+                        orientation='horizontal',
+                        key=f'STRIP {i}||SLIDER LIMIT',
                     ),
                 ]
             )
 
         layout = []
         steps = (add_gain_slider, add_param_sliders)
-        if self.kind.name in ("banana", "potato"):
+        if self.kind.name in ('banana', 'potato'):
             steps += (add_limit_slider,)
         [step(layout) for step in steps]
         return psg.Frame(
-            self.window.cache["labels"][f"STRIP {i}||LABEL"],
+            self.window.cache['labels'][f'STRIP {i}||LABEL'],
             layout,
-            key=f"STRIP {i}||LABEL||SLIDER",
+            key=f'STRIP {i}||LABEL||SLIDER',
         )
 
     def make_tab2_slider_rows(self) -> psg.Frame:
@@ -439,9 +439,9 @@ class Builder:
         """tab3 row represents bus composite toggle"""
 
         def add_strip_outputs(layout):
-            params = ["MONO", "EQ", "MUTE"]
-            if self.kind.name == "basic":
-                params.remove("EQ")
+            params = ['MONO', 'EQ', 'MUTE']
+            if self.kind.name == 'basic':
+                params.remove('EQ')
             busmodes = [util._bus_mode_map[mode] for mode in util.get_bus_modes(self.vm)]
             layout.append(
                 [
@@ -449,15 +449,15 @@ class Builder:
                         psg.Button(
                             param.capitalize(),
                             size=(6, 2),
-                            key=f"BUS {i}||{param}",
+                            key=f'BUS {i}||{param}',
                         )
                         for param in params
                     ],
                     psg.ButtonMenu(
-                        "BUSMODE",
+                        'BUSMODE',
                         size=(12, 2),
-                        menu_def=["", busmodes],
-                        key=f"BUS {i}||MODE",
+                        menu_def=['', busmodes],
+                        key=f'BUS {i}||MODE',
                     ),
                 ]
             )
@@ -465,9 +465,9 @@ class Builder:
         outputs = []
         [step(outputs) for step in (add_strip_outputs,)]
         return psg.Frame(
-            self.window.cache["labels"][f"BUS {i}||LABEL"],
+            self.window.cache['labels'][f'BUS {i}||LABEL'],
             outputs,
-            key=f"BUS {i}||LABEL",
+            key=f'BUS {i}||LABEL',
         )
 
     def make_tab3_button_rows(self) -> psg.Frame:
@@ -478,7 +478,7 @@ class Builder:
         def add_gain_slider(layout):
             layout.append(
                 [
-                    psg.Text("Gain"),
+                    psg.Text('Gain'),
                     psg.Slider(
                         range=(-60, 12),
                         default_value=self.vm.bus[i].gain,
@@ -487,15 +487,15 @@ class Builder:
                         expand_x=True,
                         enable_events=True,
                         disabled=True,
-                        orientation="horizontal",
-                        key=f"BUS {i}||SLIDER GAIN",
+                        orientation='horizontal',
+                        key=f'BUS {i}||SLIDER GAIN',
                     ),
                 ]
             )
 
         outputs = []
         [step(outputs) for step in (add_gain_slider,)]
-        return psg.Frame(self.window.cache["labels"][f"BUS {i}||LABEL"], outputs, key=f"BUS {i}||LABEL||SLIDER")
+        return psg.Frame(self.window.cache['labels'][f'BUS {i}||LABEL'], outputs, key=f'BUS {i}||LABEL||SLIDER')
 
     def make_tab3_slider_rows(self) -> psg.Frame:
         layout = [[self.make_tab3_slider_row(i)] for i in range(self.kind.num_bus)]
