@@ -19,9 +19,9 @@ build = [
 ]
 
 [project.scripts]
-gui-basic = "nvda_voicemeeter.gui.basic:run"
-gui-banana = "nvda_voicemeeter.gui.banana:run"
-gui-potato = "nvda_voicemeeter.gui.potato:run"
+gui-basic-nvda = "nvda_voicemeeter.gui.basic:run"
+gui-banana-nvda = "nvda_voicemeeter.gui.banana:run"
+gui-potato-nvda = "nvda_voicemeeter.gui.potato:run"
 
 [build-system]
 requires = ["pdm-backend"]
