@@ -1,0 +1,40 @@
+version: '3'
+
+vars:
+  SHELL: pwsh
+
+tasks:
+  default:
+    desc: Prepare artifacts for release
+    cmds:
+    - task: release
+
+  release:
+    desc: Build and compress all artifacts
+    cmds:
+    - task: build
+    - task: compress
+
+  build:
+    desc: Build the project
+    cmds:
+    - for:
+        matrix:
+          KIND: ["basic", "banana", "potato"]
+      cmd: pdm run pyinstaller --noconfirm --distpath dist/{{.ITEM.KIND}} spec/{{.ITEM.KIND}}.spec
+
+  compress:
+    desc: Compress the build artifacts
+    cmds:
+    - for:
+        matrix:
+          KIND: ["basic", "banana", "potato"]
+      cmd: '{{.SHELL}} -Command "Compress-Archive -Path dist/{{.ITEM.KIND}} -DestinationPath dist/{{.ITEM.KIND}}.zip"'
+
+  clean:
+    desc: Clean the project
+    cmds:
+    - |
+      {{.SHELL}} -Command "
+      Remove-Item -Recurse -Force build/basic,build/banana,build/potato
+      Remove-Item -Recurse -Force dist/*"
