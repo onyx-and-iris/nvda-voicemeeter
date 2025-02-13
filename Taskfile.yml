@@ -29,7 +29,7 @@ tasks:
       - for:
           matrix:
             KIND: [basic, banana, potato]
-        cmd: '{{.SHELL}} -Command "Compress-Archive -Path dist/{{.ITEM.KIND}} -DestinationPath dist/{{.ITEM.KIND}}.zip"'
+        cmd: '{{.SHELL}} -Command "Compress-Archive -Path dist/{{.ITEM.KIND}} -DestinationPath dist/{{.ITEM.KIND}}.zip -Force"'
 
   clean:
     desc: Clean the project

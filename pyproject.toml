@@ -31,7 +31,9 @@ build-backend = "pdm.backend"
 distribution = true
 
 [tool.pdm.scripts]
-build = {shell = "pwsh build.ps1"}
+build = {shell = "task build"}
+compress = {shell = "task compress"}
+release = {composite = ["build", "compress"]}
 
 [tool.ruff]
 exclude = [
