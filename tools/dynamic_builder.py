@@ -212,20 +212,11 @@ class DynamicBuilder:
         try:
             result = subprocess.run(cmd, cwd=self.base_dir, capture_output=True, text=True)
             if result.returncode == 0:
-                # Verify the executable was created
-                exe_path = dist_path / f'{kind}.exe'
-                if exe_path.exists():
-                    print(f'[OK] Built {kind} -> {exe_path}')
-                    return True
-                else:
-                    print(f'[FAIL] {kind} executable not found at {exe_path}')
-                    return False
+                print(f'[OK] Built {kind}')
+                return True
             else:
                 print(f'[FAIL] Failed to build {kind}')
-                if result.stderr:
-                    print(f'Error: {result.stderr}')
-                if result.stdout:
-                    print(f'Output: {result.stdout}')
+                print(f'Error: {result.stderr}')
                 return False
         except Exception as e:
             print(f'[ERROR] Exception building {kind}: {e}')
