@@ -1,0 +1,76 @@
+version: '3'
+
+# Dynamic build system - no spec files needed!
+# Examples:
+# - task -t Taskfile.dynamic.yml build KINDS="basic banana"
+# - task -t Taskfile.dynamic.yml build-all
+# KINDS can be a space-separated list of kinds to build, or "all" to build everything.
+#
+# Compression tasks are also dynamic, allowing you to specify which kind to compress or compress all kinds at once.
+# Examples:
+# - task -t Taskfile.dynamic.yml compress KIND=basic
+# - task -t Taskfile.dynamic.yml compress-all
+
+vars:
+  KINDS: '{{.KINDS | default "all"}}'
+  SHELL: pwsh
+
+tasks:
+  build:
+    desc: Build specified kinds dynamically (no spec files needed)
+    preconditions:
+      - sh: |
+          if [ ! -f controllerClient/x64/nvdaControllerClient.dll ] || [ ! -f controllerClient/x86/nvdaControllerClient.dll ]; then
+            exit 1
+          fi
+        msg: 'nvdaControllerClient.dll is missing. See https://github.com/nvaccess/nvda/blob/master/extras/controllerClient/readme.md for instructions on how to obtain it.'
+    cmds:
+      - ${PDM_BIN:-pdm} run python tools/dynamic_builder.py {{.KINDS}}
+
+  build-all:
+    desc: Build all kinds
+    preconditions:
+      - sh: |
+          if [ ! -f controllerClient/x64/nvdaControllerClient.dll ] || [ ! -f controllerClient/x86/nvdaControllerClient.dll ]; then
+            exit 1
+          fi
+        msg: 'nvdaControllerClient.dll is missing. See https://github.com/nvaccess/nvda/blob/master/extras/controllerClient/readme.md for instructions on how to obtain it.'
+    cmds:
+      - ${PDM_BIN:-pdm} run python tools/dynamic_builder.py all
+
+  compress:
+    desc: Compress artifacts for specified kind
+    cmds:
+      - task: compress-{{.KIND}}
+
+  compress-all:
+    desc: Compress artifacts for all kinds
+    cmds:
+      - for:
+          matrix:
+            KIND: [basic, banana, potato]
+        task: compress-{{.ITEM.KIND}}
+
+  compress-basic:
+    desc: Compress basic build artifacts
+    cmd: '{{.SHELL}} -Command "Compress-Archive -Path dist/basic -DestinationPath dist/basic.zip -Force"'
+    generates:
+      - dist/basic.zip
+
+  compress-banana:
+    desc: Compress banana build artifacts
+    cmd: '{{.SHELL}} -Command "Compress-Archive -Path dist/banana -DestinationPath dist/banana.zip -Force"'
+    generates:
+      - dist/banana.zip
+
+  compress-potato:
+    desc: Compress potato build artifacts
+    cmd: '{{.SHELL}} -Command "Compress-Archive -Path dist/potato -DestinationPath dist/potato.zip -Force"'
+    generates:
+      - dist/potato.zip
+
+  clean:
+    desc: Clean all build artifacts
+    cmds:
+      - |
+        {{.SHELL}} -Command "Remove-Item -Path build/*,dist/* -Recurse -Force -ErrorAction SilentlyContinue"
