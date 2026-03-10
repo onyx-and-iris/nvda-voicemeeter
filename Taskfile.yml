@@ -15,8 +15,13 @@ tasks:
       - task: build
       - task: compress
 
+  generate-specs:
+    desc: Generate all spec files from templates
+    cmd: pdm run python tools/spec_generator.py
+
   build:
     desc: Build the project
+    deps: [generate-specs]
     cmds:
       - for:
           matrix:
@@ -35,6 +40,4 @@ tasks:
     desc: Clean the project
     cmds:
       - |
-        {{.SHELL}} -Command "
-        Remove-Item -Recurse -Force build/basic,build/banana,build/potato
-        Remove-Item -Recurse -Force dist/*"
+        {{.SHELL}} -Command "Remove-Item -Path build/*,dist/* -Recurse -Force -ErrorAction SilentlyContinue"
