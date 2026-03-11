@@ -155,6 +155,10 @@ def get_bus_modes(vm) -> list:
     ]
 
 
+def get_bus_mono() -> list:
+    return ['off', 'on', 'stereo reverse']
+
+
 def check_bounds(val, bounds: tuple) -> int | float:
     lower, upper = bounds
     if val > upper:

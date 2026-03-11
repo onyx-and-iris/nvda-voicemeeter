@@ -438,13 +438,20 @@ class Builder:
     def make_tab3_button_row(self, i) -> psg.Frame:
         """tab3 row represents bus composite toggle"""
 
-        def add_strip_outputs(layout):
-            params = ['MONO', 'EQ', 'MUTE']
+        def add_bus_buttons(layout):
+            busmono = util.get_bus_mono()
+            params = ['EQ', 'MUTE']
             if self.kind.name == 'basic':
                 params.remove('EQ')
             busmodes = [util._bus_mode_map[mode] for mode in util.get_bus_modes(self.vm)]
             layout.append(
                 [
+                    psg.ButtonMenu(
+                        'Mono',
+                        size=(6, 2),
+                        menu_def=['', busmono],
+                        key=f'BUS {i}||MONO',
+                    ),
                     *[
                         psg.Button(
                             param.capitalize(),
@@ -454,7 +461,7 @@ class Builder:
                         for param in params
                     ],
                     psg.ButtonMenu(
-                        'BUSMODE',
+                        'Bus Mode',
                         size=(12, 2),
                         menu_def=['', busmodes],
                         key=f'BUS {i}||MODE',
@@ -463,7 +470,7 @@ class Builder:
             )
 
         outputs = []
-        [step(outputs) for step in (add_strip_outputs,)]
+        [step(outputs) for step in (add_bus_buttons,)]
         return psg.Frame(
             self.window.cache['labels'][f'BUS {i}||LABEL'],
             outputs,

@@ -58,6 +58,7 @@ class NVDAVMWindow(psg.Window):
                 self[f'STRIP {i}||SLIDER LIMIT'].Widget.config(**slider_opts)
         for i in range(self.kind.num_bus):
             self[f'BUS {i}||SLIDER GAIN'].Widget.config(**slider_opts)
+            self[f'BUS {i}||MONO'].Widget.config(**buttonmenu_opts)
             self[f'BUS {i}||MODE'].Widget.config(**buttonmenu_opts)
 
         self.register_events()
@@ -251,13 +252,16 @@ class NVDAVMWindow(psg.Window):
                 self[f'STRIP {i}||SLIDER {param}'].bind('<Control-Shift-KeyPress-R>', '||KEY CTRL SHIFT R')
 
         # Bus Params
-        params = ['MONO', 'EQ', 'MUTE']
+        params = ['EQ', 'MUTE']
         if self.kind.name == 'basic':
             params.remove('EQ')
         for i in range(self.kind.num_bus):
             for param in params:
                 self[f'BUS {i}||{param}'].bind('<FocusIn>', '||FOCUS IN')
                 self[f'BUS {i}||{param}'].bind('<Return>', '||KEY ENTER')
+            self[f'BUS {i}||MONO'].bind('<FocusIn>', '||FOCUS IN')
+            self[f'BUS {i}||MONO'].bind('<space>', '||KEY SPACE', propagate=False)
+            self[f'BUS {i}||MONO'].bind('<Return>', '||KEY ENTER')
             self[f'BUS {i}||MODE'].bind('<FocusIn>', '||FOCUS IN')
             self[f'BUS {i}||MODE'].bind('<space>', '||KEY SPACE', propagate=False)
             self[f'BUS {i}||MODE'].bind('<Return>', '||KEY ENTER', propagate=False)
@@ -306,7 +310,7 @@ class NVDAVMWindow(psg.Window):
                     mode = None
                 continue
 
-            match parsed_cmd := self.parser.match.parseString(event):
+            match parsed_cmd := self.parser.match.parse_string(event):
                 # Slider mode
                 case [['ALT', 'LEFT' | 'RIGHT' | 'UP' | 'DOWN' as direction], ['PRESS' | 'RELEASE' as e]]:
                     if mode:
@@ -972,7 +976,7 @@ class NVDAVMWindow(psg.Window):
                                 self.nvda.speak,
                                 'on' if val else 'off',
                             )
-                        case 'MONO' | 'MUTE':
+                        case 'MUTE':
                             val = not val
                             setattr(self.vm.bus[int(index)], param.lower(), val)
                             self.cache['bus'][event] = val
@@ -980,6 +984,15 @@ class NVDAVMWindow(psg.Window):
                                 200,
                                 self.nvda.speak,
                                 'on' if val else 'off',
+                            )
+                        case 'MONO':
+                            chosen = values[event]
+                            self.vm.bus[int(index)].mono = util.get_bus_mono().index(chosen)
+                            self.cache['bus'][event] = chosen
+                            self.TKroot.after(
+                                200,
+                                self.nvda.speak,
+                                f'mono {chosen}',
                             )
                         case 'MODE':
                             chosen = util._bus_mode_map_reversed[values[event]]
@@ -996,11 +1009,19 @@ class NVDAVMWindow(psg.Window):
                         val = self.cache['bus'][f'BUS {index}||{param}']
                         if param == 'MODE':
                             self.nvda.speak(f'{label} bus {param} {util._bus_mode_map[val]}')
+                        elif param == 'MONO':
+                            busmode = util.get_bus_mono()[val]
+                            if busmode in ('on', 'off'):
+                                self.nvda.speak(f'{label} {param} {busmode}')
+                            else:
+                                self.nvda.speak(f'{label} {busmode}')
                         else:
                             self.nvda.speak(f'{label} {param} {"on" if val else "off"}')
                 case [['BUS', index], [param], ['KEY', 'SPACE' | 'ENTER']]:
                     if param == 'MODE':
                         util.open_context_menu_for_buttonmenu(self, f'BUS {index}||MODE')
+                    elif param == 'MONO':
+                        util.open_context_menu_for_buttonmenu(self, f'BUS {index}||MONO')
                     else:
                         self.find_element_with_focus().click()
 
