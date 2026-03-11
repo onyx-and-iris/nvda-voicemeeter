@@ -56,23 +56,18 @@ jobs:
 
           foreach ($dll in $dllFiles) {
             $fullPath = Join-Path $tempDir $dll
-            if ($dll -match "x64" -or (Get-Item $fullPath).Directory.Name -match "x64") {
+            $dirName = (Get-Item $fullPath).Directory.Name
+            
+            if ($dll -match "x64" -or $dirName -match "x64") {
               Copy-Item $fullPath "controllerClient/x64/nvdaControllerClient.dll"
               Write-Host "Copied x64 DLL: $dll"
-            } elseif ($dll -match "x86" -or (Get-Item $fullPath).Directory.Name -match "x86") {
+            } elseif ($dll -match "x86" -or $dirName -match "x86") {
               Copy-Item $fullPath "controllerClient/x86/nvdaControllerClient.dll"
               Write-Host "Copied x86 DLL: $dll"
+            } elseif ($dll -match "arm64" -or $dirName -match "arm64") {
+              Write-Host "Skipping ARM64 DLL: $dll (not needed)"
             } else {
-              # If architecture not clear from path, check file architecture
-              $fileInfo = Get-Item $fullPath
-              # For now, assume first DLL is x64, second is x86 if no clear indication
-              if (!(Test-Path "controllerClient/x64/nvdaControllerClient.dll")) {
-                Copy-Item $fullPath "controllerClient/x64/nvdaControllerClient.dll"
-                Write-Host "Copied to x64 (assumed): $dll"
-              } else {
-                Copy-Item $fullPath "controllerClient/x86/nvdaControllerClient.dll"
-                Write-Host "Copied to x86 (assumed): $dll"
-              }
+              Write-Host "Skipping unknown architecture DLL: $dll"
             }
           }
 
