@@ -19,15 +19,15 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Setup PDM
+      - name: Install PDM
         uses: pdm-project/setup-pdm@v4
         with:
           python-version: '3.12'
 
-      - name: Setup Task
+      - name: Install Task
         uses: go-task/setup-task@v1
         with:
-          version: latest
+          version: 3.x
 
       - name: Download NVDA Controller Client
         shell: pwsh
