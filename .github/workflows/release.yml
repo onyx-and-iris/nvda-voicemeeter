@@ -123,13 +123,21 @@ jobs:
           Write-Host "PDM path: $pdmPath"
           echo "PDM_BIN=$pdmPath" >> $env:GITHUB_ENV
 
-      - name: Build executables
+      - name: Build artifacts with dynamic taskfile
         shell: pwsh
         env:
           PDM_BIN: ${{ env.PDM_BIN }}
         run: |
           Write-Host "Building all executables using dynamic builder..."
-          task -t Taskfile.dynamic.yml build-all
+          task --taskfile Taskfile.dynamic.yml build-all
+
+      - name: Compress build artifacts
+        shell: pwsh
+        env:
+          PDM_BIN: ${{ env.PDM_BIN }}
+        run: |
+          Write-Host "Compressing build artifacts..."
+          task --taskfile Taskfile.dynamic.yml compress-all
 
       - name: Verify build outputs
         shell: pwsh
