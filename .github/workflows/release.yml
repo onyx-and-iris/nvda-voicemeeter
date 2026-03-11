@@ -180,9 +180,9 @@ jobs:
       - name: Build Summary
         shell: pwsh
         run: |
-          Write-Host -ForegroundColor Green "🎉 Build completed successfully!"
+          Write-Host -ForegroundColor Green "Build completed successfully!"
           Write-Host ""
-          Write-Host "📦 Built artifacts:"
+          Write-Host "Built artifacts:"
           Write-Host "  - nvda-voicemeeter-basic.zip"
           Write-Host "  - nvda-voicemeeter-banana.zip"
           Write-Host "  - nvda-voicemeeter-potato.zip"
@@ -208,22 +208,22 @@ jobs:
             --title "NVDA-Voicemeeter $TAG_NAME" \
             --notes "## NVDA-Voicemeeter Release $TAG_NAME
 
-          ### 📦 Downloads
+          ### Downloads
           - **nvda-voicemeeter-basic.zip** - Basic version with dependencies
           - **nvda-voicemeeter-banana.zip** - Banana version with dependencies  
           - **nvda-voicemeeter-potato.zip** - Potato version with dependencies
 
-          ### 🔧 Requirements
+          ### Requirements
           - Windows 10/11
           - Voicemeeter (Basic/Banana/Potato) installed
           - NVDA screen reader
 
-          ### 🚀 Installation
+          ### Installation
           1. Download the appropriate zip for your Voicemeeter version
           2. Extract and run the executable - no installation required
           3. The application will integrate with NVDA automatically
 
-          ### 📝 Notes
+          ### Notes
           - Built with dynamic build system using PyInstaller
           - Includes NVDA Controller Client for screen reader integration"
         env:
