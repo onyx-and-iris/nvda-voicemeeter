@@ -1,0 +1,234 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: '3.12'
+
+      - name: Setup Task
+        uses: go-task/setup-task@v1
+        with:
+          version: latest
+
+      - name: Download NVDA Controller Client
+        shell: pwsh
+        run: |
+          Write-Host "Downloading NVDA Controller Client..."
+          $url = "https://download.nvaccess.org/releases/stable/nvda_2025.3.3_controllerClient.zip"
+          $zipPath = "nvda_controllerClient.zip"
+
+          # Download the zip file
+          Invoke-WebRequest -Uri $url -OutFile $zipPath
+          Write-Host "Downloaded $zipPath"
+
+          # Extract to temp directory
+          $tempDir = "temp_controller"
+          Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
+
+          # Find and copy DLL files to correct locations
+          Write-Host "Extracting DLL files..."
+
+          # Create directories if they don't exist
+          New-Item -ItemType Directory -Path "controllerClient/x64" -Force | Out-Null
+          New-Item -ItemType Directory -Path "controllerClient/x86" -Force | Out-Null
+
+          # Find and copy the DLL files
+          $dllFiles = Get-ChildItem -Path $tempDir -Recurse -Name "*.dll" | Where-Object { $_ -like "*controllerClient*" }
+
+          foreach ($dll in $dllFiles) {
+            $fullPath = Join-Path $tempDir $dll
+            if ($dll -match "x64" -or (Get-Item $fullPath).Directory.Name -match "x64") {
+              Copy-Item $fullPath "controllerClient/x64/nvdaControllerClient.dll"
+              Write-Host "Copied x64 DLL: $dll"
+            } elseif ($dll -match "x86" -or (Get-Item $fullPath).Directory.Name -match "x86") {
+              Copy-Item $fullPath "controllerClient/x86/nvdaControllerClient.dll"
+              Write-Host "Copied x86 DLL: $dll"
+            } else {
+              # If architecture not clear from path, check file architecture
+              $fileInfo = Get-Item $fullPath
+              # For now, assume first DLL is x64, second is x86 if no clear indication
+              if (!(Test-Path "controllerClient/x64/nvdaControllerClient.dll")) {
+                Copy-Item $fullPath "controllerClient/x64/nvdaControllerClient.dll"
+                Write-Host "Copied to x64 (assumed): $dll"
+              } else {
+                Copy-Item $fullPath "controllerClient/x86/nvdaControllerClient.dll"
+                Write-Host "Copied to x86 (assumed): $dll"
+              }
+            }
+          }
+
+          # Clean up
+          Remove-Item $zipPath -Force
+          Remove-Item $tempDir -Recurse -Force
+
+          # Verify files were copied
+          Write-Host "Verifying controller client files..."
+          if (Test-Path "controllerClient/x64/nvdaControllerClient.dll") {
+            Write-Host "[OK] x64 controller client found"
+          } else {
+            Write-Host "[ERROR] x64 controller client missing"
+            exit 1
+          }
+
+          if (Test-Path "controllerClient/x86/nvdaControllerClient.dll") {
+            Write-Host "[OK] x86 controller client found"  
+          } else {
+            Write-Host "[ERROR] x86 controller client missing"
+            exit 1
+          }
+
+      - name: Fix dependencies for CI
+        shell: pwsh
+        run: |
+          echo "Fixing local dependencies for CI build..."
+
+          # Remove local path dependency for voicemeeter-api
+          pdm remove -dG dev voicemeeter-api || true
+
+          echo "Updated dependencies for CI build"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          # Install project dependencies
+          pdm install
+
+          # Verify PyInstaller is available
+          Write-Host "Verifying PyInstaller installation..."
+          pdm list | Select-String pyinstaller
+
+      - name: Get PDM executable path
+        shell: pwsh
+        run: |
+          $pdmPath = Get-Command pdm | Select-Object -ExpandProperty Source
+          Write-Host "PDM path: $pdmPath"
+          echo "PDM_BIN=$pdmPath" >> $env:GITHUB_ENV
+
+      - name: Build executables
+        shell: pwsh
+        env:
+          PDM_BIN: ${{ env.PDM_BIN }}
+        run: |
+          Write-Host "Building all executables using dynamic builder..."
+          task -t Taskfile.dynamic.yml build-all
+
+      - name: Verify build outputs
+        shell: pwsh
+        run: |
+          Write-Host "Verifying build outputs..."
+
+          $expectedFiles = @(
+            "dist/basic.zip",
+            "dist/banana.zip",
+            "dist/potato.zip"
+          )
+
+          $missingFiles = @()
+          $foundFiles = @()
+
+          foreach ($file in $expectedFiles) {
+            if (Test-Path $file) {
+              $size = [math]::Round((Get-Item $file).Length / 1MB, 2)
+              $foundFiles += "$file ($size MB)"
+            } else {
+              $missingFiles += $file
+            }
+          }
+
+          Write-Host "Found files:"
+          $foundFiles | ForEach-Object { Write-Host "  $_" }
+
+          if ($missingFiles.Count -gt 0) {
+            Write-Host -ForegroundColor Red "Missing files:"
+            $missingFiles | ForEach-Object { Write-Host "  $_" }
+            exit 1
+          }
+
+          Write-Host -ForegroundColor Green "All expected files found!"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: nvda-voicemeeter-builds
+          path: |
+            dist/basic.zip
+            dist/banana.zip
+            dist/potato.zip
+
+      - name: Build Summary
+        shell: pwsh
+        run: |
+          Write-Host -ForegroundColor Green "🎉 Build completed successfully!"
+          Write-Host ""
+          Write-Host "📦 Built artifacts:"
+          Write-Host "  - nvda-voicemeeter-basic.zip"
+          Write-Host "  - nvda-voicemeeter-banana.zip"
+          Write-Host "  - nvda-voicemeeter-potato.zip"
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          gh release create $TAG_NAME \
+            --title "NVDA-Voicemeeter $TAG_NAME" \
+            --notes "## NVDA-Voicemeeter Release $TAG_NAME
+
+          ### 📦 Downloads
+          - **nvda-voicemeeter-basic.zip** - Basic version with dependencies
+          - **nvda-voicemeeter-banana.zip** - Banana version with dependencies  
+          - **nvda-voicemeeter-potato.zip** - Potato version with dependencies
+
+          ### 🔧 Requirements
+          - Windows 10/11
+          - Voicemeeter (Basic/Banana/Potato) installed
+          - NVDA screen reader
+
+          ### 🚀 Installation
+          1. Download the appropriate zip for your Voicemeeter version
+          2. Extract and run the executable - no installation required
+          3. The application will integrate with NVDA automatically
+
+          ### 📝 Notes
+          - Built with dynamic build system using PyInstaller
+          - Includes NVDA Controller Client for screen reader integration"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          find . -name "*.zip" -exec gh release upload $TAG_NAME {} \;
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
