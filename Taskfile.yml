@@ -22,6 +22,12 @@ tasks:
   build:
     desc: Build the project
     deps: [generate-specs]
+    preconditions:
+      - sh: |
+          if [ ! -f controllerClient/x64/nvdaControllerClient.dll ] || [ ! -f controllerClient/x86/nvdaControllerClient.dll ]; then
+            exit 1
+          fi
+        msg: 'nvdaControllerClient.dll is missing. See https://github.com/nvaccess/nvda/blob/master/extras/controllerClient/readme.md for instructions on how to obtain it.'
     cmds:
       - for:
           matrix:
