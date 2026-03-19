@@ -1,14 +1,20 @@
 import ctypes as ct
 import platform
-import winreg
 from pathlib import Path
 
 from .errors import NVDAVMError
 
-BITS = 64 if ct.sizeof(ct.c_void_p) == 8 else 32
+try:
+    import winreg
+except ImportError as e:
+    ERR_MSG = 'winreg module not found, only Windows OS supported'
+    raise NVDAVMError(ERR_MSG) from e
 
+# Defense against edge cases where winreg imports but we're not on Windows
 if platform.system() != 'Windows':
     raise NVDAVMError('Only Windows OS supported')
+
+BITS = 64 if ct.sizeof(ct.c_void_p) == 8 else 32
 
 REG_KEY = '\\'.join(
     filter(
@@ -43,4 +49,4 @@ if not controller_path.exists():
 
 DLL_PATH = controller_path / f'x{64 if BITS == 64 else 86}' / 'nvdaControllerClient.dll'
 
-libc = ct.CDLL(str(DLL_PATH))
+libc = ct.WinDLL(str(DLL_PATH))
