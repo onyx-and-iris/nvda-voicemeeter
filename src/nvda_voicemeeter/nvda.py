@@ -15,26 +15,38 @@ class CBindings:
     bind_cancel_speech = libc.nvdaController_cancelSpeech
     bind_braille_message = libc.nvdaController_brailleMessage
 
-    def call(self, fn, *args, ok=(0,)):
+    def _call(self, fn, *args, ok=(0,)) -> int:
         retval = fn(*args)
         if retval not in ok:
             raise NVDAVMCAPIError(fn.__name__, retval)
         return retval
 
+    def test_if_running(self) -> int:
+        return self._call(self.bind_test_if_running, ok=(ServerState.RUNNING, ServerState.UNAVAILABLE))
 
-class Nvda(CBindings):
+    def speak_text(self, text: str) -> None:
+        self._call(self.bind_speak_text, text)
+
+    def cancel_speech(self) -> None:
+        self._call(self.bind_cancel_speech)
+
+    def braille_message(self, text: str) -> None:
+        self._call(self.bind_braille_message, text)
+
+
+class Nvda:
+    def __init__(self):
+        self._bindings = CBindings()
+
     @property
-    def is_running(self):
-        return (
-            self.call(self.bind_test_if_running, ok=(ServerState.RUNNING, ServerState.UNAVAILABLE))
-            == ServerState.RUNNING
-        )
+    def is_running(self) -> bool:
+        return self._bindings.test_if_running() == ServerState.RUNNING
 
-    def speak(self, text):
-        self.call(self.bind_speak_text, text)
+    def speak(self, text: str) -> None:
+        self._bindings.speak_text(text)
 
-    def cancel_speech(self):
-        self.call(self.bind_cancel_speech)
+    def cancel_speech(self) -> None:
+        self._bindings.cancel_speech()
 
-    def braille_message(self, text):
-        self.call(self.bind_braille_message, text)
+    def braille_message(self, text: str) -> None:
+        self._bindings.braille_message(text)
