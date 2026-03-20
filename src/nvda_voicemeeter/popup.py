@@ -310,14 +310,16 @@ class Popup:
                         f'<Shift-{event}-{direction}>', f'||KEY SHIFT {direction.upper()} {event_id}'
                     )
                     self.popup[f'COMPRESSOR||SLIDER {param}'].bind(
-                        f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}'
+                        f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}', propagate=False
                     )
                     if param == 'RELEASE':
                         self.popup[f'COMPRESSOR||SLIDER {param}'].bind(
                             f'<Alt-{event}-{direction}>', f'||KEY ALT {direction.upper()} {event_id}'
                         )
                         self.popup[f'COMPRESSOR||SLIDER {param}'].bind(
-                            f'<Control-Alt-{event}-{direction}>', f'||KEY CTRL ALT {direction.upper()} {event_id}'
+                            f'<Control-Alt-{event}-{direction}>',
+                            f'||KEY CTRL ALT {direction.upper()} {event_id}',
+                            propagate=False,
                         )
             self.popup[f'COMPRESSOR||SLIDER {param}'].bind('<Control-Shift-KeyPress-R>', '||KEY CTRL SHIFT R')
         self.popup['MAKEUP'].bind('<FocusIn>', '||FOCUS IN')
@@ -642,14 +644,16 @@ class Popup:
                         f'<Shift-{event}-{direction}>', f'||KEY SHIFT {direction.upper()} {event_id}'
                     )
                     self.popup[f'GATE||SLIDER {param}'].bind(
-                        f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}'
+                        f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}', propagate=False
                     )
                     if param in ('BPSIDECHAIN', 'ATTACK', 'HOLD', 'RELEASE'):
                         self.popup[f'GATE||SLIDER {param}'].bind(
                             f'<Alt-{event}-{direction}>', f'||KEY ALT {direction.upper()} {event_id}'
                         )
                         self.popup[f'GATE||SLIDER {param}'].bind(
-                            f'<Control-Alt-{event}-{direction}>', f'||KEY CTRL ALT {direction.upper()} {event_id}'
+                            f'<Control-Alt-{event}-{direction}>',
+                            f'||KEY CTRL ALT {direction.upper()} {event_id}',
+                            propagate=False,
                         )
             self.popup[f'GATE||SLIDER {param}'].bind('<Control-Shift-KeyPress-R>', '||KEY CTRL SHIFT R')
         self.popup['Exit'].bind('<FocusIn>', '||FOCUS IN')

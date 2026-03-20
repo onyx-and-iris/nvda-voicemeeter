@@ -251,7 +251,9 @@ class NVDAVMWindow(psg.Window):
                             f'<Shift-{event}-{direction}>', f'||KEY SHIFT {direction.upper()} {event_id}'
                         )
                         self[f'STRIP {i}||SLIDER {param}'].bind(
-                            f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}'
+                            f'<Control-{event}-{direction}>',
+                            f'||KEY CTRL {direction.upper()} {event_id}',
+                            propagate=False,
                         )
                 self[f'STRIP {i}||SLIDER {param}'].bind('<Control-Shift-KeyPress-R>', '||KEY CTRL SHIFT R')
 
@@ -284,7 +286,7 @@ class NVDAVMWindow(psg.Window):
                         f'<Shift-{event}-{direction}>', f'||KEY SHIFT {direction.upper()} {event_id}'
                     )
                     self[f'BUS {i}||SLIDER GAIN'].bind(
-                        f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}'
+                        f'<Control-{event}-{direction}>', f'||KEY CTRL {direction.upper()} {event_id}', propagate=False
                     )
             self[f'BUS {i}||SLIDER GAIN'].bind('<Control-Shift-KeyPress-R>', '||KEY CTRL SHIFT R')
 
