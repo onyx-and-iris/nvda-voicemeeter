@@ -6,6 +6,7 @@ import FreeSimpleGUI as psg
 
 from . import configuration, models, util
 from .builder import Builder
+from .errors import NVDAVMError
 from .nvda import Nvda
 from .parser import Parser
 from .popup import Popup
@@ -25,6 +26,10 @@ class NVDAVMWindow(psg.Window):
         self.kind = self.vm.kind
         self.logger = logger.getChild(type(self).__name__)
         self.logger.debug(f'loaded with theme: {psg.theme()}')
+        self.nvda = Nvda()
+        if not self.nvda.is_running:
+            self.logger.error('NVDA is not running. Exiting...')
+            raise NVDAVMError('NVDA is not running')
         self.cache = {
             'hw_ins': models._make_hardware_ins_cache(self.vm),
             'hw_outs': models._make_hardware_outs_cache(self.vm),
@@ -34,7 +39,6 @@ class NVDAVMWindow(psg.Window):
             'asio': models._make_patch_asio_cache(self.vm),
             'insert': models._make_patch_insert_cache(self.vm),
         }
-        self.nvda = Nvda()
         self.parser = Parser()
         self.popup = Popup(self)
         self.builder = Builder(self)

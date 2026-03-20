@@ -1,5 +1,12 @@
+from enum import IntEnum
+
 from .cdll import libc
 from .errors import NVDAVMCAPIError
+
+
+class ServerState(IntEnum):
+    RUNNING = 0
+    UNAVAILABLE = 1722
 
 
 class CBindings:
@@ -18,7 +25,10 @@ class CBindings:
 class Nvda(CBindings):
     @property
     def is_running(self):
-        return self.call(self.bind_test_if_running) == 0
+        return (
+            self.call(self.bind_test_if_running, ok=(ServerState.RUNNING, ServerState.UNAVAILABLE))
+            == ServerState.RUNNING
+        )
 
     def speak(self, text):
         self.call(self.bind_speak_text, text)
