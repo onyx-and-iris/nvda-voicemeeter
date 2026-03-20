@@ -40,7 +40,7 @@ class Popup:
                     if values['Browse']:
                         filepath = values['Browse']
                         break
-                    self.window.nvda.speak(button)
+                    self.window.nvda.speak_and_braille(button)
                 case [_, ['KEY', 'ENTER']]:
                     popup.find_element_with_focus().click()
             self.logger.debug(f'parsed::{parsed_cmd}')
@@ -107,7 +107,7 @@ class Popup:
                 break
             match parsed_cmd := self.window.parser.match.parse_string(event):
                 case [[button], ['FOCUS', 'IN']]:
-                    self.window.nvda.speak(button)
+                    self.window.nvda.speak_and_braille(button)
                 case [_, ['KEY', 'ENTER']]:
                     popup.find_element_with_focus().click()
                 case ['Ok']:
@@ -233,21 +233,21 @@ class Popup:
                     val = values[f'ASIO INPUT SPINBOX||{in_num} {channel}']
                     self.window.vm.patch.asio[index].set(val)
                     channel = ('left', 'right')[int(channel)]
-                    self.window.nvda.speak(str(val))
+                    self.window.nvda.speak_and_braille(str(val))
                 case [['ASIO', 'INPUT', 'SPINBOX'], [in_num, channel], ['FOCUS', 'IN']]:
                     if self.popup.find_element_with_focus() is not None:
                         val = values[f'ASIO INPUT SPINBOX||{in_num} {channel}']
                         channel = ('left', 'right')[int(channel)]
                         num = int(in_num[-1])
-                        self.window.nvda.speak(f'Patch ASIO inputs to strips IN#{num} {channel} {val}')
+                        self.window.nvda.speak_and_braille(f'Patch ASIO inputs to strips IN#{num} {channel} {val}')
                 case [['ASIO', 'OUTPUT', param, 'SPINBOX'], [index]]:
                     target = getattr(self.window.vm.patch, param)[int(index)]
                     target.set(values[event])
-                    self.window.nvda.speak(str(values[event]))
+                    self.window.nvda.speak_and_braille(str(values[event]))
                 case [['ASIO', 'OUTPUT', param, 'SPINBOX'], [index], ['FOCUS', 'IN']]:
                     if self.popup.find_element_with_focus() is not None:
                         val = values[f'ASIO OUTPUT {param} SPINBOX||{index}']
-                        self.window.nvda.speak(
+                        self.window.nvda.speak_and_braille(
                             f'Patch BUS to A1 ASIO Outputs OUT {param} channel {int(index) + 1} {val}'
                         )
                 case ['BUFFER MME' | 'BUFFER WDM' | 'BUFFER KS' | 'BUFFER ASIO']:
@@ -263,15 +263,15 @@ class Popup:
                     driver = event.split()[1]
                     self.window.vm.set(f'option.buffer.{driver.lower()}', val)
                     self.window.TKroot.after(
-                        200, self.window.nvda.speak, f'{driver} BUFFER {val if val else "default"}'
+                        200, self.window.nvda.speak_and_braille, f'{driver} BUFFER {val if val else "default"}'
                     )
                 case [['BUFFER', driver], ['FOCUS', 'IN']]:
                     val = int(self.window.vm.get(f'option.buffer.{driver.lower()}'))
-                    self.window.nvda.speak(f'{driver} BUFFER {val if val else "default"}')
+                    self.window.nvda.speak_and_braille(f'{driver} BUFFER {val if val else "default"}')
                 case [['BUFFER', driver], ['KEY', 'SPACE' | 'ENTER']]:
                     util.open_context_menu_for_buttonmenu(self.popup, f'BUFFER {driver}')
                 case [[button], ['FOCUS', 'IN']]:
-                    self.window.nvda.speak(button)
+                    self.window.nvda.speak_and_braille(button)
                 case [_, ['KEY', 'ENTER']]:
                     self.popup.find_element_with_focus().click()
             self.logger.debug(f'parsed::{parsed_cmd}')
@@ -337,7 +337,7 @@ class Popup:
                 case [['COMPRESSOR'], ['SLIDER', param]]:
                     setattr(self.window.vm.strip[index].comp, param.lower(), values[event])
                 case [['COMPRESSOR'], ['SLIDER', param], ['FOCUS', 'IN']]:
-                    self.window.nvda.speak(f'{param} {values[f"COMPRESSOR||SLIDER {param}"]}')
+                    self.window.nvda.speak_and_braille(f'{param} {values[f"COMPRESSOR||SLIDER {param}"]}')
                 case [
                     ['COMPRESSOR'],
                     ['SLIDER', param],
@@ -364,9 +364,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
                         self.popup[f'COMPRESSOR||SLIDER {param}'].update(value=val)
                         if param == 'KNEE':
-                            self.window.nvda.speak(str(round(val, 2)))
+                            self.window.nvda.speak_and_braille(str(round(val, 2)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -399,9 +399,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
                         self.popup[f'COMPRESSOR||SLIDER {param}'].update(value=val)
                         if param == 'KNEE':
-                            self.window.nvda.speak(str(round(val, 2)))
+                            self.window.nvda.speak_and_braille(str(round(val, 2)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -430,9 +430,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].comp, param.lower(), val)
                         self.popup[f'COMPRESSOR||SLIDER {param}'].update(value=val)
                         if param == 'KNEE':
-                            self.window.nvda.speak(str(round(val, 2)))
+                            self.window.nvda.speak_and_braille(str(round(val, 2)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -453,7 +453,7 @@ class Popup:
                         val = util.check_bounds(val, (0, 5000))
                         self.window.vm.strip[index].comp.release = val
                         self.popup[f'COMPRESSOR||SLIDER {param}'].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -474,7 +474,7 @@ class Popup:
                         val = util.check_bounds(val, (0, 5000))
                         self.window.vm.strip[index].comp.release = val
                         self.popup[f'COMPRESSOR||SLIDER {param}'].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
 
@@ -485,7 +485,7 @@ class Popup:
                         self.window.vm.strip[index].comp.gainout = values[event]
                 case [['COMPRESSOR'], ['SLIDER', 'INPUT' | 'OUTPUT' as direction, 'GAIN'], ['FOCUS', 'IN']]:
                     label = f'{direction} GAIN'
-                    self.window.nvda.speak(f'{label} {values[f"COMPRESSOR||SLIDER {label}"]}')
+                    self.window.nvda.speak_and_braille(f'{label} {values[f"COMPRESSOR||SLIDER {label}"]}')
                 case [
                     ['COMPRESSOR'],
                     ['SLIDER', 'INPUT' | 'OUTPUT' as direction, 'GAIN'],
@@ -510,7 +510,7 @@ class Popup:
                         else:
                             self.window.vm.strip[index].comp.gainout = val
                         self.popup[f'COMPRESSOR||SLIDER {direction} GAIN'].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -537,7 +537,7 @@ class Popup:
                         else:
                             self.window.vm.strip[index].comp.gainout = val
                         self.popup[f'COMPRESSOR||SLIDER {direction} GAIN'].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -564,7 +564,7 @@ class Popup:
                         else:
                             self.window.vm.strip[index].comp.gainout = val
                         self.popup[f'COMPRESSOR||SLIDER {direction} GAIN'].update(value=val)
-                        self.window.nvda.speak(str(round(val, 1)))
+                        self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
 
@@ -578,7 +578,7 @@ class Popup:
                     else:
                         self.window.vm.strip[index].comp.gainout = 0
                     self.popup[f'COMPRESSOR||SLIDER {direction} GAIN'].update(value=0)
-                    self.window.nvda.speak(str(0))
+                    self.window.nvda.speak_and_braille(str(0))
                 case [['COMPRESSOR'], ['SLIDER', param], ['KEY', 'CTRL', 'SHIFT', 'R']]:
                     match param:
                         case 'RATIO':
@@ -593,19 +593,19 @@ class Popup:
                             val = 0.5
                     setattr(self.window.vm.strip[index].comp, param.lower(), val)
                     self.popup[f'COMPRESSOR||SLIDER {param}'].update(value=val)
-                    self.window.nvda.speak(str(round(val, 1)))
+                    self.window.nvda.speak_and_braille(str(round(val, 1)))
 
                 case ['MAKEUP']:
                     val = not self.window.vm.strip[index].comp.makeup
                     self.window.vm.strip[index].comp.makeup = val
-                    self.window.nvda.speak('on' if val else 'off')
+                    self.window.nvda.speak_and_braille('on' if val else 'off')
                 case [[button], ['FOCUS', 'IN']]:
                     if button == 'MAKEUP':
-                        self.window.nvda.speak(
+                        self.window.nvda.speak_and_braille(
                             f'{button} {"on" if self.window.vm.strip[index].comp.makeup else "off"}'
                         )
                     else:
-                        self.window.nvda.speak(button)
+                        self.window.nvda.speak_and_braille(button)
                 case [_, ['KEY', 'ENTER']]:
                     self.popup.find_element_with_focus().click()
             self.logger.debug(f'parsed::{parsed_cmd}')
@@ -673,7 +673,9 @@ class Popup:
                         'DAMPING': 'Damping Max',
                         'BPSIDECHAIN': 'BP Sidechain',
                     }
-                    self.window.nvda.speak(f'{label_map.get(param, param)} {values[f"GATE||SLIDER {param}"]}')
+                    self.window.nvda.speak_and_braille(
+                        f'{label_map.get(param, param)} {values[f"GATE||SLIDER {param}"]}'
+                    )
 
                 case [
                     ['GATE'],
@@ -695,9 +697,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         self.popup[f'GATE||SLIDER {param}'].update(value=val)
                         if param == 'BPSIDECHAIN':
-                            self.window.nvda.speak(str(int(val)))
+                            self.window.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -720,9 +722,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         self.popup[f'GATE||SLIDER {param}'].update(value=val)
                         if param == 'BPSIDECHAIN':
-                            self.window.nvda.speak(str(int(val)))
+                            self.window.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -745,9 +747,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         self.popup[f'GATE||SLIDER {param}'].update(value=val)
                         if param == 'BPSIDECHAIN':
-                            self.window.nvda.speak(str(int(val)))
+                            self.window.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -769,9 +771,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         self.popup[f'GATE||SLIDER {param}'].update(value=val)
                         if param == 'BPSIDECHAIN':
-                            self.window.nvda.speak(str(int(val)))
+                            self.window.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [
@@ -793,9 +795,9 @@ class Popup:
                         setattr(self.window.vm.strip[index].gate, param.lower(), val)
                         self.popup[f'GATE||SLIDER {param}'].update(value=val)
                         if param == 'BPSIDECHAIN':
-                            self.window.nvda.speak(str(int(val)))
+                            self.window.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.window.nvda.speak(str(round(val, 1)))
+                            self.window.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.window.vm.event.pdirty = True
                 case [['GATE'], ['SLIDER', param], ['KEY', 'CTRL', 'SHIFT', 'R']]:
@@ -814,10 +816,10 @@ class Popup:
                             val = 1000
                     setattr(self.window.vm.strip[index].gate, param.lower(), val)
                     self.popup[f'GATE||SLIDER {param}'].update(value=val)
-                    self.window.nvda.speak(str(round(val, 1)))
+                    self.window.nvda.speak_and_braille(str(round(val, 1)))
 
                 case [[button], ['FOCUS', 'IN']]:
-                    self.window.nvda.speak(button)
+                    self.window.nvda.speak_and_braille(button)
                 case [_, ['KEY', 'ENTER']]:
                     self.popup.find_element_with_focus().click()
 

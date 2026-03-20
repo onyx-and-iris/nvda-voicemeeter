@@ -50,3 +50,7 @@ class Nvda:
 
     def braille_message(self, text: str) -> None:
         self._bindings.braille_message(text)
+
+    def speak_and_braille(self, text: str) -> None:
+        self.speak(text)
+        self.braille_message(text)

@@ -78,7 +78,7 @@ class NVDAVMWindow(psg.Window):
                     self.logger.debug(f'config {defaultconfig} loaded')
                     self.TKroot.after(
                         200,
-                        self.nvda.speak,
+                        self.nvda.speak_and_braille,
                         f'config {defaultconfig.stem} has been loaded',
                     )
             except json.JSONDecodeError:
@@ -306,12 +306,12 @@ class NVDAVMWindow(psg.Window):
                 break
             elif event in util.get_slider_modes():
                 mode = event
-                self.nvda.speak(f'{mode} enabled')
+                self.nvda.speak_and_braille(f'{mode} enabled')
                 self.logger.debug(f'entered slider mode {mode}')
                 continue
             elif event == 'ESCAPE':
                 if mode:
-                    self.nvda.speak(f'{mode} disabled')
+                    self.nvda.speak_and_braille(f'{mode} disabled')
                     self.logger.debug(f'exited from slider mode {mode}')
                     mode = None
                 continue
@@ -331,7 +331,7 @@ class NVDAVMWindow(psg.Window):
                 # Focus tabgroup
                 case ['CTRL-TAB'] | ['CTRL-SHIFT-TAB']:
                     self['tabgroup'].set_focus()
-                    self.nvda.speak(f'{values["tabgroup"]}')
+                    self.nvda.speak_and_braille(f'{values["tabgroup"]}')
 
                 # Quick Navigation
                 case ['CTRL-1' | 'CTRL-2' | 'CTRL-3' | 'CTRL-4' | 'CTRL-5' | 'CTRL-6' | 'CTRL-7' | 'CTRL-8' as bind]:
@@ -475,7 +475,7 @@ class NVDAVMWindow(psg.Window):
                 case [['ENGINE', 'RESTART'], ['END']]:
                     self.TKroot.after(
                         200,
-                        self.nvda.speak,
+                        self.nvda.speak_and_braille,
                         'Audio Engine restarted',
                     )
                 case [['Save', 'Settings'], ['MENU']]:
@@ -487,7 +487,7 @@ class NVDAVMWindow(psg.Window):
                         self.logger.debug(f'saving config file to {filepath}')
                         self.TKroot.after(
                             200,
-                            self.nvda.speak,
+                            self.nvda.speak_and_braille,
                             f'config file {filepath.stem} has been saved',
                         )
                 case [['Load', 'Settings'], ['MENU']]:
@@ -506,7 +506,7 @@ class NVDAVMWindow(psg.Window):
                             self.TKroot.after(i, self.on_pdirty)
                         self.TKroot.after(
                             200,
-                            self.nvda.speak,
+                            self.nvda.speak_and_braille,
                             f'config file {filepath.stem} has been loaded',
                         )
                 case [['Load', 'Settings', 'on', 'Startup'], ['MENU']]:
@@ -522,7 +522,7 @@ class NVDAVMWindow(psg.Window):
                         configuration.set('default_config', str(filepath))
                         self.TKroot.after(
                             200,
-                            self.nvda.speak,
+                            self.nvda.speak_and_braille,
                             f'config {filepath.stem} set as default on startup',
                         )
                     else:
@@ -536,7 +536,7 @@ class NVDAVMWindow(psg.Window):
                     configuration.set('default_theme', chosen)
                     self.TKroot.after(
                         200,
-                        self.nvda.speak,
+                        self.nvda.speak_and_braille,
                         f'theme {chosen} selected.',
                     )
                     self.logger.debug(f'theme {chosen} selected')
@@ -544,13 +544,13 @@ class NVDAVMWindow(psg.Window):
                 # Tabs
                 case ['tabgroup'] | [['tabgroup'], ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is None:
-                        self.nvda.speak(f'{values["tabgroup"]}')
+                        self.nvda.speak_and_braille(f'{values["tabgroup"]}')
                 case [['tabgroup'], tabname] | [['tabgroup'], tabname, ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is None:
                         name = ' '.join(tabname)
-                        self.nvda.speak(f'{values[f"tabgroup||{name}"]}')
+                        self.nvda.speak_and_braille(f'{values[f"tabgroup||{name}"]}')
                 case [['tabgroup'], _, ['KEY', 'SHIFT', 'TAB']]:
-                    self.nvda.speak(values['tabgroup'])
+                    self.nvda.speak_and_braille(values['tabgroup'])
 
                 # Hardware In
                 case [['HARDWARE', 'IN'], [key]]:
@@ -559,18 +559,22 @@ class NVDAVMWindow(psg.Window):
                     match selection.split(':'):
                         case [device_name]:
                             setattr(self.vm.strip[index].device, 'wdm', '')
-                            self.TKroot.after(200, self.nvda.speak, f'HARDWARE IN {key} device selection removed')
+                            self.TKroot.after(
+                                200, self.nvda.speak_and_braille, f'HARDWARE IN {key} device selection removed'
+                            )
                         case [driver, device_name]:
                             setattr(self.vm.strip[index].device, driver, device_name.lstrip())
                             phonetic = {'mme': 'em em e'}
                             self.TKroot.after(
                                 200,
-                                self.nvda.speak,
+                                self.nvda.speak_and_braille,
                                 f'HARDWARE IN {key} set {phonetic.get(driver, driver)} {device_name}',
                             )
                 case [['HARDWARE', 'IN'], [key], ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is not None:
-                        self.nvda.speak(f'HARDWARE INPUT {key} {self.cache["hw_ins"][f"HARDWARE IN||{key}"]}')
+                        self.nvda.speak_and_braille(
+                            f'HARDWARE INPUT {key} {self.cache["hw_ins"][f"HARDWARE IN||{key}"]}'
+                        )
                 case [['HARDWARE', 'IN'], [key], ['KEY', 'SPACE' | 'ENTER']]:
                     util.open_context_menu_for_buttonmenu(self, f'HARDWARE IN||{key}')
 
@@ -581,18 +585,22 @@ class NVDAVMWindow(psg.Window):
                     match selection.split(':'):
                         case [device_name]:
                             setattr(self.vm.bus[index].device, 'wdm', '')
-                            self.TKroot.after(200, self.nvda.speak, f'HARDWARE OUT {key} device selection removed')
+                            self.TKroot.after(
+                                200, self.nvda.speak_and_braille, f'HARDWARE OUT {key} device selection removed'
+                            )
                         case [driver, device_name]:
                             setattr(self.vm.bus[index].device, driver, device_name.lstrip())
                             phonetic = {'mme': 'em em e'}
                             self.TKroot.after(
                                 200,
-                                self.nvda.speak,
+                                self.nvda.speak_and_braille,
                                 f'HARDWARE OUT {key} set {phonetic.get(driver, driver)} {device_name}',
                             )
                 case [['HARDWARE', 'OUT'], [key], ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is not None:
-                        self.nvda.speak(f'HARDWARE OUT {key} {self.cache["hw_outs"][f"HARDWARE OUT||{key}"]}')
+                        self.nvda.speak_and_braille(
+                            f'HARDWARE OUT {key} {self.cache["hw_outs"][f"HARDWARE OUT||{key}"]}'
+                        )
                 case [['HARDWARE', 'OUT'], [key], ['KEY', 'SPACE' | 'ENTER']]:
                     util.open_context_menu_for_buttonmenu(self, f'HARDWARE OUT||{key}')
 
@@ -601,7 +609,7 @@ class NVDAVMWindow(psg.Window):
                     val = values[f'PATCH COMPOSITE||{key}']
                     index = int(key[-1]) - 1
                     self.vm.patch.composite[index].set(util.get_patch_composite_list(self.kind).index(val) + 1)
-                    self.TKroot.after(200, self.nvda.speak, val)
+                    self.TKroot.after(200, self.nvda.speak_and_braille, val)
                 case [['PATCH', 'COMPOSITE'], [key], ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is not None:
                         if values[f'PATCH COMPOSITE||{key}']:
@@ -615,7 +623,7 @@ class NVDAVMWindow(psg.Window):
                             except IndexError as e:
                                 val = comp_list[-1]
                                 self.logger.error(f'{type(e).__name__}: {e}')
-                        self.nvda.speak(f'Patch COMPOSITE {key[-1]} {val}')
+                        self.nvda.speak_and_braille(f'Patch COMPOSITE {key[-1]} {val}')
                 case [['PATCH', 'COMPOSITE'], [key], ['KEY', 'SPACE' | 'ENTER']]:
                     util.open_context_menu_for_buttonmenu(self, f'PATCH COMPOSITE||{key}')
 
@@ -628,7 +636,7 @@ class NVDAVMWindow(psg.Window):
                     )
                     val = values[f'INSERT CHECKBOX||{in_num} {channel}']
                     self.vm.patch.insert[index].on = val
-                    self.nvda.speak('on' if val else 'off')
+                    self.nvda.speak_and_braille('on' if val else 'off')
                 case [['INSERT', 'CHECKBOX'], [in_num, channel], ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is not None:
                         index = util.get_insert_checkbox_index(
@@ -639,7 +647,7 @@ class NVDAVMWindow(psg.Window):
                         val = values[f'INSERT CHECKBOX||{in_num} {channel}']
                         channel = util._patch_insert_channels[int(channel)]
                         num = int(in_num[-1])
-                        self.nvda.speak(f'Patch INSERT IN#{num} {channel} {"on" if val else "off"}')
+                        self.nvda.speak_and_braille(f'Patch INSERT IN#{num} {channel} {"on" if val else "off"}')
                 case [['INSERT', 'CHECKBOX'], [in_num, channel], ['KEY', 'ENTER']]:
                     val = not values[f'INSERT CHECKBOX||{in_num} {channel}']
                     self.write_event_value(f'INSERT CHECKBOX||{in_num} {channel}', val)
@@ -649,7 +657,7 @@ class NVDAVMWindow(psg.Window):
                     if values['tabgroup'] == 'tab||Settings':
                         self.popup.advanced_settings(title='Advanced Settings')
                 case [['ADVANCED', 'SETTINGS'], ['FOCUS', 'IN']]:
-                    self.nvda.speak('ADVANCED SETTINGS')
+                    self.nvda.speak_and_braille('ADVANCED SETTINGS')
                 case [['ADVANCED', 'SETTINGS'], ['KEY', 'ENTER']]:
                     self.find_element_with_focus().click()
 
@@ -663,28 +671,30 @@ class NVDAVMWindow(psg.Window):
                                 next_val = 0
                             self.vm.strip[int(index)].k = next_val
                             self.cache['strip'][f'STRIP {index}||{param}'] = next_val
-                            self.nvda.speak(opts[next_val])
+                            self.nvda.speak_and_braille(opts[next_val])
                         case output if param in util._get_bus_assignments(self.kind):
                             val = not self.cache['strip'][f'STRIP {index}||{output}']
                             setattr(self.vm.strip[int(index)], output, val)
                             self.cache['strip'][f'STRIP {index}||{output}'] = val
-                            self.nvda.speak('on' if val else 'off')
+                            self.nvda.speak_and_braille('on' if val else 'off')
                         case _:
                             val = not self.cache['strip'][f'STRIP {index}||{param}']
                             setattr(self.vm.strip[int(index)], param.lower(), val)
                             self.cache['strip'][f'STRIP {index}||{param}'] = val
-                            self.nvda.speak('on' if val else 'off')
+                            self.nvda.speak_and_braille('on' if val else 'off')
                 case [['STRIP', index], [param], ['FOCUS', 'IN']]:
                     if self.find_element_with_focus() is not None:
                         val = self.cache['strip'][f'STRIP {index}||{param}']
                         phonetic = {'KARAOKE': 'karaoke'}
                         label = self.cache['labels'][f'STRIP {index}||LABEL']
                         if param == 'KARAOKE':
-                            self.nvda.speak(
+                            self.nvda.speak_and_braille(
                                 f'{label} {phonetic.get(param, param)} {["off", "k m", "k 1", "k 2", "k v"][self.cache["strip"][f"STRIP {int(index)}||{param}"]]}'
                             )
                         else:
-                            self.nvda.speak(f'{label} {phonetic.get(param, param)} {"on" if val else "off"}')
+                            self.nvda.speak_and_braille(
+                                f'{label} {phonetic.get(param, param)} {"on" if val else "off"}'
+                            )
                 case [['STRIP', index], [param], ['KEY', 'ENTER']]:
                     self.find_element_with_focus().click()
 
@@ -737,7 +747,7 @@ class NVDAVMWindow(psg.Window):
                     if self.find_element_with_focus() is not None:
                         val = values[f'STRIP {index}||SLIDER {param}']
                         label = self.cache['labels'][f'STRIP {index}||LABEL']
-                        self.nvda.speak(f'{label} {param} {int(val) if param == "LIMIT" else val}')
+                        self.nvda.speak_and_braille(f'{label} {param} {int(val) if param == "LIMIT" else val}')
                 case [
                     ['STRIP', index],
                     [
@@ -805,7 +815,7 @@ class NVDAVMWindow(psg.Window):
                                 val = util.check_bounds(val, (-40, 12))
                                 self.vm.strip[int(index)].limit = val
                                 self[f'STRIP {index}||SLIDER {param}'].update(value=val)
-                        self.nvda.speak(str(round(val, 1)))
+                        self.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -873,9 +883,9 @@ class NVDAVMWindow(psg.Window):
                                 self.vm.strip[int(index)].limit = val
                                 self[f'STRIP {index}||SLIDER {param}'].update(value=val)
                         if param == 'LIMIT':
-                            self.nvda.speak(str(int(val)))
+                            self.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.nvda.speak(str(round(val, 1)))
+                            self.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -943,9 +953,9 @@ class NVDAVMWindow(psg.Window):
                                 self.vm.strip[int(index)].limit = val
                                 self[f'STRIP {index}||SLIDER {param}'].update(value=val)
                         if param == 'LIMIT':
-                            self.nvda.speak(str(int(val)))
+                            self.nvda.speak_and_braille(str(int(val)))
                         else:
-                            self.nvda.speak(str(round(val, 1)))
+                            self.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [['STRIP', index], ['SLIDER', param], ['KEY', 'CTRL', 'SHIFT', 'R']]:
@@ -966,7 +976,7 @@ class NVDAVMWindow(psg.Window):
                         case 'LIMIT':
                             self.vm.strip[int(index)].limit = 12
                             self[f'STRIP {index}||SLIDER {param}'].update(value=12)
-                    self.nvda.speak(f'{12 if param == "LIMIT" else 0}')
+                    self.nvda.speak_and_braille(f'{12 if param == "LIMIT" else 0}')
 
                 # Bus Params
                 case [['BUS', index], [param]]:
@@ -979,7 +989,7 @@ class NVDAVMWindow(psg.Window):
                             self.cache['bus'][event] = val
                             self.TKroot.after(
                                 200,
-                                self.nvda.speak,
+                                self.nvda.speak_and_braille,
                                 'on' if val else 'off',
                             )
                         case 'MUTE':
@@ -988,7 +998,7 @@ class NVDAVMWindow(psg.Window):
                             self.cache['bus'][event] = val
                             self.TKroot.after(
                                 200,
-                                self.nvda.speak,
+                                self.nvda.speak_and_braille,
                                 'on' if val else 'off',
                             )
                         case 'MONO':
@@ -997,7 +1007,7 @@ class NVDAVMWindow(psg.Window):
                             self.cache['bus'][event] = chosen
                             self.TKroot.after(
                                 200,
-                                self.nvda.speak,
+                                self.nvda.speak_and_braille,
                                 f'mono {chosen}',
                             )
                         case 'MODE':
@@ -1006,7 +1016,7 @@ class NVDAVMWindow(psg.Window):
                             self.cache['bus'][event] = chosen
                             self.TKroot.after(
                                 200,
-                                self.nvda.speak,
+                                self.nvda.speak_and_braille,
                                 util._bus_mode_map[chosen],
                             )
                 case [['BUS', index], [param], ['FOCUS', 'IN']]:
@@ -1014,15 +1024,15 @@ class NVDAVMWindow(psg.Window):
                         label = self.cache['labels'][f'BUS {index}||LABEL']
                         val = self.cache['bus'][f'BUS {index}||{param}']
                         if param == 'MODE':
-                            self.nvda.speak(f'{label} bus {param} {util._bus_mode_map[val]}')
+                            self.nvda.speak_and_braille(f'{label} bus {param} {util._bus_mode_map[val]}')
                         elif param == 'MONO':
                             busmode = util.get_bus_mono()[val]
                             if busmode in ('on', 'off'):
-                                self.nvda.speak(f'{label} {param} {busmode}')
+                                self.nvda.speak_and_braille(f'{label} {param} {busmode}')
                             else:
-                                self.nvda.speak(f'{label} {busmode}')
+                                self.nvda.speak_and_braille(f'{label} {busmode}')
                         else:
-                            self.nvda.speak(f'{label} {param} {"on" if val else "off"}')
+                            self.nvda.speak_and_braille(f'{label} {param} {"on" if val else "off"}')
                 case [['BUS', index], [param], ['KEY', 'SPACE' | 'ENTER']]:
                     if param == 'MODE':
                         util.open_context_menu_for_buttonmenu(self, f'BUS {index}||MODE')
@@ -1040,7 +1050,7 @@ class NVDAVMWindow(psg.Window):
                     if self.find_element_with_focus() is not None:
                         label = self.cache['labels'][f'BUS {index}||LABEL']
                         val = values[f'BUS {index}||SLIDER GAIN']
-                        self.nvda.speak(f'{label} gain {val}')
+                        self.nvda.speak_and_braille(f'{label} gain {val}')
                 case [['BUS', index], ['SLIDER', 'GAIN'], ['FOCUS', 'OUT']]:
                     pass
                 case [
@@ -1059,7 +1069,7 @@ class NVDAVMWindow(psg.Window):
                         val = util.check_bounds(val, (-60, 12))
                         self.vm.bus[int(index)].gain = val
                         self[f'BUS {index}||SLIDER GAIN'].update(value=val)
-                        self.nvda.speak(str(round(val, 1)))
+                        self.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -1078,7 +1088,7 @@ class NVDAVMWindow(psg.Window):
                         val = util.check_bounds(val, (-60, 12))
                         self.vm.bus[int(index)].gain = val
                         self[f'BUS {index}||SLIDER GAIN'].update(value=val)
-                        self.nvda.speak(str(round(val, 1)))
+                        self.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [
@@ -1097,13 +1107,13 @@ class NVDAVMWindow(psg.Window):
                         val = util.check_bounds(val, (-60, 12))
                         self.vm.bus[int(index)].gain = val
                         self[f'BUS {index}||SLIDER GAIN'].update(value=val)
-                        self.nvda.speak(str(round(val, 1)))
+                        self.nvda.speak_and_braille(str(round(val, 1)))
                     else:
                         self.vm.event.pdirty = True
                 case [['BUS', index], ['SLIDER', 'GAIN'], ['KEY', 'CTRL', 'SHIFT', 'R']]:
                     self.vm.bus[int(index)].gain = 0
                     self[f'BUS {index}||SLIDER GAIN'].update(value=0)
-                    self.nvda.speak(str(0))
+                    self.nvda.speak_and_braille(str(0))
 
                 # Unknown
                 case _:
