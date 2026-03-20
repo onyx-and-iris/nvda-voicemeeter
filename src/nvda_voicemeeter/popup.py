@@ -35,7 +35,7 @@ class Popup:
             self.logger.debug(f'values::{values}')
             if event in (psg.WIN_CLOSED, 'Cancel'):
                 break
-            match parsed_cmd := self.window.parser.match.parseString(event):
+            match parsed_cmd := self.window.parser.match.parse_string(event):
                 case [[button], ['FOCUS', 'IN']]:
                     if values['Browse']:
                         filepath = values['Browse']
@@ -105,7 +105,7 @@ class Popup:
             self.logger.debug(f'values::{values}')
             if event in (psg.WIN_CLOSED, 'Cancel'):
                 break
-            match parsed_cmd := self.window.parser.match.parseString(event):
+            match parsed_cmd := self.window.parser.match.parse_string(event):
                 case [[button], ['FOCUS', 'IN']]:
                     self.window.nvda.speak(button)
                 case [_, ['KEY', 'ENTER']]:
@@ -227,7 +227,7 @@ class Popup:
             self.logger.debug(f'values::{values}')
             if event in (psg.WIN_CLOSED, 'Exit'):
                 break
-            match parsed_cmd := self.window.parser.match.parseString(event):
+            match parsed_cmd := self.window.parser.match.parse_string(event):
                 case [['ASIO', 'INPUT', 'SPINBOX'], [in_num, channel]]:
                     index = util.get_asio_input_spinbox_index(int(channel), int(in_num[-1]))
                     val = values[f'ASIO INPUT SPINBOX||{in_num} {channel}']
@@ -331,7 +331,7 @@ class Popup:
             self.logger.debug(f'values::{values}')
             if event in (psg.WIN_CLOSED, 'Exit'):
                 break
-            match parsed_cmd := self.window.parser.match.parseString(event):
+            match parsed_cmd := self.window.parser.match.parse_string(event):
                 case [['COMPRESSOR'], ['SLIDER', param]]:
                     setattr(self.window.vm.strip[index].comp, param.lower(), values[event])
                 case [['COMPRESSOR'], ['SLIDER', param], ['FOCUS', 'IN']]:
@@ -661,7 +661,7 @@ class Popup:
             self.logger.debug(f'values::{values}')
             if event in (psg.WIN_CLOSED, 'Exit'):
                 break
-            match parsed_cmd := self.window.parser.match.parseString(event):
+            match parsed_cmd := self.window.parser.match.parse_string(event):
                 case [['GATE'], ['SLIDER', param]]:
                     setattr(self.window.vm.strip[index].gate, param.lower(), values[event])
                 case [['GATE'], ['SLIDER', param], ['FOCUS', 'IN']]:
